@@ -15,6 +15,9 @@ public class MySAXApp extends DefaultHandler {
 	public static void main(String args[]) throws Exception {
 		XMLReader xr = XMLReaderFactory.createXMLReader();
 		MySAXApp handler = new MySAXApp();
+		
+		// Ignores the dtd definition for the moment, we do not want to load it
+		xr.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 		xr.setContentHandler(handler);
 		xr.setErrorHandler(handler);
 
