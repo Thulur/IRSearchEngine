@@ -8,8 +8,15 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.*;
 
 public class MySAXApp extends DefaultHandler {
+	
+	boolean publicationReferenceEntered = false;
+	boolean patentGrantEntered = false;
+	boolean inventionTitleEntered = false;
+	boolean docNumberEntered = false;
+	
 	public MySAXApp() {
 		super();
+		
 	}
 
 	public static void main(String args[]) throws Exception {
@@ -35,59 +42,61 @@ public class MySAXApp extends DefaultHandler {
 	////////////////////////////////////////////////////////////////////
 
 	public void startDocument() {
-		System.out.println("Start document");
+		return;
 	}
 
 	public void endDocument() {
-		System.out.println("End document");
+		return;
 	}
 
 	public void startElement(String uri, String name, String qName, Attributes atts) {
-		if ("".equals(uri))
-			System.out.println("Start element: " + qName);
-		else
-			System.out.println("Start element: {" + uri + "}" + name);
 		
-		//name as well as qName seem to pickup "invention-title", so it should be easy to extract them
-		if(name.equals("invention-title")) {
-			System.out.println(name);
-		}
-		if(qName.equals("invention-title")) {
-			System.out.println(qName);
-		}
+		switch (name) {
+		case "us-patent-grant":
+			this.patentGrantEntered = true;
+			break;
+		case "publication-reference":
+			this.publicationReferenceEntered = true;
+			break;
+		case "invention-title":
+			this.inventionTitleEntered = true;
+			break;
+		case "doc-number":
+			this.docNumberEntered = true;
+			break;
+		}	
+		
 	}
 
 	public void endElement(String uri, String name, String qName) {
-		if ("".equals(uri))
-			System.out.println("End element: " + qName);
-		else
-			System.out.println("End element:   {" + uri + "}" + name);
+		
+		switch (name) {
+		case "us-patent-grant":
+			this.patentGrantEntered = false;
+			break;
+		case "publication-reference":
+			this.publicationReferenceEntered = false;
+			break;
+		case "invention-title":
+			this.inventionTitleEntered = false;
+			break;
+		case "doc-number":
+			this.docNumberEntered = false;
+			break;
+		}	
 	}
 
 	public void characters(char ch[], int start, int length) {
-		System.out.print("Characters:    \"");
-		for (int i = start; i < start + length; i++) {
-			switch (ch[i]) {
-			case '\\':
-				System.out.print("\\\\");
-				break;
-			case '"':
-				System.out.print("\\\"");
-				break;
-			case '\n':
-				System.out.print("\\n");
-				break;
-			case '\r':
-				System.out.print("\\r");
-				break;
-			case '\t':
-				System.out.print("\\t");
-				break;
-			default:
-				System.out.print(ch[i]);
-				break;
-			}
+		
+		if (this.patentGrantEntered == false) return; 
+		
+		if (this.docNumberEntered == true && this.publicationReferenceEntered == true) {
+			System.out.print(new String(ch, start,length) + " - ");	
 		}
-		System.out.print("\"\n");
+		
+		if (this.inventionTitleEntered == true) {
+			System.out.println(new String(ch, start,length));
+		}
+		
 	}
 }
