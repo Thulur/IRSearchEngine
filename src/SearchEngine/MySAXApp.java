@@ -47,6 +47,14 @@ public class MySAXApp extends DefaultHandler {
 			System.out.println("Start element: " + qName);
 		else
 			System.out.println("Start element: {" + uri + "}" + name);
+		
+		//name as well as qName seem to pickup "invention-title", so it should be easy to extract them
+		if(name.equals("invention-title")) {
+			System.out.println(name);
+		}
+		if(qName.equals("invention-title")) {
+			System.out.println(qName);
+		}
 	}
 
 	public void endElement(String uri, String name, String qName) {
