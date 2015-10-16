@@ -16,7 +16,6 @@ public class MySAXApp extends DefaultHandler {
 	
 	public MySAXApp() {
 		super();
-		
 	}
 
 	public static void main(String args[]) throws Exception {
@@ -73,9 +72,13 @@ public class MySAXApp extends DefaultHandler {
 		switch (name) {
 		case "us-patent-grant":
 			this.patentGrantEntered = false;
+			this.publicationReferenceEntered = false;
+			this.inventionTitleEntered = false;
+			this.docNumberEntered = false;
 			break;
 		case "publication-reference":
 			this.publicationReferenceEntered = false;
+			this.docNumberEntered = false;
 			break;
 		case "invention-title":
 			this.inventionTitleEntered = false;
@@ -87,16 +90,16 @@ public class MySAXApp extends DefaultHandler {
 	}
 
 	public void characters(char ch[], int start, int length) {
-		
-		if (this.patentGrantEntered == false) return; 
-		
-		if (this.docNumberEntered == true && this.publicationReferenceEntered == true) {
-			System.out.print(new String(ch, start,length) + " - ");	
+
+		if (!this.patentGrantEntered) return;
+
+		if (this.docNumberEntered && this.publicationReferenceEntered) {
+			System.out.print(new String(ch, start,length) + " - ");
 		}
-		
-		if (this.inventionTitleEntered == true) {
+
+		if (this.inventionTitleEntered) {
 			System.out.println(new String(ch, start,length));
 		}
-		
+
 	}
 }
