@@ -1,6 +1,7 @@
 package SearchEngine;
 
 import java.io.FileReader;
+import java.io.RandomAccessFile;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -21,18 +22,29 @@ public class MySAXApp extends DefaultHandler {
 	public static void main(String args[]) throws Exception {
 		XMLReader xr = XMLReaderFactory.createXMLReader();
 		MySAXApp handler = new MySAXApp();
-		
+
 		// Ignores the dtd definition for the moment, we do not want to load it
 		xr.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 		xr.setContentHandler(handler);
 		xr.setErrorHandler(handler);
 
-		// Parse each file provided on the
-		// command line.
+		// Parse each file provided on the command line.
 		for (int i = 0; i < args.length; i++) {
-			FileReader r = new FileReader(args[i]);
-			InputSource source = new InputSource(r);
-			xr.parse(source);
+			try {
+				FileReader r = new FileReader(args[i]);
+				InputSource source = new InputSource(r);
+				xr.parse(source);
+			} catch (Exception e) {
+				RandomAccessFile xmlFile = new RandomAccessFile(args[i], "rw");
+
+				while (xmlFile.readLine() != null) {
+					String line = xmlFile.readLine();
+
+					if (line.startsWith("<?xml") || line.startsWith("<!DOCTYPE")) {
+
+					}
+				}
+			}
 		}
 	}
 
@@ -64,7 +76,7 @@ public class MySAXApp extends DefaultHandler {
 			this.docNumberEntered = true;
 			break;
 		}	
-		
+
 	}
 
 	public void endElement(String uri, String name, String qName) {
