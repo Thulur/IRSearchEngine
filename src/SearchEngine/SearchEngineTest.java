@@ -16,11 +16,11 @@ public class SearchEngineTest {
     
     public static void main(String args[]) throws Exception {
 
-        // SearchEngine myEngine = new SearchEngineMyTeamName();
+        SearchEngine myEngine = new SearchEngineMajorRelease();
         
         // long start = System.currentTimeMillis();
         
-        // myEngine.index(String directory)
+        myEngine.index("");
         
         // long time = System.currentTimeMillis() - start;
         

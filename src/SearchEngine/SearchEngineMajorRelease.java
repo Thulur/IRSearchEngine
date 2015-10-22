@@ -30,37 +30,47 @@ import java.util.List;
 import java.util.Properties;
 
 
-public class SearchEngineTemplate extends SearchEngine { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
-
+public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
+    private MySAXApp saxApp = new MySAXApp();
     
-    public SearchEngineTemplate() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
+    public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
         super();
     }
 
     @Override
     void index(String directory) {
+        List<String> files = new LinkedList<>();
+        files.add("data/testData.xml");
+
+        saxApp.addDocumentParsedListener(this);
+
+        try {
+            saxApp.parseFiles(files);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         stem("enter some text here");
     }
 
     private List<String> stem(String text) {
         Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos, lemma");
+        props.put("annotators", "tokenize, ssplit, pos");
         StanfordCoreNLP pipeline = new StanfordCoreNLP(props, false);
         Annotation document = pipeline.process(text);
-        LinkedList<String> lemmas = new LinkedList<String>();
+        LinkedList<String> words = new LinkedList<>();
 
         for(CoreMap sentence: document.get(CoreAnnotations.SentencesAnnotation.class))
         {
             for(CoreLabel token: sentence.get(CoreAnnotations.TokensAnnotation.class))
             {
                 String word = token.get(CoreAnnotations.TextAnnotation.class);
-                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
-                lemmas.add(lemma);
+                words.add(word);
             }
         }
 
-        return lemmas;
+        return words;
     }
 
     @Override
@@ -81,5 +91,11 @@ public class SearchEngineTemplate extends SearchEngine { // Replace 'Template' w
     ArrayList<String> search(String query, int topK, int prf) {
         return null;
     }
-    
+
+    @Override
+    public void documentParsed(Document document) {
+        List<String> words = stem(document.patentAbstract);
+
+        System.out.println(String.join(", ", words));
+    }
 }

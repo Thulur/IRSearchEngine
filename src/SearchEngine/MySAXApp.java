@@ -1,6 +1,8 @@
 package SearchEngine;
 
 import java.io.FileReader;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -8,29 +10,31 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.*;
 
 public class MySAXApp extends DefaultHandler {
-	
-	boolean publicationReferenceEntered = false;
 	boolean patentGrantEntered = false;
+	boolean abstractEntered = false;
+	boolean publicationReferenceEntered = false;
 	boolean inventionTitleEntered = false;
 	boolean docNumberEntered = false;
-	
+	boolean abstractParagraphEntered = false;
+	Document document;
+	List<ParsedEventListener> parsedEventListeners;
+
 	public MySAXApp() {
 		super();
 	}
 
-	public static void main(String args[]) throws Exception {
+	public void parseFiles(List<String> files) throws Exception {
 		XMLReader xr = XMLReaderFactory.createXMLReader();
-		MySAXApp handler = new MySAXApp();
 		
 		// Ignores the dtd definition for the moment, we do not want to load it
 		xr.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-		xr.setContentHandler(handler);
-		xr.setErrorHandler(handler);
+		xr.setContentHandler(this);
+		xr.setErrorHandler(this);
 
 		// Parse each file provided on the
 		// command line.
-		for (int i = 0; i < args.length; i++) {
-			FileReader r = new FileReader(args[i]);
+		for (String file: files) {
+			FileReader r = new FileReader(file);
 			InputSource source = new InputSource(r);
 			xr.parse(source);
 		}
@@ -53,6 +57,13 @@ public class MySAXApp extends DefaultHandler {
 		switch (name) {
 		case "us-patent-grant":
 			this.patentGrantEntered = true;
+			this.document = new Document();
+			break;
+		case "abstract":
+			this.abstractEntered = true;
+			break;
+		case "p":
+			this.abstractParagraphEntered = true;
 			break;
 		case "publication-reference":
 			this.publicationReferenceEntered = true;
@@ -71,20 +82,37 @@ public class MySAXApp extends DefaultHandler {
 		
 		switch (name) {
 		case "us-patent-grant":
-			this.patentGrantEntered = false;
-			this.publicationReferenceEntered = false;
-			this.inventionTitleEntered = false;
-			this.docNumberEntered = false;
+			patentGrantEntered = false;
+			abstractEntered = false;
+			abstractParagraphEntered = false;
+			publicationReferenceEntered = false;
+			inventionTitleEntered = false;
+			docNumberEntered = false;
+
+			if (parsedEventListeners != null){
+				for (ParsedEventListener eventListener: parsedEventListeners) {
+					eventListener.documentParsed(document);
+				}
+			}
+
+			this.document = null;
+			break;
+		case "abstract":
+			abstractEntered = false;
+			abstractParagraphEntered = false;
+			break;
+		case "p":
+			abstractParagraphEntered = false;
 			break;
 		case "publication-reference":
-			this.publicationReferenceEntered = false;
-			this.docNumberEntered = false;
+			publicationReferenceEntered = false;
+			docNumberEntered = false;
 			break;
 		case "invention-title":
-			this.inventionTitleEntered = false;
+			inventionTitleEntered = false;
 			break;
 		case "doc-number":
-			this.docNumberEntered = false;
+			docNumberEntered = false;
 			break;
 		}	
 	}
@@ -94,12 +122,23 @@ public class MySAXApp extends DefaultHandler {
 		if (!this.patentGrantEntered) return;
 
 		if (this.docNumberEntered && this.publicationReferenceEntered) {
-			System.out.print(new String(ch, start,length) + " - ");
+			document.setDocId(Integer.parseInt(new String(ch, start,length)));
 		}
 
 		if (this.inventionTitleEntered) {
-			System.out.println(new String(ch, start,length));
+			document.setInventionTitle(new String(ch, start,length));
 		}
 
+		if (this.abstractEntered && abstractParagraphEntered) {
+			document.setPatentAbstract(new String(ch, start,length));
+		}
+	}
+
+	public void addDocumentParsedListener(ParsedEventListener eventListener) {
+		if (parsedEventListeners == null) {
+			parsedEventListeners = new LinkedList<>();
+		}
+
+		parsedEventListeners.add(eventListener);
 	}
 }
