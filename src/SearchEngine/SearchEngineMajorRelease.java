@@ -85,6 +85,8 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         punctuation.add(",");
         punctuation.add(":");
         punctuation.add(";");
+        punctuation.add("-lrb-");
+        punctuation.add("-rrb-");
 
         words.removeAll(punctuation);
 
@@ -116,11 +118,12 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private void processDocument(Document document) {
-        System.out.println(document.docId);
         List<String> words = stem(document.patentAbstract);
 
         words.removeAll(stopWords);
 
+        System.out.println(document.docId);
+        System.out.println(document.getPatentAbstract());
         System.out.println(String.join(", ", words));
     }
 }

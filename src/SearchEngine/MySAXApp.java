@@ -130,7 +130,11 @@ public class MySAXApp extends DefaultHandler {
 		}
 
 		if (this.abstractEntered && abstractParagraphEntered) {
-			document.setPatentAbstract(new String(ch, start,length));
+			if (document.getPatentAbstract() != null && document.getPatentAbstract() != "") {
+				document.setPatentAbstract(document.getPatentAbstract() + " " + new String(ch, start,length));
+			} else {
+				document.setPatentAbstract(new String(ch, start,length));
+			}
 		}
 	}
 
