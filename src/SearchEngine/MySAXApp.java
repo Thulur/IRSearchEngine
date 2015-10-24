@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.util.LinkedList;
 import java.util.List;
 
+import SearchEngine.data.Document;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -49,6 +50,7 @@ public class MySAXApp extends DefaultHandler {
 	}
 
 	public void endDocument() {
+		// TODO: Signal the program that the parsing is finished (needed for further steps in the programm)
 		return;
 	}
 

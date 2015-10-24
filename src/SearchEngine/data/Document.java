@@ -1,4 +1,6 @@
-package SearchEngine;
+package SearchEngine.data;
+
+import SearchEngine.SearchEngine;
 
 /**
  * Created by sebastian on 22.10.2015.

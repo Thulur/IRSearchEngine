@@ -18,19 +18,15 @@ package SearchEngine;
  * Keep in mind to include your implementation decisions also in the pdf file of each assignment
  */
 
-import edu.stanford.nlp.ling.CoreAnnotations;
-import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.util.CoreMap;
+import SearchEngine.data.Document;
+import SearchEngine.data.Index;
 
-import java.io.FileInputStream;
 import java.util.*;
 
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private MySAXApp saxApp = new MySAXApp();
-    private List<String> stopWords = new LinkedList<>();
+    private Index index = new Index();
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -39,7 +35,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     void index(String directory) {
-        initStopWords();
         saxApp.addDocumentParsedListener(this);
         
         List<String> files = new LinkedList<>();
@@ -52,49 +47,10 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
     }
 
-    private void initStopWords() {
-        try {
-            Scanner scanner = new Scanner(new FileInputStream("data/stopWords.txt"));
-
-            while (scanner.hasNext()) {
-                stopWords.add(scanner.nextLine());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private List<String> stem(String text) {
-        Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos");
-        StanfordCoreNLP pipeline = new StanfordCoreNLP(props, false);
-        Annotation document = pipeline.process(text);
-        LinkedList<String> words = new LinkedList<>();
-
-        for(CoreMap sentence: document.get(CoreAnnotations.SentencesAnnotation.class))
-        {
-            for(CoreLabel token: sentence.get(CoreAnnotations.TokensAnnotation.class))
-            {
-                String word = token.get(CoreAnnotations.TextAnnotation.class);
-                words.add(word.toLowerCase());
-            }
-        }
-
-        List<String> punctuation = new LinkedList<>();
-        punctuation.add(".");
-        punctuation.add(",");
-        punctuation.add(":");
-        punctuation.add(";");
-        punctuation.add("-lrb-");
-        punctuation.add("-rrb-");
-
-        words.removeAll(punctuation);
-
-        return words;
-    }
-
     @Override
     boolean loadIndex(String directory) {
+        //index.loadFromFile(Fi);
+
         return false;
     }
     
@@ -118,12 +74,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private void processDocument(Document document) {
-        List<String> words = stem(document.patentAbstract);
-
-        words.removeAll(stopWords);
-
-        System.out.println(document.docId);
-        System.out.println(document.getPatentAbstract());
-        System.out.println(String.join(", ", words));
+        index.addToIndex(document);
     }
 }
