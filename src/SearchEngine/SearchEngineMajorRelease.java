@@ -68,9 +68,22 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         return null;
     }
 
+    //method printIndex() for testing purposes only
+
+    private void printIndex() {
+        index.printIndex();
+    }
+
+    //Observer methods
+
     @Override
     public void documentParsed(Document document) {
         processDocument(document);
+    }
+
+    public void finishedParsing() {
+        System.out.println("Finished parsing!");
+        printIndex();
     }
 
     private void processDocument(Document document) {

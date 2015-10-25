@@ -2,10 +2,7 @@ package SearchEngine.data;
 
 import SearchEngine.utils.WordParser;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Sebastian on 24.10.2015.
@@ -41,6 +38,30 @@ public class Index {
             }
 
             metaDataList.put(document.docId, metaData);
+        }
+    }
+
+    /*
+    * method printIndex() for testing purposes only
+    * also to get an understanding of how to work with HashMaps
+    */
+
+    public void printIndex() {
+        Set<String> keys = values.keySet();
+
+        for (String key: keys) {
+            HashMap<Integer, WordMetaData> value = values.get(key);
+
+            Set<Integer> innerKeys = value.keySet();
+
+            for (Integer innerKey: innerKeys) {
+
+                WordMetaData metaData = value.get(innerKey);
+
+                System.out.println(key + " - " + innerKey + " - " + metaData.getAbstractPos()
+                        + " - " + metaData.getDocId() + " - " + metaData.getPatentDocId());
+            }
+
         }
     }
 }

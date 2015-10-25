@@ -7,4 +7,5 @@ import SearchEngine.data.Document;
  */
 public interface ParsedEventListener {
     void documentParsed(Document document);
+    void finishedParsing();
 }

@@ -50,8 +50,11 @@ public class MySAXApp extends DefaultHandler {
 	}
 
 	public void endDocument() {
-		// TODO: Signal the program that the parsing is finished (needed for further steps in the programm)
-		return;
+		if (parsedEventListeners != null){
+			for (ParsedEventListener eventListener: parsedEventListeners) {
+				eventListener.finishedParsing();
+			}
+		}
 	}
 
 	public void startElement(String uri, String name, String qName, Attributes atts) {
