@@ -2,6 +2,8 @@ package SearchEngine.data;
 
 import SearchEngine.utils.WordParser;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -63,5 +65,31 @@ public class Index {
             }
 
         }
+    }
+
+    public void saveToFile() {
+        try {
+            FileWriter fw = new FileWriter("data/index.txt");
+
+            Set<String> keys = values.keySet();
+
+            for (String key: keys) {
+                HashMap<Integer, WordMetaData> value = values.get(key);
+
+                Set<Integer> innerKeys = value.keySet();
+
+                for (Integer innerKey: innerKeys) {
+
+                    WordMetaData metaData = value.get(innerKey);
+
+                    fw.write(key + "," + innerKey + "," + metaData.getAbstractPos()
+                            + "," + metaData.getDocId() + "," + metaData.getPatentDocId() +"\n");
+                }
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

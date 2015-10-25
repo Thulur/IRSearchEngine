@@ -68,11 +68,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         return null;
     }
 
-    //method printIndex() for testing purposes only
-
-    private void printIndex() {
-        index.printIndex();
-    }
 
     //Observer methods
 
@@ -83,7 +78,8 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     public void finishedParsing() {
         System.out.println("Finished parsing!");
-        printIndex();
+        index.printIndex();
+        index.saveToFile();
     }
 
     private void processDocument(Document document) {
