@@ -2,44 +2,130 @@ package SearchEngine.data;
 
 import SearchEngine.utils.WordParser;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import javax.sound.sampled.Line;
+import java.io.*;
 import java.util.*;
 
 /**
  * Created by Sebastian on 24.10.2015.
  */
 public class Index {
-    HashMap<String, Integer> index = new HashMap<>();
+    HashMap<String, Integer> values = new HashMap<>();
+//    private FileWriter fileWriter;
+//    private LineNumberReader lineNumberReader;
+
+    public Index() {
+        try {
+            FileWriter fileWriter = new FileWriter("data/postinglist.txt");
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void addToIndex(Document document) {
-        List<String> words = WordParser.getInstance().stem(document.patentAbstract);
+
+        List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
+        words.addAll(WordParser.getInstance().stem(document.getInventionTitle()));
         WordParser.getInstance().removeStopwords(words);
 
-        WordMetaData metaData = new WordMetaData();
-        metaData.setPatentDocId(document.getDocId());
-        // TODO: WordMetaData need to save the absolute position of the elements for parsing of single words
-        // to calculate their positions
-        //metaData.setAbstractPos();
-
         String patentAbstract = document.getPatentAbstract();
-        for (String word: words) {
-            HashMap<Integer, WordMetaData> metaDataList;
+        String inventionTitle = document.getInventionTitle();
 
-            for (int i = -1; (i = patentAbstract.indexOf(word, i + 1)) != -1; ) {
-                metaData.addWordOccurrence(i);
+        try {
+            String fileName = "data/postinglist.txt";
+
+            int numberOfLines = countLines(fileName);
+
+            for (String word: words) {
+
+                WordMetaData metaData = new WordMetaData();
+                metaData.setPatentDocId(document.getDocId());
+                metaData.setAbstractPos(document.getPatentAbstractPos());
+                metaData.setAbstractLength(document.getPatentAbstractLength());
+                metaData.setInventionTitlePos(document.getInventionTitlePos());
+                metaData.setInventionTitleLength(document.getInventionTitleLength());
+
+                for (int i = -1; (i = patentAbstract.indexOf(word, i + 1)) != -1; ) {
+                    metaData.addWordOccurrence(i + metaData.getAbstractPos());
+                }
+
+                for (int i = -1; (i = inventionTitle.indexOf(word, i + 1)) != -1; ) {
+                    metaData.addWordOccurrence(i + metaData.getInventionTitlePos());
+                }
+
+                //Wort im Index?
+
+                if (values.get(word) == null) {
+                    FileWriter fileWriter = new FileWriter(fileName, true);
+
+                    fileWriter.write(word + "|" + metaData.toString() + "\n");
+                    numberOfLines++;
+                    values.put(word, numberOfLines);
+                    fileWriter.close();
+                } else {
+                    int lineNumber = values.get(word);
+
+                    try (LineNumberReader lnr = new LineNumberReader(new FileReader(fileName))) {
+
+                        lnr.setLineNumber(lineNumber);
+                        String lineToWrite = lnr.readLine();
+
+                        lnr.close();
+
+                        rewriteFile(fileName, lineToWrite, metaData.toString());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private int countLines(String filename) throws IOException {
+        InputStream is = new BufferedInputStream(new FileInputStream(filename));
+        try {
+            byte[] c = new byte[1024];
+            int count = 0;
+            int readChars = 0;
+            boolean empty = true;
+            while ((readChars = is.read(c)) != -1) {
+                empty = false;
+                for (int i = 0; i < readChars; ++i) {
+                    if (c[i] == '\n') {
+                        ++count;
+                    }
+                }
+            }
+            return (count == 0 && !empty) ? 1 : count;
+        } finally {
+            is.close();
+        }
+    }
+
+    private void rewriteFile(String fileName, String compareString, String newString) throws IOException {
+        try {
+            String fileContent = new String();
+            String line = new String();
+
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+
+            while ((line = reader.readLine()) != null) {
+                if (line.equals(compareString)) {
+                    fileContent += line + newString + "\n";
+                } else {
+                    fileContent += line + "\n";
+                }
             }
 
-            if (values.get(word) == null) {
-                metaDataList = new HashMap<>();
+            reader.close();
 
-                values.put(word, metaDataList);
-            } else {
-                metaDataList = values.get(word);
-            }
+            FileWriter fileWriter = new FileWriter(fileName);
+            fileWriter.write(fileContent);
 
-            metaDataList.put(document.docId, metaData);
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -52,30 +138,32 @@ public class Index {
 
     // index should still be savable and loadable, so we dont have to index every time we start the program
     public void printIndex() {
-        Set<String> keys = values.keySet();
-
-        for (String key: keys) {
-            HashMap<Integer, WordMetaData> value = values.get(key);
-
-            Set<Integer> innerKeys = value.keySet();
-
-            for (Integer innerKey: innerKeys) {
-
-                WordMetaData metaData = value.get(innerKey);
-
-                System.out.println(key + " - " + innerKey + " - " + metaData.getAbstractPos()
-                    + " - " + metaData.getDocId() + " - " + metaData.getPatentDocId());
-            }
+        for (String key: values.keySet()) {
+            System.out.println(key + "-" + values.get(key));
         }
     }
 
 
-    public void loadFromFile(FileReader fileReader) {
+    public void loadFromFile(BufferedReader reader) {
+        try {
+            values = new HashMap<>();
 
+            String line = new String();
+
+            while ((line = reader.readLine()) != null) {
+                values.put(line.split("[,]")[0], Integer.parseInt(line.split("[,]")[1]));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void saveToFile(FileWriter fileWriter) {
         try {
+
+            for (String key: values.keySet()) {
+                fileWriter.write(key + "," + values.get(key) + "\n");
+            }
 
             fileWriter.close();
         } catch (IOException e) {

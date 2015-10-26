@@ -22,10 +22,7 @@ import SearchEngine.data.Document;
 import SearchEngine.data.Index;
 import SearchEngine.utils.WordParser;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.LineNumberReader;
+import java.io.*;
 import java.util.*;
 
 
@@ -56,7 +53,8 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     boolean loadIndex(String directory) {
         try {
-            index.loadFromFile(new FileReader("data/index.txt"));
+            index.loadFromFile(new BufferedReader(new FileReader("data/index.txt")));
+            index.printIndex();
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -96,7 +94,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     public void finishedParsing() {
         System.out.println("Finished parsing!");
-        index.printIndex();
 
         try {
             index.saveToFile(new FileWriter("data/index.txt"));
@@ -108,29 +105,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     // title?
 
     private void processDocument(Document document) {
-        //get words
-
-        List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
-        words.addAll(WordParser.getInstance().stem(document.getInventionTitle()));
-
-        //do stuff for words
-
-        for (String word: words) {
-
-            // look if word is in index. if not, add it
-
-
-            //
-
-            try {
-                FileWriter fileWriter = new FileWriter("data/postinglist.txt");
-                fileWriter.getEncoding().
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-
+        index.addToIndex(document);
     }
 }

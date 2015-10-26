@@ -26,7 +26,7 @@ public class SearchEngineTest {
         
         // System.out.print("Indexing Time:\t" + time + "\tms\n");
         
-        // myEngine.loadIndex(String directory)
+         myEngine.loadIndex("disregard");
         
         // String query = "";
         

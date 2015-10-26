@@ -10,8 +10,10 @@ public class WordMetaData {
     private int docId;
     private int patentDocId;
     private long abstractPos;
-    private int abstractLenght;
-    private List<Integer> occurences = new LinkedList<>();
+    private int abstractLength;
+    private long inventionTitlePos;
+    private int inventionTitleLength;
+    private List<Long> occurences = new LinkedList<>();
 
     public WordMetaData() {
 
@@ -21,14 +23,23 @@ public class WordMetaData {
 
     }
 
-    public void addWordOccurrence(int pos) {
+    public void addWordOccurrence(long pos) {
         occurences.add(pos);
     }
 
     @Override
     public String toString() {
-        // TODO: Generate the stringified version of the data
-        return super.toString();
+        String metaDataString = new String();
+
+        metaDataString += docId + "," + patentDocId + "," + abstractPos + "," + abstractLength + "," +
+                inventionTitlePos + "," +inventionTitleLength;
+        for (long occurence: occurences) {
+            metaDataString += "," + occurence;
+        }
+
+        metaDataString += ";";
+
+        return metaDataString;
     }
 
     //GETTER & SETTER
@@ -57,11 +68,27 @@ public class WordMetaData {
         this.docId = docId;
     }
 
-    public int getAbstractLenght() {
-        return abstractLenght;
+    public int getAbstractLength() {
+        return abstractLength;
     }
 
-    public void setAbstractLenght(int abstractLenght) {
-        this.abstractLenght = abstractLenght;
+    public void setAbstractLength(int abstractLength) {
+        this.abstractLength = abstractLength;
+    }
+
+    public int getInventionTitleLength() {
+        return inventionTitleLength;
+    }
+
+    public void setInventionTitleLength(int inventionTitleLength) {
+        this.inventionTitleLength = inventionTitleLength;
+    }
+
+    public long getInventionTitlePos() {
+        return inventionTitlePos;
+    }
+
+    public void setInventionTitlePos(long inventionTitlePos) {
+        this.inventionTitlePos = inventionTitlePos;
     }
 }

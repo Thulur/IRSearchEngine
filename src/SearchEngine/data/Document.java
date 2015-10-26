@@ -6,13 +6,13 @@ import SearchEngine.SearchEngine;
  * Created by sebastian on 22.10.2015.
  */
 public class Document {
-    int docId;
-    String inventionTitle;
-    long inventionTitlePos;
-    int inventionTitleLength;
-    String patentAbstract;
-    long patentAbstractPos;
-    int patentAbstractLength;
+    private int docId;
+    private String inventionTitle;
+    private long inventionTitlePos;
+    private int inventionTitleLength;
+    private String patentAbstract;
+    private long patentAbstractPos;
+    private int patentAbstractLength;
 
     public String getInventionTitle() {
         return inventionTitle;
