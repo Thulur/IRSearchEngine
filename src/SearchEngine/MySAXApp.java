@@ -1,6 +1,7 @@
 package SearchEngine;
 
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class MySAXApp extends DefaultHandler {
 	boolean abstractParagraphEntered = false;
 	Document document;
 	List<ParsedEventListener> parsedEventListeners;
+	FileInputStream fileInput;
 
 	public MySAXApp() {
 		super();
@@ -35,9 +37,10 @@ public class MySAXApp extends DefaultHandler {
 		// Parse each file provided on the
 		// command line.
 		for (String file: files) {
-			FileReader r = new FileReader(file);
-			InputSource source = new InputSource(r);
+			fileInput = new FileInputStream(file);
+			InputSource source = new InputSource(fileInput);
 			xr.parse(source);
+			fileInput.close();
 		}
 	}
 
@@ -58,7 +61,6 @@ public class MySAXApp extends DefaultHandler {
 	}
 
 	public void startElement(String uri, String name, String qName, Attributes atts) {
-		
 		switch (name) {
 		case "us-patent-grant":
 			this.patentGrantEntered = true;
@@ -84,7 +86,6 @@ public class MySAXApp extends DefaultHandler {
 	}
 
 	public void endElement(String uri, String name, String qName) {
-		
 		switch (name) {
 		case "us-patent-grant":
 			patentGrantEntered = false;
@@ -119,10 +120,17 @@ public class MySAXApp extends DefaultHandler {
 		case "doc-number":
 			docNumberEntered = false;
 			break;
-		}	
+		}
 	}
 
 	public void characters(char ch[], int start, int length) {
+		long pos = -1;
+
+		try {
+			pos = fileInput.getChannel().position() - ch.length;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		if (!this.patentGrantEntered) return;
 
@@ -131,7 +139,17 @@ public class MySAXApp extends DefaultHandler {
 		}
 
 		if (this.inventionTitleEntered) {
-			document.setInventionTitle(new String(ch, start,length));
+			if (document.getInventionTitle() != null && document.getInventionTitle() != "") {
+				document.setInventionTitle(document.getInventionTitle() + " " + new String(ch, start, length));
+			} else {
+				document.setInventionTitle(new String(ch, start, length));
+			}
+
+			if (document.getInventionTitlePos() == 0) {
+				document.setInventionTitlePos(pos + start);
+			}
+
+			document.setInventionTitleLength(document.getInventionTitleLength() + length);
 		}
 
 		if (this.abstractEntered && abstractParagraphEntered) {
@@ -140,6 +158,12 @@ public class MySAXApp extends DefaultHandler {
 			} else {
 				document.setPatentAbstract(new String(ch, start,length));
 			}
+
+			if (document.getPatentAbstractPos() == 0) {
+				document.setPatentAbstractPos(pos + start);
+			}
+
+			document.setPatentAbstractLength(document.getPatentAbstractLength() + length);
 		}
 	}
 

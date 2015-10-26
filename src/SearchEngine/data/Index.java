@@ -23,14 +23,13 @@ public class Index {
         // to calculate their positions
         //metaData.setAbstractPos();
 
+        String patentAbstract = document.getPatentAbstract();
         for (String word: words) {
-            List<Integer> positions = new LinkedList<>(); // TODO: get all positions of a word in the abstract and title
-
-            for (int pos: positions) {
-                metaData.addWordOccurrence(pos);
-            }
-
             HashMap<Integer, WordMetaData> metaDataList;
+
+            for (int i = -1; (i = patentAbstract.indexOf(word, i + 1)) != -1; ) {
+                metaData.addWordOccurrence(i);
+            }
 
             if (values.get(word) == null) {
                 metaDataList = new HashMap<>();
@@ -63,9 +62,8 @@ public class Index {
                 WordMetaData metaData = value.get(innerKey);
 
                 System.out.println(key + " - " + innerKey + " - " + metaData.getAbstractPos()
-                        + " - " + metaData.getDocId() + " - " + metaData.getPatentDocId());
+                    + " - " + metaData.getDocId() + " - " + metaData.getPatentDocId());
             }
-
         }
     }
 
