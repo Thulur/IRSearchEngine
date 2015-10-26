@@ -2,6 +2,7 @@ package SearchEngine.data;
 
 import SearchEngine.utils.WordParser;
 
+import javax.print.Doc;
 import java.io.*;
 import java.util.*;
 
@@ -66,8 +67,10 @@ public class Index {
                     int lineNumber = values.get(word);
 
                     try (LineNumberReader lnr = new LineNumberReader(new FileReader(fileName))) {
+                        for (int i = 0; i < lineNumber - 1; ++i) {
+                            lnr.readLine();
+                        }
 
-                        lnr.setLineNumber(lineNumber);
                         String lineToWrite = lnr.readLine();
 
                         lnr.close();
@@ -175,10 +178,41 @@ public class Index {
         List<Document> results = new LinkedList<>();
 
         try {
-            LineNumberReader reader = new LineNumberReader(new FileReader(file));
-            reader.setLineNumber(postingListLine);
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            for (int i = 0; i < postingListLine - 1; ++i) {
+                reader.readLine();
+            }
             String posting = reader.readLine();
+            reader.close();
+            String metaDataString = posting.split("[|]")[1];
+            String[] metaDataCollection = metaDataString.split("[;]");
 
+            for (String metaData: metaDataCollection) {
+                RandomAccessFile xmlReader = new RandomAccessFile("data/testData.xml", "r");
+                String[] metaDataValues = metaData.split("[,]");
+                int patentDocId = Integer.parseInt(metaDataValues[1]);
+                long abstractPos = Long.parseLong(metaDataValues[2]);
+                int abstractLength = Integer.parseInt(metaDataValues[3]);
+                long inventionTitlePos = Long.parseLong(metaDataValues[4]);
+                int inventionTitleLength = Integer.parseInt(metaDataValues[5]);
+
+                byte[] abstractBuffer = new byte[4096];
+                xmlReader.seek(abstractPos);
+                xmlReader.read(abstractBuffer);
+                String patentAbstract = new String(abstractBuffer, 0, abstractLength);
+
+                byte[] titleBuffer = new byte[512];
+                xmlReader.seek(inventionTitlePos);
+                xmlReader.read(titleBuffer);
+                String title = new String(titleBuffer, 0, inventionTitleLength);
+
+                Document document = new Document();
+                document.setDocId(patentDocId);
+                document.setPatentAbstract(patentAbstract);
+                document.setInventionTitle(title);
+
+                results.add(document);
+            }
             // Parse posting read results
         } catch (IOException e) {
             e.printStackTrace();

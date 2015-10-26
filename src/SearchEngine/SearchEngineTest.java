@@ -1,5 +1,7 @@
 package SearchEngine;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author: Your team name
@@ -30,10 +32,10 @@ public class SearchEngineTest {
         
         // String query = "";
         
-        // ArrayList <String> results = new ArrayList <> ();
+        ArrayList<String> results = new ArrayList <> ();
         
-        // results = myEngine.search(String query, int topK, int prf)
-        
+        results = myEngine.search("device", 0, 0);
+        int i = 0;
     }
 
 }

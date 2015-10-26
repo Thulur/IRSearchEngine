@@ -50,8 +50,11 @@ public class WordParser {
             for(CoreLabel token: sentence.get(CoreAnnotations.TokensAnnotation.class))
             {
                 //String word = token.get(CoreAnnotations.TextAnnotation.class);
-                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
-                words.add(lemma.toLowerCase());
+                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class).toLowerCase();
+
+                if (!words.contains(lemma)) {
+                    words.add(lemma);
+                }
             }
         }
 
