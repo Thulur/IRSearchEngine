@@ -26,7 +26,11 @@ public class Index {
     public void addToIndex(Document document) {
 
         List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
-        words.addAll(WordParser.getInstance().stem(document.getInventionTitle()));
+        for (String word: WordParser.getInstance().stem(document.getInventionTitle())) {
+            if (!words.contains(word)) {
+                words.add(word);
+            }
+        }
         WordParser.getInstance().removeStopwords(words);
 
         String patentAbstract = document.getPatentAbstract();
