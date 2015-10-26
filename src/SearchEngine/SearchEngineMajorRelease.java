@@ -21,6 +21,7 @@ package SearchEngine;
 import SearchEngine.data.Document;
 import SearchEngine.data.Index;
 
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -51,9 +52,13 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     boolean loadIndex(String directory) {
-        //index.loadFromFile(Fi);
-
-        return false;
+        try {
+            index.loadFromFile(new FileReader("data/index.txt"));
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
     
     @Override
@@ -62,6 +67,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     boolean loadCompressedIndex(String directory) {
+
         return false;
     }
     

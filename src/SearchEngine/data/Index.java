@@ -2,6 +2,7 @@ package SearchEngine.data;
 
 import SearchEngine.utils.WordParser;
 
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -67,6 +68,10 @@ public class Index {
         }
     }
 
+    public void loadFromFile(FileReader fileReader) {
+
+    }
+
     public void saveToFile(FileWriter fileWriter) {
         try {
             Set<String> keys = values.keySet();
@@ -80,6 +85,8 @@ public class Index {
 
                     WordMetaData metaData = value.get(innerKey);
 
+                    // TODO: The innerKey already contains the patent doc id (it should not be twice in one entry)
+                    // TODO: All entries of one word should be printed in one line (fits better into the theoretical structure of an inverted index)
                     fileWriter.write(key + "," + innerKey + "," + metaData.getAbstractPos()
                             + "," + metaData.getDocId() + "," + metaData.getPatentDocId() + "\n");
                 }
