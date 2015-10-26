@@ -47,6 +47,7 @@ public class Index {
     /*
     * method printIndex() for testing purposes only
     * also to get an understanding of how to work with HashMaps
+    * FYI: (Work in progress)We really should introduce junit soon (tests are also made for a better understanding of code :D)
     */
 
     public void printIndex() {
@@ -95,5 +96,11 @@ public class Index {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Document> search(String word) {
+        List<Document> results = new LinkedList<>();
+
+        return results;
     }
 }

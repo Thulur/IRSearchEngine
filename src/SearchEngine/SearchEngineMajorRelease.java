@@ -20,6 +20,7 @@ package SearchEngine;
 
 import SearchEngine.data.Document;
 import SearchEngine.data.Index;
+import SearchEngine.utils.WordParser;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -73,6 +74,13 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     
     @Override
     ArrayList<String> search(String query, int topK, int prf) {
+        List<String> searchWords = WordParser.getInstance().stem(query);
+        WordParser.getInstance().removeStopwords(searchWords);
+
+        for (String word: searchWords) {
+            List<Document> results = index.search(word);
+        }
+
         return null;
     }
 
