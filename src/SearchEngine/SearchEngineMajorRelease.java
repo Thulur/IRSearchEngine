@@ -25,12 +25,14 @@ import SearchEngine.utils.WordParser;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.util.*;
 
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private MySAXApp saxApp = new MySAXApp();
     private Index index = new Index();
+    private LineNumberReader lnr;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -103,7 +105,32 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
     }
 
+    // title?
+
     private void processDocument(Document document) {
-        index.addToIndex(document);
+        //get words
+
+        List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
+        words.addAll(WordParser.getInstance().stem(document.getInventionTitle()));
+
+        //do stuff for words
+
+        for (String word: words) {
+
+            // look if word is in index. if not, add it
+
+
+            //
+
+            try {
+                FileWriter fileWriter = new FileWriter("data/postinglist.txt");
+                fileWriter.getEncoding().
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
     }
 }
