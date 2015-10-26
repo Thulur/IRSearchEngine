@@ -21,6 +21,8 @@ package SearchEngine;
 import SearchEngine.data.Document;
 import SearchEngine.data.Index;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 
@@ -79,7 +81,12 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     public void finishedParsing() {
         System.out.println("Finished parsing!");
         index.printIndex();
-        index.saveToFile();
+
+        try {
+            index.saveToFile(new FileWriter("data/index.txt"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void processDocument(Document document) {

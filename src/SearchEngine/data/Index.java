@@ -67,10 +67,8 @@ public class Index {
         }
     }
 
-    public void saveToFile() {
+    public void saveToFile(FileWriter fileWriter) {
         try {
-            FileWriter fw = new FileWriter("data/index.txt");
-
             Set<String> keys = values.keySet();
 
             for (String key: keys) {
@@ -82,14 +80,13 @@ public class Index {
 
                     WordMetaData metaData = value.get(innerKey);
 
-                    fw.write(key + "," + innerKey + "," + metaData.getAbstractPos()
-                            + "," + metaData.getDocId() + "," + metaData.getPatentDocId() +"\n");
+                    fileWriter.write(key + "," + innerKey + "," + metaData.getAbstractPos()
+                            + "," + metaData.getDocId() + "," + metaData.getPatentDocId() + "\n");
                 }
 
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 }
