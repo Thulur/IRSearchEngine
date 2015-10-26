@@ -76,12 +76,17 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     ArrayList<String> search(String query, int topK, int prf) {
         List<String> searchWords = WordParser.getInstance().stem(query);
         WordParser.getInstance().removeStopwords(searchWords);
+        ArrayList<String> results = new ArrayList<>();
 
         for (String word: searchWords) {
-            List<Document> results = index.search(word);
+            List<Document> documents = index.lookUpPostingInFile(word, "data/postinglist.txt");
+
+            for (Document document: documents) {
+                results.add(document.getInventionTitle());
+            }
         }
 
-        return null;
+        return results;
     }
 
 
