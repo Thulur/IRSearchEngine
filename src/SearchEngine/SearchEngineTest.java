@@ -21,8 +21,13 @@ public class SearchEngineTest {
         SearchEngine myEngine = new SearchEngineMajorRelease();
         
         // long start = System.currentTimeMillis();
-        
+
+        Long start = System.nanoTime();
+
         myEngine.index("");
+
+        Long end = System.nanoTime();
+        System.out.println("Indexing took " + ((end - start)/1000000000) + " seconds.");
         
         // long time = System.currentTimeMillis() - start;
         
