@@ -2,9 +2,7 @@ package SearchEngine.data;
 
 import SearchEngine.utils.WordParser;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -64,7 +62,7 @@ public class Index {
                 WordMetaData metaData = value.get(innerKey);
 
                 System.out.println(key + " - " + innerKey + " - " + metaData.getAbstractPos()
-                    + " - " + metaData.getDocId() + " - " + metaData.getPatentDocId());
+                        + " - " + metaData.getDocId() + " - " + metaData.getPatentDocId());
             }
         }
     }
@@ -83,8 +81,19 @@ public class Index {
         }
     }
 
-    public List<Document> search(String word) {
+    public List<Document> lookUpPostingInFile(String word, String file) {
+        int postingListLine = index.get(word);
         List<Document> results = new LinkedList<>();
+
+        try {
+            LineNumberReader reader = new LineNumberReader(new FileReader(file));
+            reader.setLineNumber(postingListLine);
+            String posting = reader.readLine();
+
+            // Parse posting read results
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return results;
     }
