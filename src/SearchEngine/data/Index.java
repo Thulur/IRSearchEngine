@@ -178,8 +178,13 @@ public class Index {
     }
 
     public List<Document> lookUpPostingInFile(String word, String file) {
-        int postingListLine = values.get(word);
         List<Document> results = new LinkedList<>();
+
+        if (!values.containsKey(word)) {
+            return results;
+        }
+
+        int postingListLine = values.get(word);
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));

@@ -32,10 +32,17 @@ public class SearchEngineTest {
         
         // String query = "";
         
-        ArrayList<String> results = new ArrayList <> ();
+        // ArrayList<String> results = new ArrayList <> ();
         
-        results = myEngine.search("device", 0, 0);
-        int i = 0;
+        // results = myEngine.search("selection", 0, 0);
+        System.out.println("selection:");
+        myEngine.search("selection", 0, 0).forEach(System.out::println);
+        System.out.println("device:");
+        myEngine.search("device", 0, 0).forEach(System.out::println);
+        System.out.println("justify:");
+        myEngine.search("justify", 0, 0).forEach(System.out::println);
+        System.out.println("write:");
+        myEngine.search("write", 0, 0).forEach(System.out::println);
     }
 
 }
