@@ -197,7 +197,6 @@ public class Index {
             }
             String posting = reader.readLine();
             reader.close();
-//            String metaDataString = posting.split("[|]")[1];
             String[] metaDataCollection = posting.split("[;]");
 
             for (String metaData: metaDataCollection) {
@@ -240,6 +239,7 @@ public class Index {
 
         try {
             BufferedReader br = new BufferedReader(new FileReader("data/postinglist.txt"));
+            FileWriter fw = new FileWriter("data/compressed_postinglist.txt");
 
             String line = new String();
 
@@ -279,18 +279,19 @@ public class Index {
 
                 LinkedList<long[]> occurrenceDeltas = new LinkedList<>();
 
-                for (int i = 1; i < input.length - 1; i++) {
-                    patentDocIdDeltas[i] = patentDocIds[i+1] - patentDocIds[i];
+                for (int i = 1; i < input.length ; i++) {
+                    patentDocIdDeltas[i] = patentDocIds[i] - patentDocIds[i-1];
                 }
 
                 for (int i = 0; i < input.length; i++) {
                     occurrenceDeltas.add(i, new long[numberOfOccurrences[i]]);
 
+                    //this if-structure is unnecessary. it's only here because of the occurrence bug
                     if (occurrences.get(i).length > 0) {
                         occurrenceDeltas.get(i)[0] = occurrences.get(i)[0];
 
-                        for (int j = 1; j < occurrences.get(i).length - 1; j++) {
-                            occurrenceDeltas.get(i)[j] = occurrences.get(i)[j+1] - occurrences.get(i)[j];
+                        for (int j = 1; j < occurrences.get(i).length ; j++) {
+                            occurrenceDeltas.get(i)[j] = occurrences.get(i)[j] - occurrences.get(i)[j-1];
                         }
                     }
                 }
@@ -314,56 +315,96 @@ public class Index {
                     compressed +=  invTitleLenghts[i] + ";";
                 }
 
-                FileWriter fw = new FileWriter("data/compressed_postinglist.txt", true);
+                fw = new FileWriter("data/compressed_postinglist.txt", true);
 
                 fw.write(compressed + "\n");
 
                 fw.close();
-
-
-
-//                for (String string: input) {
-////                    System.out.println(string);
-//
-//                    String[] numberStrings = string.split(",");
-//
-//                    for (String numberString: numberStrings) {
-//                        System.out.println(numberString);
-//                    }
-//
-//                    //cast numbers to Integer
-//
-//                    Long[] numbers = new Long[numberStrings.length];
-//
-//                    for (int i = 0; i < numbers.length; i++) {
-//                        numbers[i] = Long.parseLong(numberStrings[i]);
-//                    }
-//
-//                    //compute deltas per posting list entry
-//
-//                    Long[] deltas = new Long[numbers.length];
-//
-//                    //first number stays the same
-//                    deltas[0] = numbers[0];
-//
-//                    for (int i = 1; i<numbers.length - 1; i++) {
-//                        deltas[i] = numbers[i+1] - numbers[i];
-//                        System.out.println(deltas[i]);
-//                        System.out.println(Long.toBinaryString(deltas[i]));
-//                    }
-//
-//                    //compress deltas using vbyte encoding
-//
-//
-//                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        //compress it
+    public void decompressLine() {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("data/compressed_postinglist.txt"));
 
-        //write to other file
+            String line = br.readLine();
+
+            String[] input = line.split(";");
+
+            int[] docIds = new int[input.length];
+            long[] patentDocIdDeltas = new long[input.length];
+            int[] numberOfOccurrences = new int[input.length];
+            LinkedList<long[]> occurrenceDeltas = new LinkedList<>();
+            long[] abstractPositions = new long[input.length];
+            int[] abstractLenghts = new int[input.length];
+            long[] invTitlePositions = new long[input.length];
+            int[] invTitleLenghts = new int[input.length];
+
+            for (int i = 0; i < input.length; i++) {
+                String[] split = input[i].split(",");
+                docIds[i] = Integer.parseInt(split[0]);
+                patentDocIdDeltas[i] = Long.parseLong(split[1]);
+                numberOfOccurrences[i] = Integer.parseInt(split[2]);
+
+                occurrenceDeltas.add(i, new long[numberOfOccurrences[i]]);
+
+                for (int j = 0; j < numberOfOccurrences[i]; j++) {
+                    occurrenceDeltas.get(i)[j] = Long.parseLong(split[j+3]);
+                }
+
+                abstractPositions[i] = Long.parseLong(split[split.length-4]);
+                abstractLenghts[i] = Integer.parseInt(split[split.length-3]);
+                invTitlePositions[i] = Long.parseLong(split[split.length-2]);
+                invTitleLenghts[i] = Integer.parseInt(split[split.length-1]);
+            }
+
+            long[] patentDocIds = new long[input.length];
+            patentDocIds[0] = patentDocIdDeltas[0];
+
+            LinkedList<long[]> occurrences = new LinkedList<>();
+
+            for (int i = 1; i < input.length ; i++) {
+                patentDocIds[i] = patentDocIdDeltas[i] + patentDocIds[i-1];
+            }
+
+            for (int i = 0; i < input.length; i++) {
+                occurrences.add(i, new long[numberOfOccurrences[i]]);
+
+                //this if-structure is unnecessary. it's only here because of the occurrence bug
+                if (occurrenceDeltas.get(i).length > 0) {
+                    occurrences.get(i)[0] = occurrenceDeltas.get(i)[0];
+
+                    for (int j = 1; j < occurrenceDeltas.get(i).length; j++) {
+                        occurrences.get(i)[j] = occurrenceDeltas.get(i)[j] + occurrences.get(i)[j-1];
+                    }
+                }
+            }
+
+            String decompressed = new String();
+
+            for (int i = 0; i < input.length; i++) {
+                decompressed += docIds[i] + ",";
+                decompressed += patentDocIds[i] + ",";
+                decompressed += numberOfOccurrences[i] + ",";
+
+                for (int j = 0; j < occurrences.get(i).length; j++) {
+                    decompressed += occurrences.get(i)[j] + ",";
+                }
+
+                decompressed += abstractPositions[i] + ",";
+                decompressed += abstractLenghts[i] + ",";
+                decompressed += invTitlePositions[i] + ",";
+                decompressed +=  invTitleLenghts[i] + ";";
+            }
+
+            System.out.println(decompressed);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

@@ -51,6 +51,7 @@ public class SearchEngineTest {
 
         //compression
         myEngine.compressIndex("disregard");
+
     }
 
 }
