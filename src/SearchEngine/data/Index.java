@@ -58,12 +58,16 @@ public class Index {
                     metaData.addWordOccurrence(i + metaData.getInventionTitlePos());
                 }
 
+                // sort occurences
+
+                metaData.sortOccurences();
+
                 //Wort im Index?
 
                 if (values.get(word) == null) {
                     FileWriter fileWriter = new FileWriter(fileName, true);
 
-                    fileWriter.write(word + "|" + metaData.toString() + "\n");
+                    fileWriter.write(metaData.toString() + "\n");
                     numberOfLines++;
                     values.put(word, numberOfLines);
                     fileWriter.close();
@@ -193,17 +197,18 @@ public class Index {
             }
             String posting = reader.readLine();
             reader.close();
-            String metaDataString = posting.split("[|]")[1];
-            String[] metaDataCollection = metaDataString.split("[;]");
+//            String metaDataString = posting.split("[|]")[1];
+            String[] metaDataCollection = posting.split("[;]");
 
             for (String metaData: metaDataCollection) {
                 RandomAccessFile xmlReader = new RandomAccessFile("data/testData.xml", "r");
                 String[] metaDataValues = metaData.split("[,]");
+                int size = metaDataValues.length;
                 int patentDocId = Integer.parseInt(metaDataValues[1]);
-                long abstractPos = Long.parseLong(metaDataValues[2]);
-                int abstractLength = Integer.parseInt(metaDataValues[3]);
-                long inventionTitlePos = Long.parseLong(metaDataValues[4]);
-                int inventionTitleLength = Integer.parseInt(metaDataValues[5]);
+                long abstractPos = Long.parseLong(metaDataValues[size-4]);
+                int abstractLength = Integer.parseInt(metaDataValues[size-3]);
+                long inventionTitlePos = Long.parseLong(metaDataValues[size-2]);
+                int inventionTitleLength = Integer.parseInt(metaDataValues[size-1]);
 
                 byte[] abstractBuffer = new byte[4096];
                 xmlReader.seek(abstractPos);
@@ -239,13 +244,120 @@ public class Index {
             String line = new String();
 
             while ((line = br.readLine()) != null) {
+
                 String[] input = line.split(";");
 
-                for (String string: input) {
-                    System.out.println(string);
+                int[] docIds = new int[input.length];
+                long[] patentDocIds = new long[input.length];
+                int[] numberOfOccurrences = new int[input.length];
+                LinkedList<long[]> occurrences = new LinkedList<>();
+                long[] abstractPositions = new long[input.length];
+                int[] abstractLenghts = new int[input.length];
+                long[] invTitlePositions = new long[input.length];
+                int[] invTitleLenghts = new int[input.length];
+
+                for (int i = 0; i < input.length; i++) {
+                    String[] split = input[i].split(",");
+                    docIds[i] = Integer.parseInt(split[0]);
+                    patentDocIds[i] = Long.parseLong(split[1]);
+                    numberOfOccurrences[i] = Integer.parseInt(split[2]);
+
+                    occurrences.add(i, new long[numberOfOccurrences[i]]);
+
+                    for (int j = 0; j < numberOfOccurrences[i]; j++) {
+                        occurrences.get(i)[j] = Long.parseLong(split[j+3]);
+                    }
+
+                    abstractPositions[i] = Long.parseLong(split[split.length-4]);
+                    abstractLenghts[i] = Integer.parseInt(split[split.length-3]);
+                    invTitlePositions[i] = Long.parseLong(split[split.length-2]);
+                    invTitleLenghts[i] = Integer.parseInt(split[split.length-1]);
                 }
+
+                long[] patentDocIdDeltas = new long[input.length];
+                patentDocIdDeltas[0] = patentDocIds[0];
+
+                LinkedList<long[]> occurrenceDeltas = new LinkedList<>();
+
+                for (int i = 1; i < input.length - 1; i++) {
+                    patentDocIdDeltas[i] = patentDocIds[i+1] - patentDocIds[i];
+                }
+
+                for (int i = 0; i < input.length; i++) {
+                    occurrenceDeltas.add(i, new long[numberOfOccurrences[i]]);
+
+                    if (occurrences.get(i).length > 0) {
+                        occurrenceDeltas.get(i)[0] = occurrences.get(i)[0];
+
+                        for (int j = 1; j < occurrences.get(i).length - 1; j++) {
+                            occurrenceDeltas.get(i)[j] = occurrences.get(i)[j+1] - occurrences.get(i)[j];
+                        }
+                    }
+                }
+
+                //create compressed string
+
+                String compressed = new String();
+
+                for (int i = 0; i < input.length; i++) {
+                    compressed += docIds[i] + ",";
+                    compressed += patentDocIdDeltas[i] + ",";
+                    compressed += numberOfOccurrences[i] + ",";
+
+                    for (int j = 0; j < occurrenceDeltas.get(i).length; j++) {
+                        compressed += occurrenceDeltas.get(i)[j] + ",";
+                    }
+
+                    compressed += abstractPositions[i] + ",";
+                    compressed += abstractLenghts[i] + ",";
+                    compressed += invTitlePositions[i] + ",";
+                    compressed +=  invTitleLenghts[i] + ";";
+                }
+
+                FileWriter fw = new FileWriter("data/compressed_postinglist.txt", true);
+
+                fw.write(compressed + "\n");
+
+                fw.close();
+
+
+
+//                for (String string: input) {
+////                    System.out.println(string);
+//
+//                    String[] numberStrings = string.split(",");
+//
+//                    for (String numberString: numberStrings) {
+//                        System.out.println(numberString);
+//                    }
+//
+//                    //cast numbers to Integer
+//
+//                    Long[] numbers = new Long[numberStrings.length];
+//
+//                    for (int i = 0; i < numbers.length; i++) {
+//                        numbers[i] = Long.parseLong(numberStrings[i]);
+//                    }
+//
+//                    //compute deltas per posting list entry
+//
+//                    Long[] deltas = new Long[numbers.length];
+//
+//                    //first number stays the same
+//                    deltas[0] = numbers[0];
+//
+//                    for (int i = 1; i<numbers.length - 1; i++) {
+//                        deltas[i] = numbers[i+1] - numbers[i];
+//                        System.out.println(deltas[i]);
+//                        System.out.println(Long.toBinaryString(deltas[i]));
+//                    }
+//
+//                    //compress deltas using vbyte encoding
+//
+//
+//                }
             }
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 

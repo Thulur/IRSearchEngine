@@ -64,6 +64,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     
     @Override
     void compressIndex(String directory) {
+        index.compressIndex();
     }
 
     @Override
