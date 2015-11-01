@@ -15,7 +15,7 @@ for link in links:
     f = urlopen(link)
     file_count = 0
 
-    with open("../data/ipg/" + link[-13:], "wb") as local_file:
+    with open("../data/ipgzip/" + link[-13:], "wb") as local_file:
         local_file.write(f.read())
         file_count += 1
         print("Downloaded " + str(file_count) + "/" + str(len(links)))
