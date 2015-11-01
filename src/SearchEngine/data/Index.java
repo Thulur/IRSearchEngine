@@ -230,4 +230,28 @@ public class Index {
         return results;
     }
 
+    public void compressIndex() {
+        //read entry from file
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("data/postinglist.txt"));
+
+            String line = new String();
+
+            while ((line = br.readLine()) != null) {
+                String[] input = line.split(";");
+
+                for (String string: input) {
+                    System.out.println(string);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        //compress it
+
+        //write to other file
+    }
+
 }
