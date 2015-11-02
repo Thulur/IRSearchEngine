@@ -27,7 +27,7 @@ import java.util.*;
 
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
-    private MySAXApp saxApp = new MySAXApp();
+    private XMLParser saxApp = new XMLParser();
     private Index index = new Index();
     private LineNumberReader lnr;
 
@@ -41,7 +41,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         saxApp.addDocumentParsedListener(this);
         
         List<String> files = new LinkedList<>();
-        files.add("data/testData.xml");
+        files.add("data/ipgxml/ipg150106.xml.tmp");
         
         try {
             saxApp.parseFiles(files);
