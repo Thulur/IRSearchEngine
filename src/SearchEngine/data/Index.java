@@ -33,8 +33,8 @@ public class Index {
         }
         WordParser.getInstance().removeStopwords(words);
 
-        String patentAbstract = document.getPatentAbstract();
-        String inventionTitle = document.getInventionTitle();
+        String patentAbstract = document.getPatentAbstract().toLowerCase();
+        String inventionTitle = document.getInventionTitle().toLowerCase();
 
         try {
             String fileName = "data/postinglist.txt";
