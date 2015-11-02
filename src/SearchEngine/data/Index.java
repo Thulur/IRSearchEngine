@@ -84,7 +84,7 @@ public class Index {
             String line = new String();
 
             while ((line = reader.readLine()) != null) {
-                values.put(line.split("[,]")[0], Long.parseLong(line.split("[,]")[1]));
+                values.put(line.split("[ ]")[0], Long.parseLong(line.split("[ ]")[1]));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -103,22 +103,18 @@ public class Index {
 
                 while (prevEntryPos != -1) {
                     tmpPostingList.seek(prevEntryPos);
-                    byte[] buffer = new byte[512];
+                    byte[] buffer = new byte[2048];
                     tmpPostingList.read(buffer);
                     String readString = new String(buffer);
                     int separatorPos = readString.indexOf(";");
-                    if (separatorPos == -1) {
-
-                    } else {
-                        readString = readString.substring(0, separatorPos + 1);
-                        String tmpPos = readString.substring(0, readString.indexOf(","));
-                        prevEntryPos = Long.parseLong(tmpPos);
-                        postingListEntry += readString.substring(readString.indexOf(",") + 1);
-                    }
+                    readString = readString.substring(0, separatorPos + 1);
+                    String tmpPos = readString.substring(0, readString.indexOf(","));
+                    prevEntryPos = Long.parseLong(tmpPos);
+                    postingListEntry = readString.substring(readString.indexOf(",") + 1) + postingListEntry;
                 }
 
                 Long filePos = postingListFile.getChannel().position();
-                dictionaryFile.writeBytes(key + "," + filePos.toString() + "\n");
+                dictionaryFile.writeBytes(key + " " + filePos.toString() + "\n");
                 postingListFile.writeBytes(postingListEntry + "\n");
             }
 
