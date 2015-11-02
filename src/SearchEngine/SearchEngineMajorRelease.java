@@ -102,12 +102,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     public void finishedParsing() {
         System.out.println("Finished parsing!");
-
-        try {
-            index.saveToFile(new FileWriter("data/index.txt"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        index.save();
     }
 
     // title?

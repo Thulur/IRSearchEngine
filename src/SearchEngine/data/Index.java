@@ -2,7 +2,6 @@ package SearchEngine.data;
 
 import SearchEngine.utils.WordParser;
 
-import javax.print.Doc;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
@@ -11,10 +10,12 @@ import java.util.*;
  * Created by Sebastian on 24.10.2015.
  */
 public class Index {
-    HashMap<String, Integer> values = new HashMap<>();
+    HashMap<String, Long> values = new HashMap<>();
+    RandomAccessFile tmpPostingList;
 
     public Index() {
         try {
+            tmpPostingList = new RandomAccessFile("data/tmppostinglist.txt", "rw");
             FileWriter fileWriter = new FileWriter("data/postinglist.txt");
             fileWriter.close();
         } catch (IOException e) {
@@ -23,7 +24,6 @@ public class Index {
     }
 
     public void addToIndex(Document document) {
-
         List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
         WordParser.getInstance().stem(document.getInventionTitle()).stream().filter(word -> !words.contains(word)).forEach(words::add);
         WordParser.getInstance().removeStopwords(words);
@@ -31,106 +31,34 @@ public class Index {
         String patentAbstract = document.getPatentAbstract().toLowerCase();
         String inventionTitle = document.getInventionTitle().toLowerCase();
 
-        try {
-            String fileName = "data/postinglist.txt";
+        for (String word: words) {
+            WordMetaData metaData = new WordMetaData();
+            metaData.setPatentDocId(document.getDocId());
+            metaData.setAbstractPos(document.getPatentAbstractPos());
+            metaData.setAbstractLength(document.getPatentAbstractLength());
+            metaData.setInventionTitlePos(document.getInventionTitlePos());
+            metaData.setInventionTitleLength(document.getInventionTitleLength());
 
-            int numberOfLines = countLines(fileName);
+            for (int i = -1; (i = patentAbstract.indexOf(word, i + 1)) != -1; ) {
+                metaData.addWordOccurrence(i + metaData.getAbstractPos());
+            }
 
-            for (String word: words) {
+            for (int i = -1; (i = inventionTitle.indexOf(word, i + 1)) != -1; ) {
+                metaData.addWordOccurrence(i + metaData.getInventionTitlePos());
+            }
 
-                WordMetaData metaData = new WordMetaData();
-                metaData.setPatentDocId(document.getDocId());
-                metaData.setAbstractPos(document.getPatentAbstractPos());
-                metaData.setAbstractLength(document.getPatentAbstractLength());
-                metaData.setInventionTitlePos(document.getInventionTitlePos());
-                metaData.setInventionTitleLength(document.getInventionTitleLength());
-
-                for (int i = -1; (i = patentAbstract.indexOf(word, i + 1)) != -1; ) {
-                    metaData.addWordOccurrence(i + metaData.getAbstractPos());
-                }
-
-                for (int i = -1; (i = inventionTitle.indexOf(word, i + 1)) != -1; ) {
-                    metaData.addWordOccurrence(i + metaData.getInventionTitlePos());
-                }
-
-                // sort occurences
-
-                metaData.sortOccurences();
-
-                //Wort im Index?
-
+            try {
                 if (values.get(word) == null) {
-                    FileWriter fileWriter = new FileWriter(fileName, true);
-
-                    fileWriter.write(metaData.toString() + "\n");
-                    numberOfLines++;
-                    values.put(word, numberOfLines);
-                    fileWriter.close();
+                    values.put(word, tmpPostingList.getChannel().position());
+                    tmpPostingList.writeBytes("-1," + metaData.toString());
                 } else {
-                    int lineNumber = values.get(word);
-
-                    try (LineNumberReader lnr = new LineNumberReader(new FileReader(fileName))) {
-                        for (int i = 0; i < lineNumber - 1; ++i) {
-                            lnr.readLine();
-                        }
-
-                        String lineToWrite = lnr.readLine();
-
-                        lnr.close();
-
-                        rewriteFile(fileName, lineToWrite, metaData.toString());
-                    }
+                    long tmpPos = tmpPostingList.getChannel().position();
+                    tmpPostingList.writeBytes(values.get(word).toString() + "," + metaData.toString());
+                    values.put(word, tmpPos);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private int countLines(String filename) throws IOException {
-        InputStream is = new BufferedInputStream(new FileInputStream(filename));
-        try {
-            byte[] c = new byte[1024];
-            int count = 0;
-            int readChars = 0;
-            boolean empty = true;
-            while ((readChars = is.read(c)) != -1) {
-                empty = false;
-                for (int i = 0; i < readChars; ++i) {
-                    if (c[i] == '\n') {
-                        ++count;
-                    }
-                }
-            }
-            return (count == 0 && !empty) ? 1 : count;
-        } finally {
-            is.close();
-        }
-    }
-
-    private void rewriteFile(String fileName, String compareString, String newString) throws IOException {
-        try {
-            String fileContent = new String();
-            String line = new String();
-
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
-
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(compareString)) {
-                    fileContent += line + newString + "\n";
-                } else {
-                    fileContent += line + "\n";
-                }
-            }
-
-            reader.close();
-
-            FileWriter fileWriter = new FileWriter(fileName);
-            fileWriter.write(fileContent);
-
-            fileWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -156,21 +84,46 @@ public class Index {
             String line = new String();
 
             while ((line = reader.readLine()) != null) {
-                values.put(line.split("[,]")[0], Integer.parseInt(line.split("[,]")[1]));
+                values.put(line.split("[,]")[0], Long.parseLong(line.split("[,]")[1]));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void saveToFile(FileWriter fileWriter) {
+    public void save() {
         try {
+            RandomAccessFile dictionaryFile = new RandomAccessFile("data/index.txt", "rw");
+            RandomAccessFile postingListFile = new RandomAccessFile("data/postinglist.txt", "rw");
 
-            for (String key: values.keySet()) {
-                fileWriter.write(key + "," + values.get(key) + "\n");
+            for (Map.Entry<String, Long> entry : values.entrySet()) {
+                String key = entry.getKey();
+                long prevEntryPos = entry.getValue();
+                String postingListEntry = new String();
+
+                while (prevEntryPos != -1) {
+                    tmpPostingList.seek(prevEntryPos);
+                    byte[] buffer = new byte[512];
+                    tmpPostingList.read(buffer);
+                    String readString = new String(buffer);
+                    int separatorPos = readString.indexOf(";");
+                    if (separatorPos == -1) {
+
+                    } else {
+                        readString = readString.substring(0, separatorPos + 1);
+                        String tmpPos = readString.substring(0, readString.indexOf(","));
+                        prevEntryPos = Long.parseLong(tmpPos);
+                        postingListEntry += readString.substring(readString.indexOf(",") + 1);
+                    }
+                }
+
+                Long filePos = postingListFile.getChannel().position();
+                dictionaryFile.writeBytes(key + "," + filePos.toString() + "\n");
+                postingListFile.writeBytes(postingListEntry + "\n");
             }
 
-            fileWriter.close();
+            dictionaryFile.close();
+            postingListFile.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -183,7 +136,7 @@ public class Index {
             return results;
         }
 
-        int postingListLine = values.get(word);
+        long postingListLine = values.get(word);
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
