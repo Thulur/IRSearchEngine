@@ -41,7 +41,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         saxApp.addDocumentParsedListener(this);
         
         List<String> files = new LinkedList<>();
-        files.add("data/ipgxml/ipg150106.xml.tmp");
+        files.add("data/testData.xml");
         
         try {
             saxApp.parseFiles(files);
@@ -102,12 +102,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     public void finishedParsing() {
         System.out.println("Finished parsing!");
-
-        try {
-            index.saveToFile(new FileWriter("data/index.txt"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        index.save();
     }
 
     // title?
