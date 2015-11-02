@@ -41,7 +41,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         saxApp.addDocumentParsedListener(this);
         
         List<String> files = new LinkedList<>();
-        files.add("data/ipgxml/ipg150106.xml.tmp");
+        files.add("data/testData.xml");
         
         try {
             saxApp.parseFiles(files);
@@ -54,7 +54,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     boolean loadIndex(String directory) {
         try {
             index.loadFromFile(new BufferedReader(new FileReader("data/index.txt")));
-            index.printIndex();
+//            index.printIndex();
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -66,7 +66,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     void compressIndex(String directory) {
         index.compressIndex();
         // for testing purposes
-        index.decompressLine();
+//        index.decompressLine();
     }
 
     @Override

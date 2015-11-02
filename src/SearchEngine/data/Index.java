@@ -4,6 +4,7 @@ import SearchEngine.utils.WordParser;
 
 import javax.print.Doc;
 import java.io.*;
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -252,20 +253,20 @@ public class Index {
 
                 for (int i = 0; i < input.length; i++) {
                     String[] split = input[i].split(",");
+
                     docIds[i] = Integer.parseInt(split[0]);
                     patentDocIds[i] = Long.parseLong(split[1]);
-                    numberOfOccurrences[i] = Integer.parseInt(split[2]);
+                    invTitlePositions[i] = Long.parseLong(split[2]);
+                    abstractPositions[i] = Long.parseLong(split[3]);
+                    invTitleLenghts[i] = Integer.parseInt(split[4]);
+                    abstractLenghts[i] = Integer.parseInt(split[5]);
+                    numberOfOccurrences[i] = Integer.parseInt(split[6]);
 
                     occurrences.add(i, new long[numberOfOccurrences[i]]);
 
                     for (int j = 0; j < numberOfOccurrences[i]; j++) {
-                        occurrences.get(i)[j] = Long.parseLong(split[j+3]);
+                        occurrences.get(i)[j] = Long.parseLong(split[j+7]);
                     }
-
-                    abstractPositions[i] = Long.parseLong(split[split.length-4]);
-                    abstractLenghts[i] = Integer.parseInt(split[split.length-3]);
-                    invTitlePositions[i] = Long.parseLong(split[split.length-2]);
-                    invTitleLenghts[i] = Integer.parseInt(split[split.length-1]);
                 }
 
                 long[] patentDocIdDeltas = new long[input.length];
@@ -280,34 +281,36 @@ public class Index {
                 for (int i = 0; i < input.length; i++) {
                     occurrenceDeltas.add(i, new long[numberOfOccurrences[i]]);
 
-                    //this if-structure is unnecessary. it's only here because of the occurrence bug
-                    if (occurrences.get(i).length > 0) {
+                    // error prevention, see issue #10 on github
+                    if (numberOfOccurrences[i] > 0) {
+
                         occurrenceDeltas.get(i)[0] = occurrences.get(i)[0];
 
                         for (int j = 1; j < occurrences.get(i).length ; j++) {
                             occurrenceDeltas.get(i)[j] = occurrences.get(i)[j] - occurrences.get(i)[j-1];
                         }
+
                     }
                 }
 
-                //create compressed string
+                // create compressed string
 
                 String compressed = new String();
 
                 for (int i = 0; i < input.length; i++) {
                     compressed += docIds[i] + ",";
                     compressed += patentDocIdDeltas[i] + ",";
+                    compressed += invTitlePositions[i] + ",";
+                    compressed += abstractPositions[i] + ",";
+                    compressed += invTitleLenghts[i] + ";";
+                    compressed += abstractLenghts[i] + ",";
                     compressed += numberOfOccurrences[i] + ",";
 
                     for (int j = 0; j < occurrenceDeltas.get(i).length; j++) {
                         compressed += occurrenceDeltas.get(i)[j] + ",";
                     }
-
-                    compressed += abstractPositions[i] + ",";
-                    compressed += abstractLenghts[i] + ",";
-                    compressed += invTitlePositions[i] + ",";
-                    compressed +=  invTitleLenghts[i] + ";";
                 }
+                convertToVByte(patentDocIdDeltas[0]);
 
                 fw = new FileWriter("data/compressed_postinglist.txt", true);
 
@@ -401,4 +404,47 @@ public class Index {
         }
     }
 
+    public String convertToVByte(long input) {
+        String binaryString = Long.toBinaryString(input);
+
+        String vByteString = new String();
+
+        int count = 0;
+
+        for (int i = binaryString.length(); i > 0; i--) {
+            ++count;
+
+            if ((count % 8) == 0 && count == 8) {
+                vByteString = '1' + vByteString;
+                ++i;
+            } else if ((count % 8) == 0 && count != 8) {
+                vByteString = '0' + vByteString;
+                ++i;
+            } else {
+                vByteString = binaryString.charAt(i-1) + vByteString;
+            }
+        }
+
+        // fill with leading zeros to keep output byte aligned
+        // turns out this isn't even necessary because Integer and BigInteger class handle this internally
+
+//        int offset = vByteString.length() % 8;
+//
+//        if (offset != 0) {
+//            for (int i = 8 - offset; i > 0; i--) {
+//                vByteString = '0' + vByteString;
+//            }
+//        }
+
+        System.out.println(vByteString.length());
+
+        System.out.println(vByteString);
+
+        long output = new BigInteger(vByteString, 2).longValue();
+
+        System.out.println(output);
+        System.out.println(Long.toHexString(output));
+
+        return Long.toHexString(output);
+    }
 }
