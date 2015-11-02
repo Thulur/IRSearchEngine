@@ -11,8 +11,6 @@ import java.util.*;
  */
 public class Index {
     HashMap<String, Integer> values = new HashMap<>();
-//    private FileWriter fileWriter;
-//    private LineNumberReader lineNumberReader;
 
     public Index() {
         try {
@@ -26,11 +24,7 @@ public class Index {
     public void addToIndex(Document document) {
 
         List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
-        for (String word: WordParser.getInstance().stem(document.getInventionTitle())) {
-            if (!words.contains(word)) {
-                words.add(word);
-            }
-        }
+        WordParser.getInstance().stem(document.getInventionTitle()).stream().filter(word -> !words.contains(word)).forEach(words::add);
         WordParser.getInstance().removeStopwords(words);
 
         String patentAbstract = document.getPatentAbstract();

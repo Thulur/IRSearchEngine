@@ -75,6 +75,9 @@ public class MySAXApp extends DefaultHandler {
 		case "publication-reference":
 			this.publicationReferenceEntered = true;
 			break;
+		case "application-reference":
+			// reset everything if appl-type!="utility"
+			break;
 		case "invention-title":
 			this.inventionTitleEntered = true;
 			break;
@@ -95,7 +98,7 @@ public class MySAXApp extends DefaultHandler {
 			inventionTitleEntered = false;
 			docNumberEntered = false;
 
-			if (parsedEventListeners != null){
+			if (parsedEventListeners != null && document != null){
 				for (ParsedEventListener eventListener: parsedEventListeners) {
 					eventListener.documentParsed(document);
 				}
@@ -135,7 +138,21 @@ public class MySAXApp extends DefaultHandler {
 		if (!this.patentGrantEntered) return;
 
 		if (this.docNumberEntered && this.publicationReferenceEntered) {
-			document.setDocId(Integer.parseInt(new String(ch, start,length)));
+			// catch Exception here (we do not know if id is an integer at this point, reset parse state if no integer)
+
+			try {
+				int patentId = Integer.parseInt(new String(ch, start,length));
+				document.setDocId(patentId);
+			} catch (NumberFormatException e) {
+				// The current patent type is not a utility, utility patents have got integer ids
+				patentGrantEntered = false;
+				abstractEntered = false;
+				abstractParagraphEntered = false;
+				publicationReferenceEntered = false;
+				inventionTitleEntered = false;
+				docNumberEntered = false;
+				document = null;
+			}
 		}
 
 		if (this.inventionTitleEntered) {
@@ -156,7 +173,7 @@ public class MySAXApp extends DefaultHandler {
 			if (document.getPatentAbstract() != null && document.getPatentAbstract() != "") {
 				document.setPatentAbstract(document.getPatentAbstract() + " " + new String(ch, start,length));
 			} else {
-				document.setPatentAbstract(new String(ch, start,length));
+				document.setPatentAbstract(new String(ch, start, length));
 			}
 
 			if (document.getPatentAbstractPos() == 0) {
