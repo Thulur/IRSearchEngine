@@ -15,8 +15,9 @@ file_count = 0
 for link in links:
     f = urlopen(link)
 
-    with open("../data/ipgzip/" + link[-13:], "wb") as local_file:
-        local_file.write(f.read())
-        file_count += 1
-        print("Downloaded " + str(file_count) + "/" + str(len(links)))
+    if not os.path.isfile("../data/ipgzip/" + link[-13:]):
+        with open("../data/ipgzip/" + link[-13:], "wb") as local_file:
+            local_file.write(f.read())
+    file_count += 1
+    print("Downloaded " + str(file_count) + "/" + str(len(links)))
         
