@@ -95,8 +95,9 @@ public class Index {
         try {
             RandomAccessFile dictionaryFile = new RandomAccessFile("data/index.txt", "rw");
             RandomAccessFile postingListFile = new RandomAccessFile("data/postinglist.txt", "rw");
+            Map<String, Long> sortedMap = new TreeMap<>(values);
 
-            for (Map.Entry<String, Long> entry : values.entrySet()) {
+            for (Map.Entry<String, Long> entry : sortedMap.entrySet()) {
                 String key = entry.getKey();
                 long prevEntryPos = entry.getValue();
                 String postingListEntry = new String();
