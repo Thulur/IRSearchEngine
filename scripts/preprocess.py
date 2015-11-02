@@ -4,6 +4,8 @@
 import os
 import zipfile
 
+
+file_count = 0
 for filename in os.listdir("../data/ipgzip"):
     if filename.endswith(".zip"):
         fh = open("../data/ipgzip/" + filename, "rb")
@@ -24,7 +26,15 @@ for filename in os.listdir("../data/ipgzip"):
                 if line.startswith("<?xml") or line.startswith("<!DOCTYPE"):
                     continue
                 fhw.write(line)
+            
             fhw.write("</myroot>\n")
+
+            fhr.close()
+            fhw.close()
+            os.remove("../data/ipgxml/" + name)
+            os.rename("../data/ipgxml/" + name + ".tmp", "../data/ipgxml/" + name)
+            file_count += 1
+            print("Processed " + str(file_count) + " files")
 
         fh.close()
             

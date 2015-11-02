@@ -27,7 +27,7 @@ import java.util.*;
 
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
-    private MySAXApp saxApp = new MySAXApp();
+    private XMLParser saxApp = new XMLParser();
     private Index index = new Index();
     private LineNumberReader lnr;
 
@@ -64,6 +64,9 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     
     @Override
     void compressIndex(String directory) {
+        index.compressIndex();
+        // for testing purposes
+        index.decompressLine();
     }
 
     @Override

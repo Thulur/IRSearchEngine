@@ -11,7 +11,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.*;
 
-public class MySAXApp extends DefaultHandler {
+public class XMLParser extends DefaultHandler {
 	boolean patentGrantEntered = false;
 	boolean abstractEntered = false;
 	boolean publicationReferenceEntered = false;
@@ -22,7 +22,7 @@ public class MySAXApp extends DefaultHandler {
 	List<ParsedEventListener> parsedEventListeners;
 	FileInputStream fileInput;
 
-	public MySAXApp() {
+	public XMLParser() {
 		super();
 	}
 

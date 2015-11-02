@@ -1,5 +1,7 @@
 package SearchEngine.data;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,16 +29,21 @@ public class WordMetaData {
         occurences.add(pos);
     }
 
+    public void sortOccurences() {
+        Collections.sort(occurences);
+    }
+
     @Override
     public String toString() {
         String metaDataString = new String();
 
-        metaDataString += docId + "," + patentDocId + "," + abstractPos + "," + abstractLength + "," +
-                inventionTitlePos + "," +inventionTitleLength;
+        metaDataString += docId + "," + patentDocId + ",";
+        metaDataString += occurences.size() + ",";
         for (long occurence: occurences) {
-            metaDataString += "," + occurence;
+            metaDataString += occurence + ",";
         }
-
+        metaDataString += abstractPos + "," + abstractLength + "," +
+                inventionTitlePos + "," +inventionTitleLength;
         metaDataString += ";";
 
         return metaDataString;
@@ -91,4 +98,6 @@ public class WordMetaData {
     public void setInventionTitlePos(long inventionTitlePos) {
         this.inventionTitlePos = inventionTitlePos;
     }
+
+
 }
