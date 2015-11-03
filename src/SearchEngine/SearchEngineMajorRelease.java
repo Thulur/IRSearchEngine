@@ -35,6 +35,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private Long start;
     private int maxThreads = 4;
     private int curFileNum = -1;
+    private Thread[] fileThreads;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -54,11 +55,24 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
 
         numRemainingFiles = files.size();
+        fileThreads = new Thread[files.size()];
 //        WordParser.getInstance().disableErrorOutput();
+
+        for (int i = 0; i < files.size(); ++i) {
+            fileThreads[i] = new Thread(new FileIndexer(files.get(i), this));
+        }
 
         for (int i = 0; i < maxThreads && i < files.size(); ++i) {
             ++curFileNum;
-            new Thread(new FileIndexer(files.get(i), this)).start();
+            fileThreads[curFileNum].start();
+        }
+
+        try {
+            for (int i = 0; i < files.size(); ++i) {
+                    fileThreads[i].join();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -113,7 +127,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         ++curFileNum;
 
         if (curFileNum < files.size()) {
-            new Thread(new FileIndexer(files.get(curFileNum), this)).start();
+            fileThreads[curFileNum].start();
         }
 
         if (numRemainingFiles == 0) {
@@ -122,6 +136,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             System.out.println("Finished parsing!");
             Long end = System.nanoTime();
             System.out.println("Indexing took " + ((end - start)/1000000000) + " seconds.");
+
         }
     }
 }
