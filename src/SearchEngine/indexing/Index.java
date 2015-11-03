@@ -1,10 +1,11 @@
 package SearchEngine.indexing;
 
 import SearchEngine.data.Document;
-import SearchEngine.utils.WordParser;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -29,8 +30,8 @@ public class Index {
         }
     }
 
-
     public void loadFromFile() {
+
         try {
             BufferedReader br = new BufferedReader(new FileReader("data/index.txt"));
             values = new TreeMap<>();
@@ -40,6 +41,27 @@ public class Index {
             while ((line = br.readLine()) != null) {
                 values.put(line.split("[ ]")[0], Long.parseLong(line.split("[ ]")[1]));
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void mergePartialIndices(List<String> paritalFiles) {
+        String filenameId = "";
+        String filename = paritalFiles.get(0);
+
+        if (filename.indexOf("ipg") != -1) {
+            filenameId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
+        }
+
+        File oldIndex = new File("data/partialindices/index" + filenameId + ".txt");
+        File newIndex = new File("data/index.txt");
+        File oldPostingList = new File("data/partialindices/postinglist" + filenameId + ".txt");
+        File newPostingList = new File("data/postinglist.txt");
+
+        try {
+            Files.copy(oldIndex.toPath(), newIndex.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(oldPostingList.toPath(), newPostingList.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -73,29 +95,31 @@ public class Index {
                 long inventionTitlePos = Long.parseLong(metaDataValues[size-2]);
                 int inventionTitleLength = Integer.parseInt(metaDataValues[size-1]);
 
-                byte[] abstractBuffer = new byte[4096];
-                xmlReader.seek(abstractPos);
-                xmlReader.read(abstractBuffer);
-                String patentAbstract = new String(abstractBuffer, 0, abstractLength);
+                String patentAbstract = readStringFromFile(xmlReader, 4096, abstractPos, abstractLength);
+                String title = readStringFromFile(xmlReader, 512, inventionTitlePos, inventionTitleLength);
 
-                byte[] titleBuffer = new byte[512];
-                xmlReader.seek(inventionTitlePos);
-                xmlReader.read(titleBuffer);
-                String title = new String(titleBuffer, 0, inventionTitleLength);
-
-                Document document = new Document();
-                document.setDocId(patentDocId);
-                document.setPatentAbstract(patentAbstract);
-                document.setInventionTitle(title);
+                Document document = new Document(patentDocId, patentAbstract, title);
 
                 results.add(document);
             }
-            // Parse posting read results
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return results;
+    }
+
+    private String readStringFromFile(RandomAccessFile file, int buffersize, long pos, int length) {
+        byte[] titleBuffer = new byte[buffersize];
+
+        try {
+            file.seek(pos);
+            file.read(titleBuffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new String(titleBuffer, 0, length);
     }
 
     public void compressIndex() {
