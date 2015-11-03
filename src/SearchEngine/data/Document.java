@@ -14,6 +14,16 @@ public class Document {
     private long patentAbstractPos;
     private int patentAbstractLength;
 
+    public Document() {
+
+    }
+
+    public Document(int docId, String inventionTitle, String patentAbstract) {
+        this.docId = docId;
+        this.inventionTitle = inventionTitle;
+        this.patentAbstract = patentAbstract;
+    }
+
     public String getInventionTitle() {
         return inventionTitle;
     }

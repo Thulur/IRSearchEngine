@@ -1,7 +1,6 @@
 package SearchEngine.indexing;
 
 import SearchEngine.data.Document;
-import SearchEngine.utils.WordParser;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -72,29 +71,31 @@ public class Index {
                 long inventionTitlePos = Long.parseLong(metaDataValues[size-2]);
                 int inventionTitleLength = Integer.parseInt(metaDataValues[size-1]);
 
-                byte[] abstractBuffer = new byte[4096];
-                xmlReader.seek(abstractPos);
-                xmlReader.read(abstractBuffer);
-                String patentAbstract = new String(abstractBuffer, 0, abstractLength);
+                String patentAbstract = readStringFromFile(xmlReader, 4096, abstractPos, abstractLength);
+                String title = readStringFromFile(xmlReader, 512, inventionTitlePos, inventionTitleLength);
 
-                byte[] titleBuffer = new byte[512];
-                xmlReader.seek(inventionTitlePos);
-                xmlReader.read(titleBuffer);
-                String title = new String(titleBuffer, 0, inventionTitleLength);
-
-                Document document = new Document();
-                document.setDocId(patentDocId);
-                document.setPatentAbstract(patentAbstract);
-                document.setInventionTitle(title);
+                Document document = new Document(patentDocId, patentAbstract, title);
 
                 results.add(document);
             }
-            // Parse posting read results
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return results;
+    }
+
+    private String readStringFromFile(RandomAccessFile file, int buffersize, long pos, int length) {
+        byte[] titleBuffer = new byte[buffersize];
+
+        try {
+            file.seek(pos);
+            file.read(titleBuffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new String(titleBuffer, 0, length);
     }
 
     public void compressIndex() {
