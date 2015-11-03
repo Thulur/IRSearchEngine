@@ -6,6 +6,7 @@ import zipfile
 
 
 file_count = 0
+doc_collector_file = open("../data/xmlfiles.txt", "w")
 for filename in os.listdir("../data/ipgzip"):
     if filename.endswith(".zip"):
         fh = open("../data/ipgzip/" + filename, "rb")
@@ -34,6 +35,11 @@ for filename in os.listdir("../data/ipgzip"):
                 fhw.close()
                 os.remove("../data/ipgxml/" + name)
                 os.rename("../data/ipgxml/" + name + ".tmp", "../data/ipgxml/" + name)
+
+            if file_count == 0:
+                doc_collector_file.write(name)
+            else:
+                doc_collector_file.write("," + name)
             file_count += 1
             print("Processed " + str(file_count) + " files")
 
