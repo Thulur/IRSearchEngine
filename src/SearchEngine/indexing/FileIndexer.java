@@ -1,10 +1,10 @@
 package SearchEngine.indexing;
 
-import SearchEngine.SearchEngine;
 import SearchEngine.data.Document;
 import SearchEngine.data.WordMetaData;
 import SearchEngine.utils.WordParser;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
@@ -19,27 +19,33 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     private XMLParser xmlApp = new XMLParser();
     private HashMap<String, Long> values = new HashMap<>();
     private RandomAccessFile tmpPostingList;
+    private String filenameId;
+    private String filename;
 
     public FileIndexer(String filename, ParsedEventListener parsingStateListener) {
         xmlApp.addDocumentParsedListener(parsingStateListener);
         xmlApp.addDocumentParsedListener(this);
+        this.filename = filename;
+        filenameId = "";
 
-        try {
-            tmpPostingList = new RandomAccessFile("data/tmppostinglist.txt", "rw");
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (filename.indexOf("ipg") != -1) {
+            filenameId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
         }
 
         try {
-            xmlApp.parseFiles(filename);
-        } catch (Exception e) {
+            tmpPostingList = new RandomAccessFile("data/partialindices/tmppostinglist" + filenameId + ".txt", "rw");
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public void run() {
-
+        try {
+            xmlApp.parseFiles("data/ipgxml/" + filename);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -58,7 +64,9 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
     public void addToIndex(Document document) {
         List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
-        WordParser.getInstance().stem(document.getInventionTitle()).stream().filter(word -> !words.contains(word)).forEach(words::add);
+        List<String> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle());
+        // Add every word in stemmedTitle to words, that is not in words
+        stemmedTitle.stream().filter(word -> !words.contains(word)).forEach(words::add);
         WordParser.getInstance().removeStopwords(words);
 
         String patentAbstract = document.getPatentAbstract().toLowerCase();
@@ -97,8 +105,8 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
     private void save() {
         try {
-            RandomAccessFile dictionaryFile = new RandomAccessFile("data/index.txt", "rw");
-            RandomAccessFile postingListFile = new RandomAccessFile("data/postinglist.txt", "rw");
+            RandomAccessFile dictionaryFile = new RandomAccessFile("data/partialindices/index" + filenameId + ".txt", "rw");
+            RandomAccessFile postingListFile = new RandomAccessFile("data/partialindices/postinglist" + filenameId + ".txt", "rw");
             Map<String, Long> sortedMap = new TreeMap<>(values);
 
             for (Map.Entry<String, Long> entry : sortedMap.entrySet()) {
@@ -108,7 +116,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
                 while (prevEntryPos != -1) {
                     tmpPostingList.seek(prevEntryPos);
-                    byte[] buffer = new byte[2048];
+                    byte[] buffer = new byte[8192];
                     tmpPostingList.read(buffer);
                     String readString = new String(buffer);
                     int separatorPos = readString.indexOf(";");
@@ -125,6 +133,9 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
             dictionaryFile.close();
             postingListFile.close();
+            tmpPostingList.close();
+            File tmpFile = new File ("data/partialindices/tmppostinglist" + filenameId + ".txt");
+            tmpFile.delete();
         } catch (IOException e) {
             e.printStackTrace();
         }

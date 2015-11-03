@@ -23,13 +23,18 @@ import SearchEngine.indexing.Index;
 import SearchEngine.indexing.FileIndexer;
 import SearchEngine.indexing.ParsedEventListener;
 import SearchEngine.utils.WordParser;
+import edu.stanford.nlp.ling.Word;
 
 import java.io.*;
 import java.util.*;
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private Index index = new Index();
-    private int numFiles;
+    private int numRemainingFiles;
+    private List<String> files = new LinkedList<>();
+    private Long start;
+    private int maxThreads = 4;
+    private int curFileNum = -1;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -38,8 +43,23 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     void index(String directory) {
-        numFiles = 1;
-        new FileIndexer("data/testData.xml", this);
+        start = System.nanoTime();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("data/xmlfiles.txt"));
+            String filesString = reader.readLine();
+            files = Arrays.asList(filesString.split("[,]"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        numRemainingFiles = files.size();
+        WordParser.getInstance().disableErrorOutput();
+
+        for (int i = 0; i < maxThreads && i < files.size(); ++i) {
+            ++curFileNum;
+            new Thread(new FileIndexer(files.get(i), this)).start();
+        }
     }
 
     @Override
@@ -93,10 +113,19 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     public void finishedParsing() {
-        --numFiles;
+        --numRemainingFiles;
 
-        if (numFiles == 0) {
+        if (curFileNum < files.size()) {
+            ++curFileNum;
+            new Thread(new FileIndexer(files.get(curFileNum), this)).start();
+        }
+
+        if (numRemainingFiles == 0) {
+            index.mergePartialIndices(files);
+            WordParser.getInstance().enableErrorOutput();
             System.out.println("Finished parsing!");
+            Long end = System.nanoTime();
+            System.out.println("Indexing took " + ((end - start)/1000000000) + " seconds.");
         }
     }
 }

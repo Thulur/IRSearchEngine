@@ -7,6 +7,8 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 
 import java.io.FileInputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -18,6 +20,7 @@ import java.util.Scanner;
 public class WordParser {
     private static WordParser instance;
     private List<String> stopWords = new LinkedList<>();
+    private PrintStream err = System.err;
 
     private WordParser() {
         try {
@@ -36,6 +39,17 @@ public class WordParser {
             WordParser.instance = new WordParser();
         }
         return WordParser.instance;
+    }
+
+    public void disableErrorOutput() {
+        System.setErr(new PrintStream(new OutputStream() {
+            public void write(int b) {
+            }
+        }));
+    }
+
+    public void enableErrorOutput() {
+        System.setErr(err);
     }
 
     public List<String> stem(String text) {

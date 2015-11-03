@@ -4,6 +4,8 @@ import SearchEngine.data.Document;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -28,7 +30,6 @@ public class Index {
         }
     }
 
-
     public void loadFromFile(BufferedReader reader) {
         try {
             values = new HashMap<>();
@@ -38,6 +39,27 @@ public class Index {
             while ((line = reader.readLine()) != null) {
                 values.put(line.split("[ ]")[0], Long.parseLong(line.split("[ ]")[1]));
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void mergePartialIndices(List<String> paritalFiles) {
+        String filenameId = "";
+        String filename = paritalFiles.get(0);
+
+        if (filename.indexOf("ipg") != -1) {
+            filenameId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
+        }
+
+        File oldIndex = new File("data/partialindices/index" + filenameId + ".txt");
+        File newIndex = new File("data/index.txt");
+        File oldPostingList = new File("data/partialindices/postinglist" + filenameId + ".txt");
+        File newPostingList = new File("data/postinglist.txt");
+
+        try {
+            Files.copy(oldIndex.toPath(), newIndex.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(oldPostingList.toPath(), newPostingList.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }
