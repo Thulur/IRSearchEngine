@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import codecs
 import os
 import zipfile
 
-
 file_count = 0
-doc_collector_file = open("../data/xmlfiles.txt", "w")
+doc_collector_file = codecs.open("../data/xmlfiles.txt", "w", "utf-8")
 for filename in os.listdir("../data/ipgzip"):
     if filename.endswith(".zip"):
         fh = open("../data/ipgzip/" + filename, "rb")
@@ -17,8 +17,8 @@ for filename in os.listdir("../data/ipgzip"):
                 outpath = "../data/ipgxml"
                 z.extract(name, outpath)
                 
-                fhr = open("../data/ipgxml/" + name, "r")
-                fhw = open("../data/ipgxml/" + name + ".tmp", "w")
+                fhr = codecs.open("../data/ipgxml/" + name, "r")
+                fhw = codecs.open("../data/ipgxml/" + name + ".tmp", "w")
 
                 fhw.write('<?xml version="1.0" encoding="UTF-8"?>\n')
                 fhw.write('<!DOCTYPE us-patent-grant SYSTEM "us-patent-grant-v45-2014-04-03.dtd" [ ]>\n')
@@ -44,4 +44,5 @@ for filename in os.listdir("../data/ipgzip"):
             print("Processed " + str(file_count) + " files")
 
         fh.close()
+doc_collector_file.close()
             
