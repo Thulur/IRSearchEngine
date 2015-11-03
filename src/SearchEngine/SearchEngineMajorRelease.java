@@ -44,14 +44,10 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     boolean loadIndex(String directory) {
-        try {
-            index.loadFromFile(new BufferedReader(new FileReader("data/index.txt")));
-//            index.printIndex();
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
+        // TODO: loadFromFile should throw an IOException via signature
+        index.loadFromFile();
+
+        return true;
     }
     
     @Override

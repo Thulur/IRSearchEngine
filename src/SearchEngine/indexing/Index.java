@@ -11,7 +11,7 @@ import java.util.*;
  * Created by Sebastian on 24.10.2015.
  */
 public class Index {
-    HashMap<String, Long> values = new HashMap<>();
+    TreeMap<String, Long> values = new TreeMap<>();
 
     public Index() {
 
@@ -30,13 +30,14 @@ public class Index {
     }
 
 
-    public void loadFromFile(BufferedReader reader) {
+    public void loadFromFile() {
         try {
-            values = new HashMap<>();
+            BufferedReader br = new BufferedReader(new FileReader("data/index.txt"));
+            values = new TreeMap<>();
 
             String line = new String();
 
-            while ((line = reader.readLine()) != null) {
+            while ((line = br.readLine()) != null) {
                 values.put(line.split("[ ]")[0], Long.parseLong(line.split("[ ]")[1]));
             }
         } catch (IOException e) {
@@ -101,14 +102,19 @@ public class Index {
         //read entry from file
 
         try {
-            BufferedReader br = new BufferedReader(new FileReader("data/postinglist.txt"));
-            FileWriter fw = new FileWriter("data/compressed_postinglist.txt");
+            BufferedReader postingReader = new BufferedReader(new FileReader("data/postinglist.txt"));
+            BufferedReader indexReader = new BufferedReader(new FileReader("data/index.txt"));
+            FileWriter indexWriter = new FileWriter("data/compressed_index.txt");
 
-            String line = new String();
+//            FileOutputStream stream = new FileOutputStream("data/compressed_postinglist.txt");
+//            OutputStreamWriter postingWriter = new OutputStreamWriter(stream);
+            RandomAccessFile postingWriter = new RandomAccessFile("data/compressed_postinglist.txt", "rw");
 
-            while ((line = br.readLine()) != null) {
+            loadFromFile();
 
-                String[] input = line.split(";");
+            for (String key: values.keySet()) {
+
+                String[] input = postingReader.readLine().split(";");
 
                 int[] docIds = new int[input.length];
                 long[] patentDocIds = new long[input.length];
@@ -181,12 +187,14 @@ public class Index {
                     compressed += ";";
                 }
 
-                fw = new FileWriter("data/compressed_postinglist.txt", true);
+                long seek = postingWriter.getChannel().position();
 
-                fw.write(compressed + "\n");
+                postingWriter.writeBytes(compressed + "\n");
 
-                fw.close();
+                indexWriter.write(key + " " + seek + "\n");
             }
+            postingWriter.close();
+            indexWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

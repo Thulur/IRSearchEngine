@@ -15,6 +15,7 @@ public class WordMetaData {
     private long inventionTitlePos;
     private int inventionTitleLength;
     private List<Long> occurrences = new LinkedList<>();
+    private String word;
 
     public WordMetaData() {
 
@@ -100,4 +101,11 @@ public class WordMetaData {
     }
 
 
+    public String getWord() {
+        return word;
+    }
+
+    public void setWord(String word) {
+        this.word = word;
+    }
 }
