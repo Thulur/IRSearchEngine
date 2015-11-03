@@ -1,5 +1,6 @@
-package SearchEngine;
+package SearchEngine.indexing;
 
+import SearchEngine.SearchEngine;
 import SearchEngine.data.Document;
 
 /**

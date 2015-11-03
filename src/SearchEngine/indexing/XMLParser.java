@@ -1,10 +1,11 @@
-package SearchEngine;
+package SearchEngine.indexing;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import SearchEngine.SearchEngine;
 import SearchEngine.data.Document;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -26,7 +27,7 @@ public class XMLParser extends DefaultHandler {
 		super();
 	}
 
-	public void parseFiles(List<String> files) throws Exception {
+	public void parseFiles(String file) throws Exception {
 		XMLReader xr = XMLReaderFactory.createXMLReader();
 		
 		// Ignores the dtd definition for the moment, we do not want to load it
@@ -36,12 +37,10 @@ public class XMLParser extends DefaultHandler {
 
 		// Parse each file provided on the
 		// command line.
-		for (String file: files) {
-			fileInput = new FileInputStream(file);
-			InputSource source = new InputSource(fileInput);
-			xr.parse(source);
-			fileInput.close();
-		}
+		fileInput = new FileInputStream(file);
+		InputSource source = new InputSource(fileInput);
+		xr.parse(source);
+		fileInput.close();
 	}
 
 	////////////////////////////////////////////////////////////////////

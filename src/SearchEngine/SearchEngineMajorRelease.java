@@ -19,17 +19,17 @@ package SearchEngine;
  */
 
 import SearchEngine.data.Document;
-import SearchEngine.data.Index;
+import SearchEngine.indexing.Index;
+import SearchEngine.indexing.FileIndexer;
+import SearchEngine.indexing.ParsedEventListener;
 import SearchEngine.utils.WordParser;
 
 import java.io.*;
 import java.util.*;
 
-
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
-    private XMLParser saxApp = new XMLParser();
     private Index index = new Index();
-    private LineNumberReader lnr;
+    private int numFiles;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -38,16 +38,8 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     void index(String directory) {
-        saxApp.addDocumentParsedListener(this);
-        
-        List<String> files = new LinkedList<>();
-        files.add("data/testData.xml");
-        
-        try {
-            saxApp.parseFiles(files);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        numFiles = 1;
+        new FileIndexer("data/testData.xml", this);
     }
 
     @Override
@@ -94,20 +86,17 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
 
     //Observer methods
-
     @Override
     public void documentParsed(Document document) {
-        processDocument(document);
+        return;
     }
 
+    @Override
     public void finishedParsing() {
-        System.out.println("Finished parsing!");
-        index.save();
-    }
+        --numFiles;
 
-    // title?
-
-    private void processDocument(Document document) {
-        index.addToIndex(document);
+        if (numFiles == 0) {
+            System.out.println("Finished parsing!");
+        }
     }
 }
