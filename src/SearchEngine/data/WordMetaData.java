@@ -38,7 +38,7 @@ public class WordMetaData {
         String metaDataString = new String();
 
         metaDataString += docId + "," + patentDocId + ",";
-        metaDataString += inventionTitlePos + "," + abstractPos + "," + abstractLength + "," + inventionTitleLength + ",";
+        metaDataString += inventionTitlePos + "," + abstractPos + "," + inventionTitleLength + "," + abstractLength + ",";
         metaDataString += occurrences.size();
 
         for (long occurrence: occurrences) {

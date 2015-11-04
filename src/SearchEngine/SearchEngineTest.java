@@ -28,25 +28,33 @@ public class SearchEngineTest {
         
         // System.out.print("Indexing Time:\t" + time + "\tms\n");
         
-         myEngine.loadIndex("disregard");
+//         myEngine.loadIndex("disregard");
         
         // String query = "";
         
         // ArrayList<String> results = new ArrayList <> ();
-        
-        // results = myEngine.search("selection", 0, 0);
-//        System.out.println("selection:");
-//        myEngine.search("selection", 0, 0).forEach(System.out::println);
-//        System.out.println("device:");
-//        myEngine.search("device", 0, 0).forEach(System.out::println);
-//        System.out.println("justify:");
-//        myEngine.search("justify", 0, 0).forEach(System.out::println);
-//        System.out.println("write:");
-//        myEngine.search("write", 0, 0).forEach(System.out::println);
 
         //compression
         myEngine.compressIndex("disregard");
 
+        // results = myEngine.search("selection", 0, 0);
+
+        int numberOfSearches = 10000;
+
+        long start = System.nanoTime();
+
+        for (int i = 0; i < numberOfSearches; ++i) {
+//            System.out.println("file-system");
+            myEngine.search("file-system", 0, 0);
+//            System.out.println("included");
+            myEngine.search("included", 0, 0);
+//            System.out.println("storing");
+            myEngine.search("storing", 0, 0);
+        }
+
+        long time = System.nanoTime() - start;
+
+        System.out.print("Search time:\t" + (time/(numberOfSearches*1000)) + "\tmicroseconds\n");
     }
 
 }
