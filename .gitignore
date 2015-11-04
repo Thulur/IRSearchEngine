@@ -16,3 +16,6 @@ hs_err_pid*
 # keep out the large patent files
 ipg*.xml
 *.zip
+/data/partialindices/tmp*.txt
+/data/partialindices/index*.txt
+/data/partialindices/post*.txt
