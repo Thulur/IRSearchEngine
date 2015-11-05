@@ -18,6 +18,7 @@ package SearchEngine;
  * Keep in mind to include your implementation decisions also in the pdf file of each assignment
  */
 
+import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.indexing.Index;
 import SearchEngine.indexing.FileIndexer;
@@ -98,7 +99,11 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     ArrayList<String> search(String query, int topK, int prf) {
-        return searchWithCompression(query, topK, prf);
+        if (Configuration.COMPRESSED) {
+            return searchWithCompression(query, topK, prf);
+        } else {
+            return searchWithoutCompression(query, topK, prf);
+        }
     }
 
     private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {

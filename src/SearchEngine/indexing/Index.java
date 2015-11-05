@@ -1,6 +1,7 @@
 package SearchEngine.indexing;
 
 import SearchEngine.data.Document;
+import SearchEngine.data.FilePaths;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -54,10 +55,24 @@ public class Index {
             filenameId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
         }
 
-        File oldIndex = new File("data/partialindices/index" + filenameId + ".txt");
-        File newIndex = new File("data/index.txt");
-        File oldPostingList = new File("data/partialindices/postinglist" + filenameId + ".txt");
-        File newPostingList = new File("data/postinglist.txt");
+        if (paritalFiles.size() == 1) {
+            replaceIndexWithPartial(filenameId);
+        }
+
+        /**
+         * - receive head for every file (first line)
+         * - while not all heads empty
+         *      - insert into treemap (word) -> (occurences in heads)
+         *      - take first entry insert into whole index
+         *      - receive every partial postinglist entry
+         */
+    }
+
+    private void replaceIndexWithPartial(String filenameId) {
+        File oldIndex = new File(FilePaths.PARTIAL_PATH + "index" + filenameId + ".txt");
+        File newIndex = new File(FilePaths.INDEX_PATH);
+        File oldPostingList = new File(FilePaths.PARTIAL_PATH + "postinglist" + filenameId + ".txt");
+        File newPostingList = new File(FilePaths.POSTINGLIST_PATH);
 
         try {
             Files.copy(oldIndex.toPath(), newIndex.toPath(), StandardCopyOption.REPLACE_EXISTING);
