@@ -9,10 +9,7 @@ import edu.stanford.nlp.util.CoreMap;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Created by Sebastian on 25.10.2015.
@@ -52,12 +49,34 @@ public class WordParser {
         System.setErr(err);
     }
 
-    public List<String> stem(String text) {
+    /**
+     * Stems a given string.
+     * @param text A string which will be tokenized.
+     * @return  Returns tokens with their position in the given string.
+     */
+    public Map<String, List<Long>> stem(String text, Boolean filterStopwords) {
+        return genericStem(text, filterStopwords, 0l);
+    }
+
+    /**
+     * Stems a given string.
+     * @param text A string which will be tokenized.
+     * @param position A position which the result positions will be relative to.
+     * @return Returns tokens with a list of positions relative to a given position.
+     */
+    public Map<String, List<Long>> stem(String text, Boolean filterStopwords, Long position) {
+        return genericStem(text, filterStopwords, position);
+    }
+
+    private Map<String, List<Long>> genericStem(String text, Boolean filterStopwords, Long pos) {
+        // Negative values should not be passed as position
+        assert pos >= 0;
+
+        Map<String, List<Long>> words = new HashMap<>();
         Properties props = new Properties();
         props.put("annotators", "tokenize, ssplit, pos, lemma");
         StanfordCoreNLP pipeline = new StanfordCoreNLP(props, false);
         Annotation document = pipeline.process(text);
-        LinkedList<String> words = new LinkedList<>();
 
         for(CoreMap sentence: document.get(CoreAnnotations.SentencesAnnotation.class))
         {
@@ -65,9 +84,20 @@ public class WordParser {
             {
                 //String word = token.get(CoreAnnotations.TextAnnotation.class);
                 String lemma = token.get(CoreAnnotations.LemmaAnnotation.class).toLowerCase();
+                Long tmpInt = token.beginPosition() + pos;
 
-                if (!words.contains(lemma)) {
-                    words.add(lemma);
+                // Do not save stopwords if the user does not want them as a part of the result
+                if (filterStopwords && stopWords.contains(lemma)) {
+                    continue;
+                }
+
+                if (words.get(lemma) == null) {
+                    List<Long> tmpList = new LinkedList<>();
+                    tmpList.add(tmpInt);
+                    words.put(lemma, tmpList);
+                } else {
+                    List<Long> tmpList = words.get(lemma);
+                    tmpList.add(tmpInt);
                 }
             }
         }
@@ -80,12 +110,8 @@ public class WordParser {
         punctuation.add("-lrb-");
         punctuation.add("-rrb-");
 
-        words.removeAll(punctuation);
+        punctuation.forEach(words::remove);
 
         return words;
-    }
-
-    public void removeStopwords(List<String> words) {
-        words.removeAll(stopWords);
     }
 }

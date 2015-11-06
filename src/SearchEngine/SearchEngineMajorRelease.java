@@ -24,7 +24,6 @@ import SearchEngine.indexing.Index;
 import SearchEngine.indexing.FileIndexer;
 import SearchEngine.indexing.ParsedEventListener;
 import SearchEngine.utils.WordParser;
-import edu.stanford.nlp.ling.Word;
 
 import java.io.*;
 import java.util.*;
@@ -81,7 +80,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     boolean loadIndex(String directory) {
         // TODO: loadFromFile should throw an IOException via signature
-//        index.loadFromFile();
+        //index.loadFromFile();
 
         return true;
     }
@@ -107,14 +106,12 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
-
-        List<String> searchWords = WordParser.getInstance().stem(query);
+        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
         WordParser.getInstance().disableErrorOutput();
-        WordParser.getInstance().removeStopwords(searchWords);
         ArrayList<String> results = new ArrayList<>();
 
-        for (String word: searchWords) {
-            List<Document> documents = index.lookUpPostingInFile(word, "data/postinglist.txt");
+        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
+            List<Document> documents = index.lookUpPostingInFile(entry.getKey(), "data/postinglist.txt");
 
             for (Document document: documents) {
                 results.add(document.getInventionTitle());
@@ -126,13 +123,12 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
 
-        List<String> searchWords = WordParser.getInstance().stem(query);
+        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
         WordParser.getInstance().disableErrorOutput();
-        WordParser.getInstance().removeStopwords(searchWords);
         ArrayList<String> results = new ArrayList<>();
 
-        for (String word: searchWords) {
-            List<Document> documents = index.lookUpPostingInFileWithCompression(word, "data/compressed_postinglist.txt");
+        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
+            List<Document> documents = index.lookUpPostingInFileWithCompression(entry.getKey(), "data/compressed_postinglist.txt");
 
             for (Document document: documents) {
                 results.add(document.getInventionTitle());

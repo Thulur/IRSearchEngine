@@ -63,16 +63,24 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     }
 
     public void addToIndex(Document document) {
-        List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
-        List<String> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle());
-        // Add every word in stemmedTitle to words, that is not in words
-        stemmedTitle.stream().filter(word -> !words.contains(word)).forEach(words::add);
-        WordParser.getInstance().removeStopwords(words);
+        Map<String, List<Long>> words = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
+        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
 
-        String patentAbstract = document.getPatentAbstract().toLowerCase();
-        String inventionTitle = document.getInventionTitle().toLowerCase();
+        for (Map.Entry<String, List<Long>> entry : stemmedTitle.entrySet()) {
+            String word = entry.getKey();
+            List<Long> occurrences = entry.getValue();
 
-        for (String word: words) {
+            if (words.containsKey(word)) {
+                List<Long> tmpList = words.get(word);
+                tmpList.addAll(occurrences);
+            } else {
+                words.put(word, occurrences);
+            }
+        }
+
+        for (Map.Entry<String, List<Long>> entry : words.entrySet()) {
+            String word = entry.getKey();
+            List<Long> occurrences = entry.getValue();
             WordMetaData metaData = new WordMetaData();
             metaData.setPatentDocId(document.getDocId());
             metaData.setAbstractPos(document.getPatentAbstractPos());
@@ -80,13 +88,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             metaData.setInventionTitlePos(document.getInventionTitlePos());
             metaData.setInventionTitleLength(document.getInventionTitleLength());
 
-            for (int i = -1; (i = patentAbstract.indexOf(word, i + 1)) != -1; ) {
-                metaData.addWordOccurrence(i + metaData.getAbstractPos());
-            }
-
-            for (int i = -1; (i = inventionTitle.indexOf(word, i + 1)) != -1; ) {
-                metaData.addWordOccurrence(i + metaData.getInventionTitlePos());
-            }
+            occurrences.forEach(metaData::addWordOccurrence);
 
             try {
                 if (values.get(word) == null) {

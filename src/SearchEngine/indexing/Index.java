@@ -32,7 +32,6 @@ public class Index {
     }
 
     public void loadFromFile(String file) {
-
         try {
             BufferedReader br = new BufferedReader(new FileReader(file));
             values = new TreeMap<>();
