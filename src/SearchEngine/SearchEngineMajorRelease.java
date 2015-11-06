@@ -18,6 +18,7 @@ package SearchEngine;
  * Keep in mind to include your implementation decisions also in the pdf file of each assignment
  */
 
+import SearchEngine.data.BooleanQuery;
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.indexing.Index;
@@ -111,7 +112,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         ArrayList<String> results = new ArrayList<>();
 
         for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
-            List<Document> documents = index.lookUpPostingInFile(entry.getKey(), "data/postinglist.txt");
+            List<Document> documents = index.lookUpPostingInFile(entry.getKey());
 
             for (Document document: documents) {
                 results.add(document.getInventionTitle());
@@ -123,17 +124,27 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
 
-        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
-        WordParser.getInstance().disableErrorOutput();
+        BooleanQuery booleanQuery = new BooleanQuery(query, index);
+
+        ArrayList<Document> documents = booleanQuery.executeQuery();
+
         ArrayList<String> results = new ArrayList<>();
 
-        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
-            List<Document> documents = index.lookUpPostingInFileWithCompression(entry.getKey(), "data/compressed_postinglist.txt");
-
-            for (Document document: documents) {
-                results.add(document.getInventionTitle());
-            }
+        for (Document document: documents) {
+            results.add(document.getInventionTitle());
         }
+
+//        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
+//        WordParser.getInstance().disableErrorOutput();
+//        ArrayList<String> results = new ArrayList<>();
+//
+//        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
+//            List<Document> documents = index.lookUpPostingInFileWithCompression(entry.getKey());
+//
+//            for (Document document: documents) {
+//                results.add(document.getInventionTitle());
+//            }
+//        }
 
         return results;
     }

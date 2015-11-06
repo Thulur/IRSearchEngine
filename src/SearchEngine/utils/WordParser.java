@@ -58,6 +58,12 @@ public class WordParser {
         return genericStem(text, filterStopwords, 0l);
     }
 
+    public String stemSingleWord(String word) {
+        Map<String, List<Long>> result = genericStem(word, true, 0l);
+
+        return result.keySet().iterator().next();
+    }
+
     /**
      * Stems a given string.
      * @param text A string which will be tokenized.

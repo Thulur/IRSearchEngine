@@ -98,13 +98,13 @@ public class Index {
         //read entry from file
 
         try {
-            BufferedReader postingReader = new BufferedReader(new FileReader("data/postinglist.txt"));
-            BufferedReader indexReader = new BufferedReader(new FileReader("data/index.txt"));
-            FileWriter indexWriter = new FileWriter("data/compressed_index.txt");
+            BufferedReader postingReader = new BufferedReader(new FileReader(FilePaths.POSTINGLIST_PATH));
+            BufferedReader indexReader = new BufferedReader(new FileReader(FilePaths.INDEX_PATH));
+            FileWriter indexWriter = new FileWriter(FilePaths.COMPRESSED_INDEX_PATH);
 
 //            FileOutputStream stream = new FileOutputStream("data/compressed_postinglist.txt");
 //            OutputStreamWriter postingWriter = new OutputStreamWriter(stream);
-            RandomAccessFile postingWriter = new RandomAccessFile("data/compressed_postinglist.txt", "rw");
+            RandomAccessFile postingWriter = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "rw");
 
             loadFromFile("data/index.txt");
 
@@ -365,7 +365,7 @@ public class Index {
         return outputString;
     }
 
-    public List<Document> lookUpPostingInFile(String word, String file) {
+    public List<Document> lookUpPostingInFile(String word) {
         List<Document> results = new LinkedList<>();
 
         if (!values.containsKey(word)) {
@@ -409,7 +409,7 @@ public class Index {
         return results;
     }
 
-    public List<Document> lookUpPostingInFileWithCompression(String word, String file) {
+    public List<Document> lookUpPostingInFileWithCompression(String word) {
         List<Document> results = new LinkedList<>();
 
         loadFromFile("data/compressed_index.txt");
