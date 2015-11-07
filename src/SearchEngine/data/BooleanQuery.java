@@ -57,7 +57,11 @@ public class BooleanQuery {
             if (booleanTokens.contains(searchToken)) {
                 booleanOperator = searchToken;
             } else {
-                searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(wordParser.stemSingleWord(searchToken)));
+                if (searchToken.contains("*")) {
+                    searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(searchToken.toLowerCase()));
+                } else {
+                    searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(wordParser.stemSingleWord(searchToken)));
+                }
             }
         }
     }
