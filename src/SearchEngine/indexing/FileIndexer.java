@@ -89,6 +89,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             metaData.setInventionTitleLength(document.getInventionTitleLength());
 
             occurrences.forEach(metaData::addWordOccurrence);
+            metaData.sortOccurences();
 
             try {
                 if (values.get(word) == null) {
