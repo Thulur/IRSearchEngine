@@ -3,6 +3,7 @@ package SearchEngine.data;
 import SearchEngine.indexing.Index;
 import SearchEngine.utils.WordParser;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -17,6 +18,7 @@ public class BooleanQuery {
     private Index index;
     private WordParser wordParser;
     private ArrayList<Document> results;
+    private String[] subQueries;
 
 
 
@@ -34,11 +36,16 @@ public class BooleanQuery {
 
         searchResults = new LinkedHashMap<>();
         results = new ArrayList<>();
+        subQueries = new String[2];
     }
 
     public ArrayList<Document> executeQuery() {
-        defineSubqueries();
-        processQuery();
+        if (searchTerm.split(" ").length == 1) {
+            processQuery();
+        } else {
+            defineSubqueries();
+        }
+
         executeBooleanOperation();
 
         return results;
@@ -49,6 +56,25 @@ public class BooleanQuery {
      * This method is only needed as soon as we have to process complex boolean queries.
      */
     private void defineSubqueries() {
+
+        int bracketCount = 0;
+        int index = 0;
+
+        for (int i = 0; i < searchTerm.length(); i++) {
+            switch (searchTerm.charAt(i)) {
+                case '(': ++bracketCount; index = bracketCount == 1 ? 1 : index; break;
+                case ')': --bracketCount; index = bracketCount == 0 ? 0 : index; break;
+                default: subQueries[index] += searchTerm.charAt(i);
+            }
+        }
+
+        if (searchTerm.charAt(0) == '(') {
+            String temp = subQueries[0];
+            subQueries[0] = subQueries[1];
+            subQueries[1] = temp;
+        }
+
+
     }
 
     private void processQuery() {

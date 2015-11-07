@@ -46,12 +46,14 @@ public class SearchEngineTest {
 
         long start = System.nanoTime();
 
-        System.out.println("comprises AND consists" + "\n");
-        myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
-        System.out.println("methods NOT inventions" + "\n");
-        myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
-        System.out.println("data OR method" + "\n");
-        myEngine.search("data OR method", 0, 0).forEach(System.out::println);
+//        System.out.println("comprises AND consists" + "\n");
+//        myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
+//        System.out.println("methods NOT inventions" + "\n");
+//        myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
+//        System.out.println("data OR method" + "\n");
+//        myEngine.search("data OR method", 0, 0).forEach(System.out::println);
+        System.out.println("data OR (method AND consists)" + "\n");
+        myEngine.search("data OR (method AND consists)", 0, 0).forEach(System.out::println);
 
         long time = System.nanoTime() - start;
 
