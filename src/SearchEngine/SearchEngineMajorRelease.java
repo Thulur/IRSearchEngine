@@ -124,28 +124,57 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
 
-        BooleanQuery booleanQuery = new BooleanQuery(query, index);
+        List<Document> documents;
+        ArrayList<String> results;
 
-        ArrayList<Document> documents = booleanQuery.executeQuery();
+        List<String> booleanTokens = new LinkedList<>();
+        booleanTokens.add("OR");
+        booleanTokens.add("NOT");
+        booleanTokens.add("AND");
 
-        ArrayList<String> results = new ArrayList<>();
+        boolean queryIsBoolean = false;
 
-        for (Document document: documents) {
-            results.add(document.getInventionTitle());
+        for (String queryToken: query.split(" ")) {
+            if (booleanTokens.contains(queryToken)) queryIsBoolean = true;
         }
 
-//        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
-//        WordParser.getInstance().disableErrorOutput();
-//        ArrayList<String> results = new ArrayList<>();
-//
-//        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
-//            List<Document> documents = index.lookUpPostingInFileWithCompression(entry.getKey());
-//
-//            for (Document document: documents) {
-//                results.add(document.getInventionTitle());
-//            }
-//        }
+        if (queryIsBoolean) {
+            BooleanQuery booleanQuery = new BooleanQuery(query, index);
 
+            documents = booleanQuery.executeQuery();
+
+            results = new ArrayList<>();
+
+            for (Document document: documents) {
+                results.add(document.getInventionTitle());
+            }
+        } else {
+            WordParser.getInstance().disableErrorOutput();
+
+            String strippedQuery = new String();
+            List<String> wildcardTokens = new LinkedList<>();
+
+            for (String queryToken: query.split(" ")) {
+                if (queryToken.contains("*")) wildcardTokens.add(queryToken);
+                else strippedQuery += queryToken + " ";
+            }
+
+            Map<String, List<Long>> searchWords = WordParser.getInstance().stem(strippedQuery, true);
+
+            for (String wildcardToken: wildcardTokens) {
+                searchWords.put(wildcardToken, null);
+            }
+
+            results = new ArrayList<>();
+
+            for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
+                documents = index.lookUpPostingInFileWithCompression(entry.getKey());
+
+                for (Document document: documents) {
+                    results.add(document.getInventionTitle());
+                }
+            }
+        }
         return results;
     }
 

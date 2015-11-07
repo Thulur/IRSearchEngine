@@ -59,7 +59,7 @@ public class WordParser {
     }
 
     public String stemSingleWord(String word) {
-        Map<String, List<Long>> result = genericStem(word, true, 0l);
+        Map<String, List<Long>> result = genericStem(word, false, 0l);
 
         return result.keySet().iterator().next();
     }

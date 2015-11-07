@@ -8,6 +8,8 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Sebastian on 24.10.2015.
@@ -412,48 +414,65 @@ public class Index {
     public List<Document> lookUpPostingInFileWithCompression(String word) {
         List<Document> results = new LinkedList<>();
 
-        loadFromFile("data/compressed_index.txt");
+        loadFromFile(FilePaths.COMPRESSED_INDEX_PATH);
 
-        if (!values.containsKey(word)) {
-            return results;
+        ArrayList<Long> matches = new ArrayList<>();
+
+        if (word.contains("*")) {
+            // I don't know why, but adding '\w*' to the string takes 4 backslashes
+            word = word.replaceAll("\\*", "\\\\w*");
+
+            Matcher matcher;
+
+            for (String key: values.keySet()) {
+                matcher = Pattern.compile(word).matcher(key);
+
+                if (matcher.find()) matches.add(values.get(key));
+            }
+        } else {
+            if (!values.containsKey(word)) {
+                return results;
+            } else {
+                matches.add(values.get(word));
+            }
         }
 
-        long postingListSeek = values.get(word);
+        for (long postingListSeek: matches) {
+            try {
+                RandomAccessFile postingReader = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "r");
 
-        try {
-            RandomAccessFile postingReader = new RandomAccessFile("data/compressed_postinglist.txt", "r");
+                postingReader.seek(postingListSeek);
+                String posting = postingReader.readLine();
 
-            postingReader.seek(postingListSeek);
-            String posting = postingReader.readLine();
+                posting = decompressLine(posting);
 
-            posting = decompressLine(posting);
+                postingReader.close();
+                RandomAccessFile xmlReader = new RandomAccessFile("data/ipgxml/testData.xml", "r");
 
-            postingReader.close();
-            RandomAccessFile xmlReader = new RandomAccessFile("data/ipgxml/testData.xml", "r");
+                String[] metaDataCollection = posting.split("[;]");
 
-            String[] metaDataCollection = posting.split("[;]");
+                for (String metaData: metaDataCollection) {
 
-            for (String metaData: metaDataCollection) {
+                    String[] metaDataValues = metaData.split("[,]");
 
-                String[] metaDataValues = metaData.split("[,]");
+                    int size = metaDataValues.length;
+                    int patentDocId = Integer.parseInt(metaDataValues[1]);
+                    long inventionTitlePos = Long.parseLong(metaDataValues[2]);
+                    long abstractPos = Long.parseLong(metaDataValues[3]);
+                    int inventionTitleLength = Integer.parseInt(metaDataValues[4]);
+                    int abstractLength = Integer.parseInt(metaDataValues[5]);
 
-                int size = metaDataValues.length;
-                int patentDocId = Integer.parseInt(metaDataValues[1]);
-                long inventionTitlePos = Long.parseLong(metaDataValues[2]);
-                long abstractPos = Long.parseLong(metaDataValues[3]);
-                int inventionTitleLength = Integer.parseInt(metaDataValues[4]);
-                int abstractLength = Integer.parseInt(metaDataValues[5]);
+                    String patentAbstract = readStringFromFile(xmlReader, 4096, abstractPos, abstractLength);
+                    String title = readStringFromFile(xmlReader, 512, inventionTitlePos, inventionTitleLength);
 
-                String patentAbstract = readStringFromFile(xmlReader, 4096, abstractPos, abstractLength);
-                String title = readStringFromFile(xmlReader, 512, inventionTitlePos, inventionTitleLength);
+                    Document document = new Document(patentDocId, title, patentAbstract);
 
-                Document document = new Document(patentDocId, patentAbstract, title);
-
-                results.add(document);
+                    results.add(document);
+                }
+                xmlReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            xmlReader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         return results;
