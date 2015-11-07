@@ -2,6 +2,7 @@ package SearchEngine.indexing;
 
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
+import SearchEngine.utils.IndexEncoder;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -168,16 +169,16 @@ public class Index {
                 String compressed = new String();
 
                 for (int i = 0; i < input.length; i++) {
-                    compressed += convertToVByte(docIds[i]);
-                    compressed += convertToVByte(patentDocIdDeltas[i]);
-                    compressed += convertToVByte(invTitlePositions[i]);
-                    compressed += convertToVByte(abstractPositions[i]);
-                    compressed += convertToVByte(invTitleLenghts[i]);
-                    compressed += convertToVByte(abstractLenghts[i]);
-                    compressed += convertToVByte(numberOfOccurrences[i]);
+                    compressed += IndexEncoder.convertToVByte(docIds[i]);
+                    compressed += IndexEncoder.convertToVByte(patentDocIdDeltas[i]);
+                    compressed += IndexEncoder.convertToVByte(invTitlePositions[i]);
+                    compressed += IndexEncoder.convertToVByte(abstractPositions[i]);
+                    compressed += IndexEncoder.convertToVByte(invTitleLenghts[i]);
+                    compressed += IndexEncoder.convertToVByte(abstractLenghts[i]);
+                    compressed += IndexEncoder.convertToVByte(numberOfOccurrences[i]);
 
                     for (int j = 0; j < occurrenceDeltas.get(i).length; j++) {
-                        compressed += convertToVByte(occurrenceDeltas.get(i)[j]);
+                        compressed += IndexEncoder.convertToVByte(occurrenceDeltas.get(i)[j]);
                     }
 
                     compressed += ";";
@@ -321,48 +322,6 @@ public class Index {
         String decimalString = decimalValue.toString();
 
         return decimalString;
-    }
-
-    private String convertToVByte(long input) {
-        String binaryString = Long.toBinaryString(input);
-
-        String vByteString = new String();
-
-        if (binaryString.length() >= 8) {
-            int count = 0;
-
-            for (int i = binaryString.length(); i > 0; i--) {
-                ++count;
-
-                if ((count % 8) == 0 && count == 8) {
-                    vByteString = '1' + vByteString;
-                    ++i;
-                } else if ((count % 8) == 0 && count != 8) {
-                    vByteString = '0' + vByteString;
-                    ++i;
-                } else {
-                    vByteString = binaryString.charAt(i-1) + vByteString;
-                }
-            }
-        } else {
-            int offset = binaryString.length() % 8;
-
-            vByteString = binaryString;
-
-            for (int i = 0; i < 8 - offset - 1; i++) {
-                vByteString = '0' + vByteString;
-            }
-
-            vByteString = '1' + vByteString;
-        }
-
-        String outputString = Long.toHexString(new BigInteger(vByteString, 2).longValue());
-
-        if ((outputString.length() % 2) != 0) {
-            outputString = '0' + outputString;
-        }
-
-        return outputString;
     }
 
     public List<Document> lookUpPostingInFile(String word) {

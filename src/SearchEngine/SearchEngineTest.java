@@ -1,5 +1,7 @@
 package SearchEngine;
 
+import SearchEngine.indexing.Index;
+import SearchEngine.utils.IndexEncoder;
 import SearchEngine.utils.WordParser;
 import edu.stanford.nlp.ling.Word;
 
@@ -22,6 +24,13 @@ public class SearchEngineTest {
     
     
     public static void main(String args[]) throws Exception {
+        String newVByte = IndexEncoder.refactoredConvertToVByte(159l);
+        String oldVByte = IndexEncoder.convertToVByte(159l);
+
+        if (newVByte == oldVByte) {
+            int i = 0;
+        }
+
         SearchEngine myEngine = new SearchEngineMajorRelease();
         
         // long start = System.currentTimeMillis();
