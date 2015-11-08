@@ -24,12 +24,15 @@ public class SearchEngineTest {
     
     
     public static void main(String args[]) throws Exception {
-        String newVByte = IndexEncoder.refactoredConvertToVByte(159l);
-        String oldVByte = IndexEncoder.convertToVByte(159l);
+        long oldStart = System.nanoTime();
+        String oldVByte = IndexEncoder.convertToVByte(15952l);
+        long oldTime = System.nanoTime() - oldStart;
+        System.out.print("Old:\t" + (oldTime) + "\tnanosec\t" + oldVByte + "\n");
 
-        if (newVByte == oldVByte) {
-            int i = 0;
-        }
+        long newStart = System.nanoTime();
+        String newVByte = IndexEncoder.refactoredConvertToVByte(15952l);
+        long newTime = System.nanoTime() - newStart;
+        System.out.print("New:\t" + (newTime) + "\tnanosec\t " + newVByte +"\n");
 
         SearchEngine myEngine = new SearchEngineMajorRelease();
         

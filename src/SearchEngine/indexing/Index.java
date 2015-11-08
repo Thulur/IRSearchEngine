@@ -42,6 +42,9 @@ public class Index {
             String line = new String();
 
             while ((line = br.readLine()) != null) {
+                // Skip empty lines at the end of the file  
+                if (line == "") continue;
+
                 values.put(line.split("[ ]")[0], Long.parseLong(line.split("[ ]")[1]));
             }
         } catch (IOException e) {
