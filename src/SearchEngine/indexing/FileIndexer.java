@@ -1,6 +1,8 @@
 package SearchEngine.indexing;
 
+import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
+import SearchEngine.data.FilePaths;
 import SearchEngine.data.WordMetaData;
 import SearchEngine.utils.WordParser;
 
@@ -33,7 +35,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
         }
 
         try {
-            tmpPostingList = new RandomAccessFile("data/partialindices/tmppostinglist" + filenameId + ".txt", "rw");
+            tmpPostingList = new RandomAccessFile(FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt", "rw");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -42,7 +44,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     @Override
     public void run() {
         try {
-            xmlApp.parseFiles("data/ipgxml/" + filename);
+            xmlApp.parseFiles(FilePaths.RAW_PARTIAL_PATH + filename);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -108,8 +110,8 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
     private void save() {
         try {
-            RandomAccessFile dictionaryFile = new RandomAccessFile("data/partialindices/index" + filenameId + ".txt", "rw");
-            RandomAccessFile postingListFile = new RandomAccessFile("data/partialindices/postinglist" + filenameId + ".txt", "rw");
+            RandomAccessFile dictionaryFile = new RandomAccessFile(FilePaths.PARTIAL_PATH + "index" + filenameId + ".txt", "rw");
+            RandomAccessFile postingListFile = new RandomAccessFile(FilePaths.PARTIAL_PATH + "postinglist" + filenameId + ".txt", "rw");
             Map<String, Long> sortedMap = new TreeMap<>(values);
 
             for (Map.Entry<String, Long> entry : sortedMap.entrySet()) {
@@ -137,7 +139,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             dictionaryFile.close();
             postingListFile.close();
             tmpPostingList.close();
-            File tmpFile = new File ("data/partialindices/tmppostinglist" + filenameId + ".txt");
+            File tmpFile = new File (FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt");
             tmpFile.delete();
         } catch (IOException e) {
             e.printStackTrace();

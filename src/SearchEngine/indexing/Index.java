@@ -42,7 +42,7 @@ public class Index {
             String line = new String();
 
             while ((line = br.readLine()) != null) {
-                // Skip empty lines at the end of the file  
+                // Skip empty lines at the end of the file
                 if (line == "") continue;
 
                 values.put(line.split("[ ]")[0], Long.parseLong(line.split("[ ]")[1]));
@@ -107,12 +107,9 @@ public class Index {
             BufferedReader postingReader = new BufferedReader(new FileReader(FilePaths.POSTINGLIST_PATH));
             BufferedReader indexReader = new BufferedReader(new FileReader(FilePaths.INDEX_PATH));
             FileWriter indexWriter = new FileWriter(FilePaths.COMPRESSED_INDEX_PATH);
-
-//            FileOutputStream stream = new FileOutputStream("data/compressed_postinglist.txt");
-//            OutputStreamWriter postingWriter = new OutputStreamWriter(stream);
             RandomAccessFile postingWriter = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "rw");
 
-            loadFromFile("data/index.txt");
+            loadFromFile(FilePaths.INDEX_PATH);
 
             for (String key: values.keySet()) {
 
@@ -339,13 +336,13 @@ public class Index {
         long postingListSeek = values.get(word);
 
         try {
-            RandomAccessFile postingReader = new RandomAccessFile("data/postinglist.txt", "r");
+            RandomAccessFile postingReader = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "r");
 
             postingReader.seek(postingListSeek);
             String posting = postingReader.readLine();
             postingReader.close();
 
-            RandomAccessFile xmlReader = new RandomAccessFile("data/ipgxml/testData.xml", "r");
+            RandomAccessFile xmlReader = new RandomAccessFile(FilePaths.RAW_PARTIAL_PATH + "testData.xml", "r");
 
             String[] metaDataCollection = posting.split("[;]");
 
@@ -409,7 +406,7 @@ public class Index {
                 posting = decompressLine(posting);
 
                 postingReader.close();
-                RandomAccessFile xmlReader = new RandomAccessFile("data/ipgxml/testData.xml", "r");
+                RandomAccessFile xmlReader = new RandomAccessFile(FilePaths.RAW_PARTIAL_PATH + "testData.xml", "r");
 
                 String[] metaDataCollection = posting.split("[;]");
 
