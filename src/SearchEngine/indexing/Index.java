@@ -22,18 +22,6 @@ public class Index {
 
     }
 
-    /*
-    * method printIndex() for testing purposes only
-    * also to get an understanding of how to work with HashMaps
-    * FYI: (Work in progress)We really should introduce junit soon (tests are also made for a better understanding of code :D)
-    */
-    // index should still be savable and loadable, so we dont have to index every time we start the program
-    public void printIndex() {
-        for (String key: values.keySet()) {
-            System.out.println(key + "-" + values.get(key));
-        }
-    }
-
     public void loadFromFile(String file) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(file));
