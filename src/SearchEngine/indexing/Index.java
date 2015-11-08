@@ -93,7 +93,6 @@ public class Index {
 
         try {
             BufferedReader postingReader = new BufferedReader(new FileReader(FilePaths.POSTINGLIST_PATH));
-            BufferedReader indexReader = new BufferedReader(new FileReader(FilePaths.INDEX_PATH));
             FileWriter indexWriter = new FileWriter(FilePaths.COMPRESSED_INDEX_PATH);
             RandomAccessFile postingWriter = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "rw");
 
