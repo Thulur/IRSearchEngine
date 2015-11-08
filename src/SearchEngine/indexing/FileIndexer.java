@@ -1,6 +1,5 @@
 package SearchEngine.indexing;
 
-import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
 import SearchEngine.data.WordMetaData;

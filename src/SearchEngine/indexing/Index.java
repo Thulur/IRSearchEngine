@@ -31,9 +31,11 @@ public class Index {
 
             while ((line = br.readLine()) != null) {
                 // Skip empty lines at the end of the file
-                if (line == "") continue;
+                String[] splitEntry = line.split("[ ]");
 
-                values.put(line.split("[ ]")[0], Long.parseLong(line.split("[ ]")[1]));
+                if (splitEntry.length < 2) continue;
+
+                values.put(splitEntry[0], Long.parseLong(splitEntry[1]));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -366,7 +368,6 @@ public class Index {
         ArrayList<Long> matches = new ArrayList<>();
 
         if (word.contains("*")) {
-            // I don't know why, but adding '\w*' to the string takes 4 backslashes
             word = word.replaceAll("\\*", "\\\\w*");
 
             Matcher matcher;

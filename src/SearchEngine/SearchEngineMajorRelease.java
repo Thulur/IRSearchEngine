@@ -123,7 +123,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
-
         List<Document> documents;
         ArrayList<String> results;
 
@@ -161,6 +160,10 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private ArrayList<String> performNormalQuery(String query) {
         WordParser.getInstance().disableErrorOutput();
 
+        if (query.startsWith("\"") && query.endsWith("\"")) {
+            return processPhraseQuery(query);
+        }
+
         String strippedQuery = new String();
         List<String> wildcardTokens = new LinkedList<>();
 
@@ -183,6 +186,45 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
             for (Document document: documents) {
                 results.add(document.getInventionTitle());
+            }
+        }
+
+        return results;
+    }
+
+    private ArrayList<String> processPhraseQuery(String query) {
+        Map<Integer, Document> docs = new HashMap<>();
+        HashSet<Integer> docIds = new HashSet<>();
+        String removedQuotationMarks = query.substring(1, query.length() - 1);
+        Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, false).keySet();
+
+        String test = tokens.iterator().next();
+        // Initialize HashSet with first documents
+        for (Document doc: index.lookUpPostingInFileWithCompression(test)) {
+            docs.put(doc.getDocId(), doc);
+            docIds.add(doc.getDocId());
+        }
+
+        while (tokens.iterator().hasNext()) {
+            HashSet<Integer> newDocIds = new HashSet<>();
+
+            for (Document doc: index.lookUpPostingInFileWithCompression(tokens.iterator().next())) {
+                docs.put(doc.getDocId(), doc);
+                newDocIds.add(doc.getDocId());
+            }
+
+            docIds.retainAll(newDocIds);
+        }
+
+        ArrayList<String> results = new ArrayList<>();
+
+        while (docIds.iterator().hasNext()) {
+            int curDocId = docIds.iterator().next();
+            Document curDoc = docs.get(curDocId);
+
+            if (curDoc.getInventionTitle().indexOf(query) >= 0 ||
+                    curDoc.getPatentAbstract().indexOf(query) >= 0) {
+                results.add(curDoc.getInventionTitle());
             }
         }
 

@@ -52,16 +52,13 @@ public class BooleanQuery {
     }
 
     private void processQuery() {
-
         for (String searchToken : searchTerm.split(" ")) {
             if (booleanTokens.contains(searchToken)) {
                 booleanOperator = searchToken;
+            } else if (searchToken.contains("*")) {
+                searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(searchToken.toLowerCase()));
             } else {
-                if (searchToken.contains("*")) {
-                    searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(searchToken.toLowerCase()));
-                } else {
-                    searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(wordParser.stemSingleWord(searchToken)));
-                }
+                searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(wordParser.stemSingleWord(searchToken)));
             }
         }
     }

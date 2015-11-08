@@ -68,10 +68,14 @@ public class SearchEngineTest {
 
 
 
-        System.out.println("inc* OR memory" + "\n");
-        myEngine.search("inc* OR memory", 0, 0).forEach(System.out::println);
+        //System.out.println("inc* OR memory" + "\n");
+        //myEngine.search("inc* OR memory", 0, 0).forEach(System.out::println);
 
-        myEngine.search("inc*", 0, 0).forEach(System.out::println);
+        //myEngine.search("inc*", 0, 0).forEach(System.out::println);
+
+        System.out.println("-------------------------------------------------------------------------");
+        myEngine.search("\"processing apparatus, control method,\"", 0, 0).forEach(System.out::println);
+        System.out.println("-------------------------------------------------------------------------");
 
         long time = System.nanoTime() - start;
 
