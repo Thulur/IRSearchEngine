@@ -64,8 +64,6 @@ public class SearchEngineTest {
 //        myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
 //        System.out.println("data OR method" + "\n");
 //        myEngine.search("data OR method", 0, 0).forEach(System.out::println);
-        String test = "inc*".toLowerCase();
-
 
 
         //System.out.println("inc* OR memory" + "\n");

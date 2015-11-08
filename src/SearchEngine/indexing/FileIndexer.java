@@ -8,10 +8,7 @@ import SearchEngine.utils.WordParser;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Created by sebastian on 03.11.2015.
@@ -64,8 +61,12 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     }
 
     public void addToIndex(Document document) {
-        Map<String, List<Long>> words = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
-        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
+//        Map<String, List<Long>> words = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
+//        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
+
+        Map<String, List<Long>> words = WordParser.getInstance().snowballStem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
+        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().snowballStem(document.getInventionTitle(), true, document.getInventionTitlePos());
+
 
         for (Map.Entry<String, List<Long>> entry : stemmedTitle.entrySet()) {
             String word = entry.getKey();

@@ -5,6 +5,7 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+import org.tartarus.snowball.ext.englishStemmer;
 
 import java.io.FileInputStream;
 import java.io.OutputStream;
@@ -106,6 +107,50 @@ public class WordParser {
                     tmpList.add(tmpInt);
                 }
             }
+        }
+
+        List<String> punctuation = new LinkedList<>();
+        punctuation.add(".");
+        punctuation.add(",");
+        punctuation.add(":");
+        punctuation.add(";");
+        punctuation.add("-lrb-");
+        punctuation.add("-rrb-");
+
+        punctuation.forEach(words::remove);
+
+        return words;
+    }
+
+    public Map<String, List<Long>> snowballStem (String text, Boolean filterStopwords, Long pos) {
+
+        Map<String, List<Long>> words = new HashMap<>();
+
+        englishStemmer stemmer = new englishStemmer();
+
+        Long posOffset = Long.valueOf(0);
+
+        for (String word: text.toLowerCase().split(" ")) {
+            stemmer.setCurrent(word);
+
+            if (stemmer.stem()) {
+                if (filterStopwords && stopWords.contains(word)) {
+                    continue;
+                }
+//                words.put(stemmer.getCurrent(), null);
+                if (words.get(word) == null) {
+                    List<Long> tmpList = new LinkedList<>();
+                    tmpList.add(pos + posOffset);
+                    words.put(word, tmpList);
+                } else {
+                    words.get(word).add(pos + posOffset);
+                }
+
+            } else {
+                System.out.println("ERROR");
+            }
+
+            posOffset += word.length() + 1;
         }
 
         List<String> punctuation = new LinkedList<>();
