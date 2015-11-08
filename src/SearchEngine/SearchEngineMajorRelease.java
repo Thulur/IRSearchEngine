@@ -198,17 +198,17 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         String removedQuotationMarks = query.substring(1, query.length() - 1);
         Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, false).keySet();
 
-        String test = tokens.iterator().next();
+        Iterator<String> tokenIterator = tokens.iterator();
         // Initialize HashSet with first documents
-        for (Document doc: index.lookUpPostingInFileWithCompression(test)) {
+        for (Document doc: index.lookUpPostingInFileWithCompression(tokenIterator.next())) {
             docs.put(doc.getDocId(), doc);
             docIds.add(doc.getDocId());
         }
 
-        while (tokens.iterator().hasNext()) {
+        while (tokenIterator.hasNext()) {
             HashSet<Integer> newDocIds = new HashSet<>();
 
-            for (Document doc: index.lookUpPostingInFileWithCompression(tokens.iterator().next())) {
+            for (Document doc: index.lookUpPostingInFileWithCompression(tokenIterator.next())) {
                 docs.put(doc.getDocId(), doc);
                 newDocIds.add(doc.getDocId());
             }
@@ -218,12 +218,13 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
         ArrayList<String> results = new ArrayList<>();
 
-        while (docIds.iterator().hasNext()) {
-            int curDocId = docIds.iterator().next();
+        Iterator<Integer> docIdIterator = docIds.iterator();
+        while (docIdIterator.hasNext()) {
+            int curDocId = docIdIterator.next();
             Document curDoc = docs.get(curDocId);
 
-            if (curDoc.getInventionTitle().indexOf(query) >= 0 ||
-                    curDoc.getPatentAbstract().indexOf(query) >= 0) {
+            if (curDoc.getInventionTitle().indexOf(removedQuotationMarks) >= 0 ||
+                    curDoc.getPatentAbstract().indexOf(removedQuotationMarks) >= 0) {
                 results.add(curDoc.getInventionTitle());
             }
         }

@@ -5,7 +5,7 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
-import org.tartarus.snowball.ext.englishStemmer;
+import org.tartarus.snowball.ext.EnglishStemmer;
 
 import java.io.FileInputStream;
 import java.io.OutputStream;
@@ -19,6 +19,7 @@ public class WordParser {
     private static WordParser instance;
     private List<String> stopWords = new LinkedList<>();
     private PrintStream err = System.err;
+    EnglishStemmer stemmer = new EnglishStemmer();
 
     private WordParser() {
         try {
@@ -89,21 +90,27 @@ public class WordParser {
         {
             for(CoreLabel token: sentence.get(CoreAnnotations.TokensAnnotation.class))
             {
-                //String word = token.get(CoreAnnotations.TextAnnotation.class);
-                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class).toLowerCase();
+                String word = token.get(CoreAnnotations.TextAnnotation.class).toLowerCase();
                 Long tmpInt = token.beginPosition() + pos;
+                stemmer.setCurrent(word);
+
+                if (stemmer.stem()) {
+                     word = stemmer.getCurrent();
+                } else {
+                    System.out.println("Stemmer error");
+                }
 
                 // Do not save stopwords if the user does not want them as a part of the result
-                if (filterStopwords && stopWords.contains(lemma)) {
+                if (filterStopwords && stopWords.contains(word)) {
                     continue;
                 }
 
-                if (words.get(lemma) == null) {
+                if (words.get(word) == null) {
                     List<Long> tmpList = new LinkedList<>();
                     tmpList.add(tmpInt);
-                    words.put(lemma, tmpList);
+                    words.put(word, tmpList);
                 } else {
-                    List<Long> tmpList = words.get(lemma);
+                    List<Long> tmpList = words.get(word);
                     tmpList.add(tmpInt);
                 }
             }
@@ -125,8 +132,6 @@ public class WordParser {
     public Map<String, List<Long>> snowballStem (String text, Boolean filterStopwords, Long pos) {
 
         Map<String, List<Long>> words = new HashMap<>();
-
-        englishStemmer stemmer = new englishStemmer();
 
         Long posOffset = Long.valueOf(0);
 

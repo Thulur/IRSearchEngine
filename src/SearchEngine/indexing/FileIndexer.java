@@ -64,8 +64,8 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 //        Map<String, List<Long>> words = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
 //        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
 
-        Map<String, List<Long>> words = WordParser.getInstance().snowballStem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
-        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().snowballStem(document.getInventionTitle(), true, document.getInventionTitlePos());
+        Map<String, List<Long>> words = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
+        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
 
 
         for (Map.Entry<String, List<Long>> entry : stemmedTitle.entrySet()) {

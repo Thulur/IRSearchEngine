@@ -102,6 +102,7 @@ public class Index {
 
             for (String key: values.keySet()) {
 
+                System.out.println(key);
                 String[] input = postingReader.readLine().split(";");
 
                 int[] docIds = new int[input.length];

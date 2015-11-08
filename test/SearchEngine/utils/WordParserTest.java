@@ -17,7 +17,7 @@ public class WordParserTest extends TestCase {
     }
 
     public void testStem() throws Exception {
-        Set<String> test = instance.stem("processing apparatus, control method,", false).keySet();
-        Set<String> test2 = instance.stem("information processing apparatus, control method, and control program", false).keySet();
+        Set<String> corenlpSnowball = instance.stem("processing apparatus, control method,", false).keySet();
+        Set<String> snowballOnly = instance.snowballStem("processing apparatus, control method,", false, 0l).keySet();
     }
 }
