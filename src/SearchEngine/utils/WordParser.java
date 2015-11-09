@@ -19,6 +19,7 @@ public class WordParser {
     private static WordParser instance;
     private List<String> stopWords = new LinkedList<>();
     private PrintStream err = System.err;
+    List<String> punctuation = new LinkedList<>();
     EnglishStemmer stemmer = new EnglishStemmer();
 
     private WordParser() {
@@ -31,6 +32,13 @@ public class WordParser {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        punctuation.add(".");
+        punctuation.add(",");
+        punctuation.add(":");
+        punctuation.add(";");
+        punctuation.add("-lrb-");
+        punctuation.add("-rrb-");
     }
 
     public static WordParser getInstance () {
@@ -76,6 +84,40 @@ public class WordParser {
         return genericStem(text, filterStopwords, position);
     }
 
+    public String stemToString(String text, Boolean filterStopwords) {
+        String result = "";
+        Properties props = new Properties();
+        props.put("annotators", "tokenize, ssplit, pos, lemma");
+        StanfordCoreNLP pipeline = new StanfordCoreNLP(props, false);
+        Annotation document = pipeline.process(text);
+
+        for(CoreMap sentence: document.get(CoreAnnotations.SentencesAnnotation.class))
+        {
+            for(CoreLabel token: sentence.get(CoreAnnotations.TokensAnnotation.class))
+            {
+                String word = token.get(CoreAnnotations.TextAnnotation.class).toLowerCase();
+                stemmer.setCurrent(word);
+
+                if (stemmer.stem()) {
+                    word = stemmer.getCurrent();
+                } else {
+                    System.out.println("Stemmer error");
+                }
+
+                // Do not save stopwords if the user does not want them as a part of the result
+                if (filterStopwords && stopWords.contains(word)) {
+                    continue;
+                }
+
+                if (!punctuation.contains(word)) {
+                    result += word + " ";
+                }
+            }
+        }
+
+        return result;
+    }
+
     private Map<String, List<Long>> genericStem(String text, Boolean filterStopwords, Long pos) {
         // Negative values should not be passed as position
         assert pos >= 0;
@@ -116,14 +158,6 @@ public class WordParser {
             }
         }
 
-        List<String> punctuation = new LinkedList<>();
-        punctuation.add(".");
-        punctuation.add(",");
-        punctuation.add(":");
-        punctuation.add(";");
-        punctuation.add("-lrb-");
-        punctuation.add("-rrb-");
-
         punctuation.forEach(words::remove);
 
         return words;
@@ -157,14 +191,6 @@ public class WordParser {
 
             posOffset += word.length() + 1;
         }
-
-        List<String> punctuation = new LinkedList<>();
-        punctuation.add(".");
-        punctuation.add(",");
-        punctuation.add(":");
-        punctuation.add(";");
-        punctuation.add("-lrb-");
-        punctuation.add("-rrb-");
 
         punctuation.forEach(words::remove);
 

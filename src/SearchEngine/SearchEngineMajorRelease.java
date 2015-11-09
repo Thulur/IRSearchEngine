@@ -198,7 +198,8 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         Map<Integer, Document> docs = new HashMap<>();
         HashSet<Integer> docIds = new HashSet<>();
         String removedQuotationMarks = query.substring(1, query.length() - 1);
-        Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, false).keySet();
+        Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES).keySet();
+        String stemmedQuery = WordParser.getInstance().stemToString(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES);
 
         Iterator<String> tokenIterator = tokens.iterator();
         // Initialize HashSet with first documents
@@ -224,9 +225,11 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         while (docIdIterator.hasNext()) {
             int curDocId = docIdIterator.next();
             Document curDoc = docs.get(curDocId);
+            String stemmedTitle = WordParser.getInstance().stemToString(curDoc.getInventionTitle(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
+            String stemmedAbstract = WordParser.getInstance().stemToString(curDoc.getPatentAbstract(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
 
-            if (curDoc.getInventionTitle().indexOf(removedQuotationMarks) >= 0 ||
-                    curDoc.getPatentAbstract().indexOf(removedQuotationMarks) >= 0) {
+            if (stemmedTitle.indexOf(stemmedQuery) >= 0 ||
+                    stemmedAbstract.indexOf(stemmedQuery) >= 0) {
                 results.add(curDoc.getInventionTitle());
             }
         }
