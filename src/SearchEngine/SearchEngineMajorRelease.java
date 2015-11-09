@@ -74,8 +74,10 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-
         }
+
+        // Join all indices at the end
+        index.mergePartialIndices(files);
     }
 
     @Override
@@ -248,7 +250,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
 
         if (numRemainingFiles == 0) {
-            index.mergePartialIndices(files);
             WordParser.getInstance().enableErrorOutput();
             System.out.println("Finished parsing!");
             Long end = System.nanoTime();

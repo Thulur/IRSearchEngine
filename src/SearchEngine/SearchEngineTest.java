@@ -1,13 +1,6 @@
 package SearchEngine;
 
-import SearchEngine.indexing.Index;
 import SearchEngine.utils.IndexEncoder;
-import SearchEngine.utils.WordParser;
-import edu.stanford.nlp.ling.Word;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -58,22 +51,23 @@ public class SearchEngineTest {
 
         long start = System.nanoTime();
 
-//        System.out.println("comprises AND consists" + "\n");
-//        myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
-//        System.out.println("methods NOT inventions" + "\n");
-//        myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
-//        System.out.println("data OR method" + "\n");
-//        myEngine.search("data OR method", 0, 0).forEach(System.out::println);
+        System.out.println("comprises AND consists" + "\n");
+        myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
+        System.out.println("methods NOT inventions" + "\n");
+        myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
+        System.out.println("data OR method" + "\n");
+        myEngine.search("data OR method", 0, 0).forEach(System.out::println);
 
 
-        //System.out.println("inc* OR memory" + "\n");
-        //myEngine.search("inc* OR memory", 0, 0).forEach(System.out::println);
+        System.out.println("inc* OR memory" + "\n");
+        myEngine.search("inc* OR memory", 0, 0).forEach(System.out::println);
 
         //myEngine.search("inc*", 0, 0).forEach(System.out::println);
 
-        System.out.println("-------------------------------------------------------------------------");
-        myEngine.search("\"processing apparatus, control method,\"", 0, 0).forEach(System.out::println);
-        System.out.println("-------------------------------------------------------------------------");
+        System.out.println("\"the presented invention\":\n");
+        myEngine.search("\"the presented invention\"", 0, 0).forEach(System.out::println);
+        System.out.println("\"mobile devices\":\n");
+        myEngine.search("\"mobile devices\"", 0, 0).forEach(System.out::println);
 
         long time = System.nanoTime() - start;
 
