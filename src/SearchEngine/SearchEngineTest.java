@@ -46,6 +46,8 @@ public class SearchEngineTest {
         System.out.println("\ndata OR method:");
         myEngine.search("data OR method", 0, 0).forEach(System.out::println);
 
+        System.out.println("\nprov* NOT free:");
+        myEngine.search("prov* NOT free", 0, 0).forEach(System.out::println);
         System.out.println("\ninc* OR memory:");
         myEngine.search("inc* OR memory", 0, 0).forEach(System.out::println);
 

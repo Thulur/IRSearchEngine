@@ -62,8 +62,9 @@ public class BooleanSearch implements Search {
     }
 
     private void executeBooleanOperation() {
-        Set<Document> firstSet = new HashSet<>(searchResults.values().iterator().next());
-        Set<Document> secondSet = new HashSet<>(searchResults.values().iterator().next());
+        Iterator<List<Document>> iterator = searchResults.values().iterator();
+        Set<Document> firstSet = new HashSet<>(iterator.next());
+        Set<Document> secondSet = new HashSet<>(iterator.next());
 
         switch (booleanOperator) {
             case "AND":  firstSet.retainAll(secondSet); break;
