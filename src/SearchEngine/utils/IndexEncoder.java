@@ -1,12 +1,10 @@
 package SearchEngine.utils;
 
-import java.math.BigInteger;
-
 /**
  * Created by sebastian on 06.11.2015.
  */
 public class IndexEncoder {
-    public static String convertToVByte(long input) {
+    /*public static String convertToVByte(long input) {
         String binaryString = Long.toBinaryString(input);
         String vByteString = "";
 
@@ -45,9 +43,9 @@ public class IndexEncoder {
         }
 
         return outputString;
-    }
+    }*/
 
-    public static String refactoredConvertToVByte(long input) {
+    public static String convertToVByte(long input) {
         long value = input;
         long result = 0;
         int i = 0;
