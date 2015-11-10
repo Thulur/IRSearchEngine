@@ -1,7 +1,5 @@
 package SearchEngine;
 
-import SearchEngine.utils.IndexEncoder;
-
 /**
  *
  * @author: Your team name
@@ -17,16 +15,6 @@ public class SearchEngineTest {
     
     
     public static void main(String args[]) throws Exception {
-        long oldStart = System.nanoTime();
-        String oldVByte = IndexEncoder.convertToVByte(15952l);
-        long oldTime = System.nanoTime() - oldStart;
-        System.out.print("Old:\t" + (oldTime) + "\tnanosec\t" + oldVByte + "\n");
-
-        long newStart = System.nanoTime();
-        String newVByte = IndexEncoder.refactoredConvertToVByte(15952l);
-        long newTime = System.nanoTime() - newStart;
-        System.out.print("New:\t" + (newTime) + "\tnanosec\t " + newVByte +"\n");
-
         SearchEngine myEngine = new SearchEngineMajorRelease();
         
         // long start = System.currentTimeMillis();
@@ -46,27 +34,24 @@ public class SearchEngineTest {
         //compression
         myEngine.compressIndex("disregard");
 
-        // results = myEngine.search("selection", 0, 0);
-
-
         long start = System.nanoTime();
 
-        System.out.println("comprises AND consists" + "\n");
+        System.out.println("\nselection:");
+        myEngine.search("selection", 0, 0).forEach(System.out::println);
+
+        System.out.println("\ncomprises AND consists:");
         myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
-        System.out.println("methods NOT inventions" + "\n");
+        System.out.println("\nmethods NOT inventions:");
         myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
-        System.out.println("data OR method" + "\n");
+        System.out.println("\ndata OR method:");
         myEngine.search("data OR method", 0, 0).forEach(System.out::println);
 
-
-        System.out.println("inc* OR memory" + "\n");
+        System.out.println("\ninc* OR memory:");
         myEngine.search("inc* OR memory", 0, 0).forEach(System.out::println);
 
-        //myEngine.search("inc*", 0, 0).forEach(System.out::println);
-
-        System.out.println("\"the presented invention\":\n");
+        System.out.println("\n\"the presented invention\":");
         myEngine.search("\"the presented invention\"", 0, 0).forEach(System.out::println);
-        System.out.println("\"mobile devices\":\n");
+        System.out.println("\n\"mobile devices\":");
         myEngine.search("\"mobile devices\"", 0, 0).forEach(System.out::println);
 
         long time = System.nanoTime() - start;

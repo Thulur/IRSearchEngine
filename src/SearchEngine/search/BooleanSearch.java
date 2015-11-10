@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * Created by Dennis on 06.11.2015.
  */
-public class BooleanSearch {
+public class BooleanSearch implements Search {
     private String searchTerm;
     private List<String> booleanTokens;
     private HashMap<String, List<Document>> searchResults;
@@ -18,7 +18,8 @@ public class BooleanSearch {
     private WordParser wordParser;
     private ArrayList<Document> results;
 
-    public BooleanSearch(String searchTerm, Index index) {
+    @Override
+    public void setupSearch(String searchTerm, Index index, int topK, int prf) {
         this.searchTerm = searchTerm;
         this.index = index;
 

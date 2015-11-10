@@ -18,15 +18,17 @@ package SearchEngine;
  * Keep in mind to include your implementation decisions also in the pdf file of each assignment
  */
 
-import SearchEngine.search.BooleanSearch;
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
-import SearchEngine.index.Index;
 import SearchEngine.index.FileIndexer;
+import SearchEngine.index.Index;
 import SearchEngine.index.ParsedEventListener;
+import SearchEngine.search.SearchFactory;
 import SearchEngine.utils.WordParser;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
@@ -37,6 +39,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private int maxThreads = 4;
     private int curFileNum = -1;
     private Thread[] fileThreads;
+    private SearchFactory searchFactory;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -90,7 +93,10 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     
     @Override
     void compressIndex(String directory) {
+        // TODO: Refactor this to use loading again!!! (This is a way to implicit)
         index.compressIndex();
+        searchFactory = new SearchFactory();
+        searchFactory.setIndex(index);
     }
 
     @Override
@@ -109,6 +115,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
+        // TODO: Update the code to use current implementations
         Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
         WordParser.getInstance().disableErrorOutput();
         ArrayList<String> results = new ArrayList<>();
@@ -125,113 +132,11 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
-        List<Document> documents;
-        ArrayList<String> results;
-
-        List<String> booleanTokens = new LinkedList<>();
-        booleanTokens.add("OR");
-        booleanTokens.add("NOT");
-        booleanTokens.add("AND");
-
-        boolean queryIsBoolean = false;
-
-        for (String queryToken: query.split(" ")) {
-            if (booleanTokens.contains(queryToken)) queryIsBoolean = true;
-        }
-
-        if (queryIsBoolean) {
-            return performBooleanQuery(query);
-        } else {
-            return performNormalQuery(query);
-        }
-    }
-
-    private ArrayList<String> performBooleanQuery(String query) {
-        BooleanSearch booleanQuery = new BooleanSearch(query, index);
-
-        List<Document> documents = booleanQuery.execute();
-
+        ArrayList<Document> documents = searchFactory.getSearchFromQuery(query, topK, prf).execute();
         ArrayList<String> results = new ArrayList<>();
 
         for (Document document: documents) {
             results.add(document.getInventionTitle());
-        }
-        return results;
-    }
-
-    private ArrayList<String> performNormalQuery(String query) {
-        WordParser.getInstance().disableErrorOutput();
-
-        if (query.startsWith("\"") && query.endsWith("\"")) {
-            return processPhraseQuery(query);
-        }
-
-        String strippedQuery = new String();
-        List<String> wildcardTokens = new LinkedList<>();
-
-        for (String queryToken: query.split(" ")) {
-            if (queryToken.contains("*")) wildcardTokens.add(queryToken);
-            else strippedQuery += queryToken + " ";
-        }
-
-        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(strippedQuery, true);
-
-        for (String wildcardToken: wildcardTokens) {
-            searchWords.put(wildcardToken, null);
-        }
-
-        ArrayList<String> results = new ArrayList<>();
-        List<Document> documents;
-
-        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
-            documents = index.lookUpPostingInFileWithCompression(entry.getKey());
-
-            for (Document document: documents) {
-                results.add(document.getInventionTitle());
-            }
-        }
-
-        return results;
-    }
-
-    private ArrayList<String> processPhraseQuery(String query) {
-        Map<Integer, Document> docs = new HashMap<>();
-        HashSet<Integer> docIds = new HashSet<>();
-        String removedQuotationMarks = query.substring(1, query.length() - 1);
-        Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES).keySet();
-        String stemmedQuery = WordParser.getInstance().stemToString(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES);
-
-        Iterator<String> tokenIterator = tokens.iterator();
-        // Initialize HashSet with first documents
-        for (Document doc: index.lookUpPostingInFileWithCompression(tokenIterator.next())) {
-            docs.put(doc.getDocId(), doc);
-            docIds.add(doc.getDocId());
-        }
-
-        while (tokenIterator.hasNext()) {
-            HashSet<Integer> newDocIds = new HashSet<>();
-
-            for (Document doc: index.lookUpPostingInFileWithCompression(tokenIterator.next())) {
-                docs.put(doc.getDocId(), doc);
-                newDocIds.add(doc.getDocId());
-            }
-
-            docIds.retainAll(newDocIds);
-        }
-
-        ArrayList<String> results = new ArrayList<>();
-
-        Iterator<Integer> docIdIterator = docIds.iterator();
-        while (docIdIterator.hasNext()) {
-            int curDocId = docIdIterator.next();
-            Document curDoc = docs.get(curDocId);
-            String stemmedTitle = WordParser.getInstance().stemToString(curDoc.getInventionTitle(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
-            String stemmedAbstract = WordParser.getInstance().stemToString(curDoc.getPatentAbstract(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
-
-            if (stemmedTitle.indexOf(stemmedQuery) >= 0 ||
-                    stemmedAbstract.indexOf(stemmedQuery) >= 0) {
-                results.add(curDoc.getInventionTitle());
-            }
         }
 
         return results;

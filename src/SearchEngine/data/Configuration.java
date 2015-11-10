@@ -5,5 +5,5 @@ package SearchEngine.data;
  */
 public class Configuration {
     public static boolean COMPRESSED = true;
-    public static boolean FILTER_STOPWORDS_IN_PHRASES = false;
+    public static boolean FILTER_STOPWORDS_IN_PHRASES = true;
 }
