@@ -18,12 +18,12 @@ package SearchEngine;
  * Keep in mind to include your implementation decisions also in the pdf file of each assignment
  */
 
-import SearchEngine.data.BooleanQuery;
+import SearchEngine.search.BooleanSearch;
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
-import SearchEngine.indexing.Index;
-import SearchEngine.indexing.FileIndexer;
-import SearchEngine.indexing.ParsedEventListener;
+import SearchEngine.index.Index;
+import SearchEngine.index.FileIndexer;
+import SearchEngine.index.ParsedEventListener;
 import SearchEngine.utils.WordParser;
 
 import java.io.*;
@@ -147,9 +147,9 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private ArrayList<String> performBooleanQuery(String query) {
-        BooleanQuery booleanQuery = new BooleanQuery(query, index);
+        BooleanSearch booleanQuery = new BooleanSearch(query, index);
 
-        List<Document> documents = booleanQuery.executeQuery();
+        List<Document> documents = booleanQuery.execute();
 
         ArrayList<String> results = new ArrayList<>();
 

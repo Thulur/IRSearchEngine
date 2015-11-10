@@ -1,11 +1,10 @@
-package SearchEngine.indexing;
+package SearchEngine.index;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import SearchEngine.SearchEngine;
 import SearchEngine.data.Document;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;

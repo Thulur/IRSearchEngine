@@ -1,6 +1,7 @@
-package SearchEngine.data;
+package SearchEngine.search;
 
-import SearchEngine.indexing.Index;
+import SearchEngine.data.Document;
+import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
 
 import java.util.*;
@@ -8,8 +9,7 @@ import java.util.*;
 /**
  * Created by Dennis on 06.11.2015.
  */
-public class BooleanQuery {
-
+public class BooleanSearch {
     private String searchTerm;
     private List<String> booleanTokens;
     private HashMap<String, List<Document>> searchResults;
@@ -18,11 +18,8 @@ public class BooleanQuery {
     private WordParser wordParser;
     private ArrayList<Document> results;
 
-
-
-    public BooleanQuery(String searchTerm, Index index) {
+    public BooleanSearch(String searchTerm, Index index) {
         this.searchTerm = searchTerm;
-
         this.index = index;
 
         wordParser = WordParser.getInstance();
@@ -36,7 +33,7 @@ public class BooleanQuery {
         results = new ArrayList<>();
     }
 
-    public ArrayList<Document> executeQuery() {
+    public ArrayList<Document> execute() {
         defineSubqueries();
         processQuery();
         executeBooleanOperation();

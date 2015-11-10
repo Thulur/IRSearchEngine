@@ -1,4 +1,4 @@
-package SearchEngine.indexing;
+package SearchEngine.index;
 
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
