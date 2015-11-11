@@ -5,7 +5,6 @@ import SearchEngine.data.FilePaths;
 import SearchEngine.utils.IndexEncoder;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -62,7 +61,6 @@ public class Index {
         } catch (IOException e) {
 
         }
-
     }
 
     public void mergePartialIndices(List<String> paritalFiles) {
@@ -166,7 +164,6 @@ public class Index {
 
     public void compressIndex() {
         //read entry from file
-
         try {
             BufferedReader postingReader = new BufferedReader(new FileReader(FilePaths.POSTINGLIST_PATH));
             RandomAccessFile indexWriter = new RandomAccessFile(FilePaths.COMPRESSED_INDEX_PATH, "rw");
@@ -267,35 +264,19 @@ public class Index {
         String[] decimalInput = new String[input.length];
 
         for (int i = 0; i < input.length; i++) {
-            String tempHexString = new String();
-            int relevantBitPositionFactor = 0;
+            String tmpValue = "";
 
-            for (int j = 0; j < input[i].length(); j++) {
-                tempHexString += "" + input[i].charAt(j) + input[i].charAt(j + 1);
-                ++j;
+            for (int j = 0; j < input[i].length(); j += 2) {
+                tmpValue += input[i].substring(j, j + 2);
 
-                String tempBinaryString = new BigInteger(tempHexString, 16).toString(2);
-
-                int offset = tempBinaryString.length() % 8;
-
-                if (offset != 0) {
-                    for (int k = 0; k < 8 - offset; k++) {
-                        tempBinaryString = '0' + tempBinaryString;
-                    }
-                }
-
-                if (tempBinaryString.charAt(8*relevantBitPositionFactor) == '1') {
+                if (input[i].charAt(j) >= 56) {
                     if (decimalInput[i] == null) {
-                        decimalInput[i] = convertToDecimalString(tempBinaryString) + ",";
+                        decimalInput[i] = convertToDecimalString(Long.parseLong(tmpValue, 16)) + ",";
                     } else {
-                        decimalInput[i] += convertToDecimalString(tempBinaryString) + ",";
+                        decimalInput[i] += convertToDecimalString(Long.parseLong(tmpValue, 16)) + ",";
                     }
-                    tempHexString = "";
-                    relevantBitPositionFactor = 0;
-                } else {
-                    ++relevantBitPositionFactor;
+                    tmpValue = "";
                 }
-
             }
             decimalInput[i] = decimalInput[i].substring(0, decimalInput[i].length()-1);
         }
@@ -371,21 +352,17 @@ public class Index {
         return decompressed;
     }
 
-    private String convertToDecimalString(String tempBinaryString) {
+    private long convertToDecimalString(long vByteValue) {
+        long result = 0;
+        int i = 0;
 
-        String strippedBinaryString = new String();
-
-        for (int i = 0; i < tempBinaryString.length(); i++) {
-            if ((i % 8) != 0) {
-                strippedBinaryString += tempBinaryString.charAt(i);
-            }
+        while (vByteValue > 0) {
+            result += ((vByteValue & 127) << (7 * i));
+            vByteValue >>= 8;
+            ++i;
         }
 
-        Long decimalValue = Long.parseLong(strippedBinaryString, 2);
-
-        String decimalString = decimalValue.toString();
-
-        return decimalString;
+        return result;
     }
 
     public List<Document> lookUpPostingInFile(String word) {
