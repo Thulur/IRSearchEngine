@@ -21,6 +21,7 @@ public class XMLParser extends DefaultHandler {
 	Document document;
 	List<ParsedEventListener> parsedEventListeners;
 	FileInputStream fileInput;
+	String tmpPatentId = "";
 
 	public XMLParser() {
 		super();
@@ -119,6 +120,24 @@ public class XMLParser extends DefaultHandler {
 			inventionTitleEntered = false;
 			break;
 		case "doc-number":
+			if (publicationReferenceEntered) {
+				try {
+					int patentId = Integer.parseInt(tmpPatentId);
+
+					document.setDocId(patentId);
+				} catch (NumberFormatException e) {
+					// The current patent type is not a utility, utility patents have got integer ids
+					patentGrantEntered = false;
+					abstractEntered = false;
+					abstractParagraphEntered = false;
+					publicationReferenceEntered = false;
+					inventionTitleEntered = false;
+					docNumberEntered = false;
+					document = null;
+				}
+
+				tmpPatentId = "";
+			}
 			docNumberEntered = false;
 			break;
 		}
@@ -129,21 +148,7 @@ public class XMLParser extends DefaultHandler {
 
 		if (this.docNumberEntered && this.publicationReferenceEntered) {
 			// catch Exception here (we do not know if id is an integer at this point, reset parse state if no integer)
-
-			try {
-				int patentId = Integer.parseInt(new String(ch, start,length));
-
-				document.setDocId(patentId);
-			} catch (NumberFormatException e) {
-				// The current patent type is not a utility, utility patents have got integer ids
-				patentGrantEntered = false;
-				abstractEntered = false;
-				abstractParagraphEntered = false;
-				publicationReferenceEntered = false;
-				inventionTitleEntered = false;
-				docNumberEntered = false;
-				document = null;
-			}
+			tmpPatentId += new String(ch, start,length);
 		}
 
 		if (this.inventionTitleEntered) {
