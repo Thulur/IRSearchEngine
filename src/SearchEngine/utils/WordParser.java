@@ -1,5 +1,6 @@
 package SearchEngine.utils;
 
+import SearchEngine.data.Configuration;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -20,7 +21,6 @@ public class WordParser {
     private List<String> stopWords = new LinkedList<>();
     private PrintStream err = System.err;
     List<String> punctuation = new LinkedList<>();
-    EnglishStemmer stemmer = new EnglishStemmer();
 
     private WordParser() {
         try {
@@ -49,10 +49,12 @@ public class WordParser {
     }
 
     public void disableErrorOutput() {
-        System.setErr(new PrintStream(new OutputStream() {
-            public void write(int b) {
-            }
-        }));
+        if (Configuration.DISABLE_ERROR_OUTPUT) {
+            System.setErr(new PrintStream(new OutputStream() {
+                public void write(int b) {
+                }
+            }));
+        }
     }
 
     public void enableErrorOutput() {
@@ -85,9 +87,10 @@ public class WordParser {
     }
 
     public String stemToString(String text, Boolean filterStopwords) {
+        EnglishStemmer stemmer = new EnglishStemmer();
         String result = "";
         Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos, lemma");
+        props.put("annotators", "tokenize, ssplit, pos");
         StanfordCoreNLP pipeline = new StanfordCoreNLP(props, false);
         Annotation document = pipeline.process(text);
 
@@ -122,9 +125,10 @@ public class WordParser {
         // Negative values should not be passed as position
         assert pos >= 0;
 
+        EnglishStemmer stemmer = new EnglishStemmer();
         Map<String, List<Long>> words = new HashMap<>();
         Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos, lemma");
+        props.put("annotators", "tokenize, ssplit, pos");
         StanfordCoreNLP pipeline = new StanfordCoreNLP(props, false);
         Annotation document = pipeline.process(text);
 
@@ -164,7 +168,7 @@ public class WordParser {
     }
 
     public Map<String, List<Long>> snowballStem (String text, Boolean filterStopwords, Long pos) {
-
+        EnglishStemmer stemmer = new EnglishStemmer();
         Map<String, List<Long>> words = new HashMap<>();
 
         Long posOffset = Long.valueOf(0);

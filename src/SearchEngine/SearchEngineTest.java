@@ -17,36 +17,35 @@ public class SearchEngineTest {
     public static void main(String args[]) throws Exception {
         SearchEngine myEngine = new SearchEngineMajorRelease();
         
-        // long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
 
         myEngine.index("");
         
-        // long time = System.currentTimeMillis() - start;
+        long time = System.currentTimeMillis() - start;
         
-        // System.out.print("Indexing Time:\t" + time + "\tms\n");
-        
-//         myEngine.loadIndex("disregard");
+        System.out.print("Indexing Time:\t" + time + "\tms\n");
         
         // String query = "";
         
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        myEngine.compressIndex("disregard");
+        myEngine.compressIndex("");
+        myEngine.loadCompressedIndex("");
 
-        long start = System.nanoTime();
+        start = System.nanoTime();
 
-        System.out.println("\nselection:");
-        myEngine.search("selection", 0, 0).forEach(System.out::println);
+        //System.out.println("\nselection:");
+        //myEngine.search("selection", 0, 0).forEach(System.out::println);
 
-        System.out.println("\ncomprises AND consists:");
-        myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
-        System.out.println("\nmethods NOT inventions:");
-        myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
+        //System.out.println("\ncomprises AND consists:");
+        //myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
+        //System.out.println("\nmethods NOT inventions:");
+        //myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
         System.out.println("\ndata OR method:");
         myEngine.search("data OR method", 0, 0).forEach(System.out::println);
 
-        System.out.println("\nprov* NOT free:");
+        /*System.out.println("\nprov* NOT free:");
         myEngine.search("prov* NOT free", 0, 0).forEach(System.out::println);
         System.out.println("\ninc* OR memory:");
         myEngine.search("inc* OR memory", 0, 0).forEach(System.out::println);
@@ -54,9 +53,9 @@ public class SearchEngineTest {
         System.out.println("\n\"the presented invention\":");
         myEngine.search("\"the presented invention\"", 0, 0).forEach(System.out::println);
         System.out.println("\n\"mobile devices\":");
-        myEngine.search("\"mobile devices\"", 0, 0).forEach(System.out::println);
+        myEngine.search("\"mobile devices\"", 0, 0).forEach(System.out::println);*/
 
-        long time = System.nanoTime() - start;
+        time = System.nanoTime() - start;
 
         System.out.print("Search time:\t" + (time/1000) + "\tmicroseconds\n");
     }

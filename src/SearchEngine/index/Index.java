@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
  */
 public class Index {
     TreeMap<String, Long> values = new TreeMap<>();
+    Map<Integer, String> docIds = new HashMap<>();
 
     public Index() {
 
@@ -24,43 +25,116 @@ public class Index {
 
     public void loadFromFile(String file) {
         try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            values = new TreeMap<>();
+            String line;
 
-            String line = new String();
+            BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.DOC_IDS_FILE));
 
-            while ((line = br.readLine()) != null) {
-                // Skip empty lines at the end of the file
+            while ((line = docIdsFile.readLine()) != null) {
                 String[] splitEntry = line.split("[ ]");
 
+                // Skip empty lines at the end of the file
+                if (splitEntry.length < 2) continue;
+
+                docIds.put(Integer.parseInt(splitEntry[0]), splitEntry[1]);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            String line;
+
+            RandomAccessFile indexFile = indexFile = new RandomAccessFile(file, "r");
+            values = new TreeMap<>();
+
+            while ((line = indexFile.readUTF()) != null) {
+                if (line == null) {
+                    int i = 0;
+                }
+
+                String[] splitEntry = line.split("[ ]");
+
+                // Skip empty lines at the end of the file
                 if (splitEntry.length < 2) continue;
 
                 values.put(splitEntry[0], Long.parseLong(splitEntry[1]));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
+
     }
 
     public void mergePartialIndices(List<String> paritalFiles) {
-        String filenameId = "";
-        String filename = paritalFiles.get(0);
-
-        if (filename.indexOf("ipg") != -1) {
-            filenameId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
-        }
-
         if (paritalFiles.size() == 1) {
-            replaceIndexWithPartial(filenameId);
-        }
+            String filenameId = "";
+            String filename = paritalFiles.get(0);
 
-        /**
-         * - receive head for every file (first line)
-         * - while not all heads empty
-         *      - insert into treemap (word) -> (occurences in heads)
-         *      - take first entry insert into whole index
-         *      - receive every partial postinglist entry
-         */
+            if (filename.indexOf("ipg") != -1) {
+                filenameId = getIpgId(filename);
+            }
+
+            replaceIndexWithPartial(filenameId);
+        } else {
+            Map<String, List<FileMergeHead>> curTokens = new TreeMap<>();
+
+            for (String partialFile: paritalFiles) {
+                FileMergeHead file = new FileMergeHead(getIpgId(partialFile));
+
+                if (curTokens.containsKey(file.getToken())) {
+                    List<FileMergeHead> tmpList = curTokens.get(file.getToken());
+                    tmpList.add(file);
+                } else {
+                    List<FileMergeHead> tmpList = new LinkedList<>();
+                    tmpList.add(file);
+                    curTokens.put(file.getToken(), tmpList);
+                }
+            }
+
+            try {
+                RandomAccessFile index = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");;
+                RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
+
+                // The iterator use is intended here because the collection changes every iteration
+                while (curTokens.keySet().iterator().hasNext()) {
+                    String curWord = curTokens.keySet().iterator().next();
+                    Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
+
+                    index.writeUTF(curWord + " " + postingList.getChannel().position());
+
+                    for (FileMergeHead file: curTokens.get(curWord)) {
+                        sortedPostings.put(file.getFirstPatentId(), file);
+
+                        if (file.nextLine()) {
+                            if (curTokens.containsKey(file.getToken())) {
+                                List<FileMergeHead> tmpList = curTokens.get(file.getToken());
+                                tmpList.add(file);
+                            } else {
+                                List<FileMergeHead> tmpList = new LinkedList<>();
+                                tmpList.add(file);
+                                curTokens.put(file.getToken(), tmpList);
+                            }
+                        }
+                    }
+
+                    Iterator<FileMergeHead> files = sortedPostings.values().iterator();
+                    while (files.hasNext()) {
+                        FileMergeHead file = files.next();
+                        postingList.writeBytes(file.getPostinglistLine());
+                    }
+
+                    postingList.writeBytes("\n");
+
+                    curTokens.remove(curWord);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String getIpgId(String filename) {
+        return filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
     }
 
     private void replaceIndexWithPartial(String filenameId) {
@@ -77,17 +151,17 @@ public class Index {
         }
     }
 
-    private String readStringFromFile(RandomAccessFile file, int buffersize, long pos, int length) {
-        byte[] titleBuffer = new byte[buffersize];
+    private String readStringFromFile(RandomAccessFile file, long pos) {
+        String result = "";
 
         try {
             file.seek(pos);
-            file.read(titleBuffer);
+            result = file.readUTF();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return new String(titleBuffer, 0, length);
+        return result;
     }
 
     public void compressIndex() {
@@ -95,14 +169,12 @@ public class Index {
 
         try {
             BufferedReader postingReader = new BufferedReader(new FileReader(FilePaths.POSTINGLIST_PATH));
-            FileWriter indexWriter = new FileWriter(FilePaths.COMPRESSED_INDEX_PATH);
+            RandomAccessFile indexWriter = new RandomAccessFile(FilePaths.COMPRESSED_INDEX_PATH, "rw");
             RandomAccessFile postingWriter = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "rw");
 
             loadFromFile(FilePaths.INDEX_PATH);
 
             for (String key: values.keySet()) {
-
-                System.out.println(key);
                 String[] input = postingReader.readLine().split(";");
 
                 int[] docIds = new int[input.length];
@@ -180,7 +252,7 @@ public class Index {
 
                 postingWriter.writeBytes(compressed + "\n");
 
-                indexWriter.write(key + " " + seek + "\n");
+                indexWriter.writeUTF(key + " " + seek);
             }
             postingWriter.close();
             indexWriter.close();
@@ -342,11 +414,9 @@ public class Index {
                 int patentDocId = Integer.parseInt(metaDataValues[1]);
                 long inventionTitlePos = Long.parseLong(metaDataValues[2]);
                 long abstractPos = Long.parseLong(metaDataValues[3]);
-                int inventionTitleLength = Integer.parseInt(metaDataValues[4]);
-                int abstractLength = Integer.parseInt(metaDataValues[5]);
 
-                String patentAbstract = readStringFromFile(xmlReader, 4096, abstractPos, abstractLength);
-                String title = readStringFromFile(xmlReader, 512, inventionTitlePos, inventionTitleLength);
+                String patentAbstract = readStringFromFile(xmlReader, abstractPos);
+                String title = readStringFromFile(xmlReader, inventionTitlePos);
 
                 Document document = new Document(patentDocId, patentAbstract, title);
 
@@ -362,8 +432,6 @@ public class Index {
 
     public List<Document> lookUpPostingInFileWithCompression(String word) {
         List<Document> results = new LinkedList<>();
-
-        loadFromFile(FilePaths.COMPRESSED_INDEX_PATH);
 
         ArrayList<Long> matches = new ArrayList<>();
 
@@ -395,23 +463,27 @@ public class Index {
                 posting = decompressLine(posting);
 
                 postingReader.close();
-                RandomAccessFile xmlReader = new RandomAccessFile(FilePaths.RAW_PARTIAL_PATH + "testData.xml", "r");
+                // TODO:
+                // Most random line ever, just open a file so java does not throw an error (improve this solution somehow!!!)
+                RandomAccessFile xmlReader = new RandomAccessFile(FilePaths.CACHE_PATH + docIds.get(0), "r");
 
+                int lastDocId = 0;
                 String[] metaDataCollection = posting.split("[;]");
 
                 for (String metaData: metaDataCollection) {
-
                     String[] metaDataValues = metaData.split("[,]");
+                    int curDocId = Integer.parseInt(metaDataValues[0]);
 
-                    int size = metaDataValues.length;
+                    if (lastDocId != curDocId) {
+                        xmlReader = new RandomAccessFile(FilePaths.CACHE_PATH + docIds.get(curDocId), "r");
+                    }
+
                     int patentDocId = Integer.parseInt(metaDataValues[1]);
                     long inventionTitlePos = Long.parseLong(metaDataValues[2]);
                     long abstractPos = Long.parseLong(metaDataValues[3]);
-                    int inventionTitleLength = Integer.parseInt(metaDataValues[4]);
-                    int abstractLength = Integer.parseInt(metaDataValues[5]);
 
-                    String patentAbstract = readStringFromFile(xmlReader, 4096, abstractPos, abstractLength);
-                    String title = readStringFromFile(xmlReader, 512, inventionTitlePos, inventionTitleLength);
+                    String patentAbstract = readStringFromFile(xmlReader, abstractPos);
+                    String title = readStringFromFile(xmlReader, inventionTitlePos);
 
                     Document document = new Document(patentDocId, title, patentAbstract);
 

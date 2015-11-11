@@ -1,15 +1,15 @@
 package SearchEngine.index;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-
 import SearchEngine.data.Document;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.*;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.helpers.XMLReaderFactory;
+
+import java.io.FileInputStream;
+import java.util.LinkedList;
+import java.util.List;
 
 public class XMLParser extends DefaultHandler {
 	boolean patentGrantEntered = false;
@@ -125,14 +125,6 @@ public class XMLParser extends DefaultHandler {
 	}
 
 	public void characters(char ch[], int start, int length) {
-		long pos = -1;
-
-		try {
-			pos = fileInput.getChannel().position() - ch.length;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 		if (!this.patentGrantEntered) return;
 
 		if (this.docNumberEntered && this.publicationReferenceEntered) {
@@ -140,6 +132,7 @@ public class XMLParser extends DefaultHandler {
 
 			try {
 				int patentId = Integer.parseInt(new String(ch, start,length));
+
 				document.setDocId(patentId);
 			} catch (NumberFormatException e) {
 				// The current patent type is not a utility, utility patents have got integer ids
@@ -160,10 +153,6 @@ public class XMLParser extends DefaultHandler {
 				document.setInventionTitle(new String(ch, start, length));
 			}
 
-			if (document.getInventionTitlePos() == 0) {
-				document.setInventionTitlePos(pos + start);
-			}
-
 			document.setInventionTitleLength(document.getInventionTitleLength() + length);
 		}
 
@@ -173,11 +162,6 @@ public class XMLParser extends DefaultHandler {
 			} else {
 				document.setPatentAbstract(new String(ch, start, length));
 			}
-
-			if (document.getPatentAbstractPos() == 0) {
-				document.setPatentAbstractPos(pos + start);
-			}
-
 			document.setPatentAbstractLength(document.getPatentAbstractLength() + length);
 		}
 	}

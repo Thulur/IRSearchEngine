@@ -27,7 +27,5 @@ public class IndexEncoderTest extends TestCase {
         Assert.assertEquals("4a00044404077faa", IndexEncoder.convertToVByte(41658452254261162l));
         // 8 Byte example
         Assert.assertEquals("6078486c00120871ac", IndexEncoder.convertToVByte(6985403392290076844l));
-
-        // TODO: Test numbers with 4-8 bytes (1-3 already done), 8 bytes will currently fail cause of an overflow
     }
 }
