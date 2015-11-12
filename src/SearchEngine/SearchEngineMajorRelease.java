@@ -18,12 +18,14 @@ package SearchEngine;
  * Keep in mind to include your implementation decisions also in the pdf file of each assignment
  */
 
+import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
-import SearchEngine.indexing.Index;
-import SearchEngine.indexing.FileIndexer;
-import SearchEngine.indexing.ParsedEventListener;
+import SearchEngine.data.FilePaths;
+import SearchEngine.index.FileIndexer;
+import SearchEngine.index.Index;
+import SearchEngine.index.ParsedEventListener;
+import SearchEngine.search.SearchFactory;
 import SearchEngine.utils.WordParser;
-import edu.stanford.nlp.ling.Word;
 
 import java.io.*;
 import java.util.*;
@@ -36,6 +38,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private int maxThreads = 4;
     private int curFileNum = -1;
     private Thread[] fileThreads;
+    private SearchFactory searchFactory;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -43,24 +46,37 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     @Override
-    void index(String directory) {
+    void index(String directory){
         start = System.nanoTime();
+        BufferedWriter docIdFile;
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader("data/xmlfiles.txt"));
             String filesString = reader.readLine();
             files = Arrays.asList(filesString.split("[,]"));
+            numRemainingFiles = files.size();
+            fileThreads = new Thread[files.size()];
+
+            docIdFile = new BufferedWriter(new FileWriter(FilePaths.DOC_IDS_FILE));
+
+            for (int i = 0; i < files.size(); ++i) {
+                fileThreads[i] = new Thread(new FileIndexer(files.get(i), i, this));
+                String fileId = "";
+                String filename = files.get(i);
+
+                if (filename.indexOf("ipg") >= 0) {
+                    fileId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
+                }
+                docIdFile.write(i + " cache" + fileId + ".txt" + "\n");
+            }
+
+            docIdFile.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        numRemainingFiles = files.size();
-        fileThreads = new Thread[files.size()];
-//        WordParser.getInstance().disableErrorOutput();
-
-        for (int i = 0; i < files.size(); ++i) {
-            fileThreads[i] = new Thread(new FileIndexer(files.get(i), this));
-        }
+        // Suppress output from corenlp for tokens send to the error output
+        WordParser.getInstance().disableErrorOutput();
 
         for (int i = 0; i < maxThreads && i < files.size(); ++i) {
             ++curFileNum;
@@ -69,17 +85,21 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
         try {
             for (int i = 0; i < files.size(); ++i) {
-                    fileThreads[i].join();
+                fileThreads[i].join();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        // Join all indices at the end
+        index.mergePartialIndices(files);
     }
 
     @Override
     boolean loadIndex(String directory) {
-        // TODO: loadFromFile should throw an IOException via signature
-        index.loadFromFile();
+        index.loadFromFile(FilePaths.INDEX_PATH);
+        searchFactory = new SearchFactory();
+        searchFactory.setIndex(index);
 
         return true;
     }
@@ -87,24 +107,35 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     void compressIndex(String directory) {
         index.compressIndex();
-        // for testing purposes
-        index.decompressLine();
+        searchFactory = new SearchFactory();
+        searchFactory.setIndex(index);
     }
 
     @Override
     boolean loadCompressedIndex(String directory) {
-
-        return false;
+        index.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH);
+        searchFactory = new SearchFactory();
+        searchFactory.setIndex(index);
+        return true;
     }
-    
+
     @Override
     ArrayList<String> search(String query, int topK, int prf) {
-        List<String> searchWords = WordParser.getInstance().stem(query);
-        WordParser.getInstance().removeStopwords(searchWords);
+        if (Configuration.COMPRESSED) {
+            return searchWithCompression(query, topK, prf);
+        } else {
+            return searchWithoutCompression(query, topK, prf);
+        }
+    }
+
+    private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
+        // TODO: Update the code to use current implementations
+        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
+        WordParser.getInstance().disableErrorOutput();
         ArrayList<String> results = new ArrayList<>();
 
-        for (String word: searchWords) {
-            List<Document> documents = index.lookUpPostingInFile(word, "data/postinglist.txt");
+        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
+            List<Document> documents = index.lookUpPostingInFile(entry.getKey());
 
             for (Document document: documents) {
                 results.add(document.getInventionTitle());
@@ -114,6 +145,16 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         return results;
     }
 
+    private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
+        ArrayList<Document> documents = searchFactory.getSearchFromQuery(query, topK, prf).execute();
+        ArrayList<String> results = new ArrayList<>();
+
+        for (Document document: documents) {
+            results.add(document.getDocId() + "------" + document.getInventionTitle());
+        }
+
+        return results;
+    }
 
     //Observer methods
     @Override
@@ -131,12 +172,10 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
 
         if (numRemainingFiles == 0) {
-            index.mergePartialIndices(files);
             WordParser.getInstance().enableErrorOutput();
             System.out.println("Finished parsing!");
             Long end = System.nanoTime();
             System.out.println("Indexing took " + ((end - start)/1000000000) + " seconds.");
-
         }
     }
 }

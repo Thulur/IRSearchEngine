@@ -1,6 +1,7 @@
-package SearchEngine.indexing;
+package SearchEngine.index;
 
 import SearchEngine.data.Document;
+import SearchEngine.data.FilePaths;
 import SearchEngine.data.WordMetaData;
 import SearchEngine.utils.WordParser;
 
@@ -19,21 +20,25 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     private XMLParser xmlApp = new XMLParser();
     private HashMap<String, Long> values = new HashMap<>();
     private RandomAccessFile tmpPostingList;
+    private RandomAccessFile cacheFile;
     private String filenameId;
     private String filename;
+    private int docId;
 
-    public FileIndexer(String filename, ParsedEventListener parsingStateListener) {
+    public FileIndexer(String filename, int docId, ParsedEventListener parsingStateListener) {
         xmlApp.addDocumentParsedListener(parsingStateListener);
         xmlApp.addDocumentParsedListener(this);
         this.filename = filename;
         filenameId = "";
+        this.docId = docId;
 
         if (filename.indexOf("ipg") != -1) {
             filenameId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
         }
 
         try {
-            tmpPostingList = new RandomAccessFile("data/partialindices/tmppostinglist" + filenameId + ".txt", "rw");
+            tmpPostingList = new RandomAccessFile(FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt", "rw");
+            cacheFile = new RandomAccessFile(FilePaths.CACHE_PATH + "cache" + filenameId + ".txt", "rw");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -42,10 +47,12 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     @Override
     public void run() {
         try {
-            xmlApp.parseFiles("data/ipgxml/" + filename);
+            xmlApp.parseFiles(FilePaths.RAW_PARTIAL_PATH + filename);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        save();
     }
 
     @Override
@@ -55,7 +62,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
     @Override
     public void finishedParsing() {
-        save();
+        //save();
     }
 
     private void processDocument(Document document) {
@@ -63,37 +70,47 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     }
 
     public void addToIndex(Document document) {
-        List<String> words = WordParser.getInstance().stem(document.getPatentAbstract());
-        List<String> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle());
-        // Add every word in stemmedTitle to words, that is not in words
-        stemmedTitle.stream().filter(word -> !words.contains(word)).forEach(words::add);
-        WordParser.getInstance().removeStopwords(words);
+        Map<String, List<Long>> words = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
+        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
 
-        String patentAbstract = document.getPatentAbstract().toLowerCase();
-        String inventionTitle = document.getInventionTitle().toLowerCase();
+        for (Map.Entry<String, List<Long>> entry : stemmedTitle.entrySet()) {
+            String word = entry.getKey();
+            List<Long> occurrences = entry.getValue();
 
-        for (String word: words) {
+            if (words.containsKey(word)) {
+                List<Long> tmpList = words.get(word);
+                tmpList.addAll(occurrences);
+            } else {
+                words.put(word, occurrences);
+            }
+        }
+
+        for (Map.Entry<String, List<Long>> entry : words.entrySet()) {
+            String word = entry.getKey();
+            List<Long> occurrences = entry.getValue();
             WordMetaData metaData = new WordMetaData();
+            metaData.setDocId(docId);
             metaData.setPatentDocId(document.getDocId());
-            metaData.setAbstractPos(document.getPatentAbstractPos());
+            try {
+                metaData.setInventionTitlePos(cacheFile.getFilePointer());
+                cacheFile.writeUTF(document.getInventionTitle());
+                metaData.setAbstractPos(cacheFile.getFilePointer());
+                cacheFile.writeUTF(document.getPatentAbstract());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             metaData.setAbstractLength(document.getPatentAbstractLength());
-            metaData.setInventionTitlePos(document.getInventionTitlePos());
             metaData.setInventionTitleLength(document.getInventionTitleLength());
 
-            for (int i = -1; (i = patentAbstract.indexOf(word, i + 1)) != -1; ) {
-                metaData.addWordOccurrence(i + metaData.getAbstractPos());
-            }
-
-            for (int i = -1; (i = inventionTitle.indexOf(word, i + 1)) != -1; ) {
-                metaData.addWordOccurrence(i + metaData.getInventionTitlePos());
-            }
+            occurrences.forEach(metaData::addWordOccurrence);
+            metaData.sortOccurences();
 
             try {
                 if (values.get(word) == null) {
-                    values.put(word, tmpPostingList.getChannel().position());
+                    values.put(word, tmpPostingList.getFilePointer());
                     tmpPostingList.writeBytes("-1," + metaData.toString());
                 } else {
-                    long tmpPos = tmpPostingList.getChannel().position();
+                    long tmpPos = tmpPostingList.getFilePointer();
                     tmpPostingList.writeBytes(values.get(word).toString() + "," + metaData.toString());
                     values.put(word, tmpPos);
                 }
@@ -105,8 +122,8 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
     private void save() {
         try {
-            RandomAccessFile dictionaryFile = new RandomAccessFile("data/partialindices/index" + filenameId + ".txt", "rw");
-            RandomAccessFile postingListFile = new RandomAccessFile("data/partialindices/postinglist" + filenameId + ".txt", "rw");
+            RandomAccessFile dictionaryFile = new RandomAccessFile(FilePaths.PARTIAL_PATH + "index" + filenameId + ".txt", "rw");
+            RandomAccessFile postingListFile = new RandomAccessFile(FilePaths.PARTIAL_PATH + "postinglist" + filenameId + ".txt", "rw");
             Map<String, Long> sortedMap = new TreeMap<>(values);
 
             for (Map.Entry<String, Long> entry : sortedMap.entrySet()) {
@@ -127,14 +144,14 @@ public class FileIndexer implements Runnable, ParsedEventListener {
                 }
 
                 Long filePos = postingListFile.getChannel().position();
-                dictionaryFile.writeBytes(key + " " + filePos.toString() + "\n");
+                dictionaryFile.writeUTF(key + " " + filePos.toString());
                 postingListFile.writeBytes(postingListEntry + "\n");
             }
 
             dictionaryFile.close();
             postingListFile.close();
             tmpPostingList.close();
-            File tmpFile = new File ("data/partialindices/tmppostinglist" + filenameId + ".txt");
+            File tmpFile = new File (FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt");
             tmpFile.delete();
         } catch (IOException e) {
             e.printStackTrace();
