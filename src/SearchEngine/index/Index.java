@@ -260,27 +260,10 @@ public class Index {
 
     public String decompressLine(String line) {
         String[] input = line.split(";");
+        int numCount = 0;
+        int patentId = 0;
 
         String[] decimalInput = new String[input.length];
-
-        for (int i = 0; i < input.length; i++) {
-            String tmpValue = "";
-
-            for (int j = 0; j < input[i].length(); j += 2) {
-                tmpValue += input[i].substring(j, j + 2);
-
-                if (input[i].charAt(j) >= 56) {
-                    if (decimalInput[i] == null) {
-                        decimalInput[i] = convertToDecimalString(Long.parseLong(tmpValue, 16)) + ",";
-                    } else {
-                        decimalInput[i] += convertToDecimalString(Long.parseLong(tmpValue, 16)) + ",";
-                    }
-                    tmpValue = "";
-                }
-            }
-            decimalInput[i] = decimalInput[i].substring(0, decimalInput[i].length()-1);
-        }
-
         int[] docIds = new int[decimalInput.length];
         long[] patentDocIdDeltas = new long[decimalInput.length];
         int[] numberOfOccurrences = new int[decimalInput.length];
@@ -289,6 +272,31 @@ public class Index {
         int[] abstractLenghts = new int[decimalInput.length];
         long[] invTitlePositions = new long[decimalInput.length];
         int[] invTitleLenghts = new int[decimalInput.length];
+
+        for (int i = 0; i < input.length; i++) {
+            String tmpValue = "";
+
+            for (int j = 0; j < input[i].length(); j += 2) {
+                tmpValue += input[i].substring(j, j + 2);
+
+                // A hexadecimal value greater or equal 8 is found => the 8th bit of a byte is set
+                if (input[i].charAt(j) >= 56) {
+                    long curNum = convertToDecimal(Long.parseLong(tmpValue, 16));
+                    if (decimalInput[i] == null) {
+                        decimalInput[i] =  curNum + ",";
+                    } else {
+                        decimalInput[i] += curNum + ",";
+                    }
+                    tmpValue = "";
+                    ++numCount;
+                }
+            }
+            decimalInput[i] = decimalInput[i].substring(0, decimalInput[i].length()-1);
+
+        }
+
+        // Basically just the delta decoding refactor this ...
+        // in should work in place with a few more variables in the loop above
 
         for (int i = 0; i < decimalInput.length; i++) {
             String[] split = decimalInput[i].split(",");
@@ -352,7 +360,7 @@ public class Index {
         return decompressed;
     }
 
-    private long convertToDecimalString(long vByteValue) {
+    private long convertToDecimal(long vByteValue) {
         long result = 0;
         int i = 0;
 
