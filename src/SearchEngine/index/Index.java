@@ -3,6 +3,7 @@ package SearchEngine.index;
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
 import SearchEngine.utils.IndexEncoder;
+import SearchEngine.utils.NumberParser;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -259,105 +260,47 @@ public class Index {
     }
 
     public String decompressLine(String line) {
-        String[] input = line.split(";");
+        StringBuilder decompressed = new StringBuilder();
+
         int numCount = 0;
-        int patentId = 0;
+        long patentId = 0;
+        long occurrence = 0;
+        long numOcc = 0;
+        int lastStart = 0;
+        long curNum;
+        for (int i = 0; i < line.length() - 1; i += 2) {
+            // A hexadecimal value greater or equal 8 is found => the 8th bit of a byte is set
+            if (line.charAt(i) >= '8') {
+                curNum = convertToDecimal(NumberParser.parseHexadecimalLong(line.substring(lastStart, i + 2)));
 
-        String[] decimalInput = new String[input.length];
-        int[] docIds = new int[decimalInput.length];
-        long[] patentDocIdDeltas = new long[decimalInput.length];
-        int[] numberOfOccurrences = new int[decimalInput.length];
-        LinkedList<long[]> occurrenceDeltas = new LinkedList<>();
-        long[] abstractPositions = new long[decimalInput.length];
-        int[] abstractLenghts = new int[decimalInput.length];
-        long[] invTitlePositions = new long[decimalInput.length];
-        int[] invTitleLenghts = new int[decimalInput.length];
+                if (numCount == 1) {
+                    patentId += curNum;
+                    decompressed.append(patentId + ",");
+                } else if (numCount == 6) {
+                    decompressed.append(curNum + ",");
+                    numOcc = curNum;
+                } else if (numCount >= 7) {
+                    occurrence += curNum;
+                    decompressed.append(occurrence);
 
-        for (int i = 0; i < input.length; i++) {
-            String tmpValue = "";
-
-            for (int j = 0; j < input[i].length(); j += 2) {
-                tmpValue += input[i].substring(j, j + 2);
-
-                // A hexadecimal value greater or equal 8 is found => the 8th bit of a byte is set
-                if (input[i].charAt(j) >= 56) {
-                    long curNum = convertToDecimal(Long.parseLong(tmpValue, 16));
-                    if (decimalInput[i] == null) {
-                        decimalInput[i] =  curNum + ",";
+                    if (numCount == numOcc + 6) {
+                        decompressed.append(";");
+                        numCount = -1;
+                        occurrence = 0;
+                        ++i;
                     } else {
-                        decimalInput[i] += curNum + ",";
+                        decompressed.append(",");
                     }
-                    tmpValue = "";
-                    ++numCount;
+                } else {
+                    decompressed.append(curNum + ",");
                 }
-            }
-            decimalInput[i] = decimalInput[i].substring(0, decimalInput[i].length()-1);
 
-        }
-
-        // Basically just the delta decoding refactor this ...
-        // in should work in place with a few more variables in the loop above
-
-        for (int i = 0; i < decimalInput.length; i++) {
-            String[] split = decimalInput[i].split(",");
-
-            docIds[i] = Integer.parseInt(split[0]);
-            patentDocIdDeltas[i] = Long.parseLong(split[1]);
-            invTitlePositions[i] = Long.parseLong(split[2]);
-            abstractPositions[i] = Long.parseLong(split[3]);
-            invTitleLenghts[i] = Integer.parseInt(split[4]);
-            abstractLenghts[i] = Integer.parseInt(split[5]);
-
-            numberOfOccurrences[i] = Integer.parseInt(split[6]);
-
-            occurrenceDeltas.add(i, new long[numberOfOccurrences[i]]);
-
-            for (int j = 0; j < numberOfOccurrences[i]; j++) {
-                occurrenceDeltas.get(i)[j] = Long.parseLong(split[j+7]);
+                ++numCount;
+                lastStart = i + 2;
             }
         }
 
-        long[] patentDocIds = new long[decimalInput.length];
-        patentDocIds[0] = patentDocIdDeltas[0];
-
-        LinkedList<long[]> occurrences = new LinkedList<>();
-
-        for (int i = 1; i < decimalInput.length ; i++) {
-            patentDocIds[i] = patentDocIdDeltas[i] + patentDocIds[i-1];
-        }
-
-        for (int i = 0; i < decimalInput.length; i++) {
-            occurrences.add(i, new long[numberOfOccurrences[i]]);
-
-            // error prevention, see issue #10 on github
-            if (occurrenceDeltas.get(i).length > 0) {
-                occurrences.get(i)[0] = occurrenceDeltas.get(i)[0];
-
-                for (int j = 1; j < occurrenceDeltas.get(i).length; j++) {
-                    occurrences.get(i)[j] = occurrenceDeltas.get(i)[j] + occurrences.get(i)[j-1];
-                }
-            }
-        }
-
-        String decompressed = new String();
-
-        for (int i = 0; i < decimalInput.length; i++) {
-            decompressed += docIds[i] + ",";
-            decompressed += patentDocIds[i] + ",";
-            decompressed += invTitlePositions[i] + ",";
-            decompressed += abstractPositions[i] + ",";
-            decompressed +=  invTitleLenghts[i] + ",";
-            decompressed += abstractLenghts[i] + ",";
-            decompressed += numberOfOccurrences[i];
-
-            for (int j = 0; j < occurrences.get(i).length; j++) {
-                decompressed += "," + occurrences.get(i)[j];
-            }
-
-            decompressed += ";";
-        }
-
-        return decompressed;
+        return decompressed.toString();
     }
 
     private long convertToDecimal(long vByteValue) {
