@@ -224,7 +224,6 @@ public class Index {
                         compressed.append(IndexEncoder.convertToVByte(occurrenceDelta));
 
                             if (numCount == numOcc + 6) {
-                            compressed.append(";");
                             numCount = -1;
                             lastOccurrence = 0;
 
@@ -280,7 +279,6 @@ public class Index {
                         decompressed.append(";");
                         numCount = -1;
                         occurrence = 0;
-                        ++i;
                     } else {
                         decompressed.append(",");
                     }
