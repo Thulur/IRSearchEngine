@@ -19,7 +19,7 @@ public class SearchEngineTest {
         
         long start = System.currentTimeMillis();
 
-        myEngine.index("");
+        //myEngine.index("");
         
         long time = System.currentTimeMillis() - start;
         
@@ -30,7 +30,7 @@ public class SearchEngineTest {
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        myEngine.compressIndex("");
+        //myEngine.compressIndex("");
         myEngine.loadCompressedIndex("");
 
         start = System.nanoTime();
@@ -43,7 +43,7 @@ public class SearchEngineTest {
         //System.out.println("\nmethods NOT inventions:");
         //myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
         System.out.println("\ndata OR method:");
-        myEngine.search("data OR method", 0, 0).forEach(System.out::println);
+        myEngine.search("data OR method", 0, 0);//.forEach(System.out::println);
 
         /*System.out.println("\nprov* NOT free:");
         myEngine.search("prov* NOT free", 0, 0).forEach(System.out::println);

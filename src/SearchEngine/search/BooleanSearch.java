@@ -62,9 +62,20 @@ public class BooleanSearch implements Search {
     }
 
     private void executeBooleanOperation() {
-        Iterator<List<Document>> iterator = searchResults.values().iterator();
-        Set<Document> firstSet = new HashSet<>(iterator.next());
-        Set<Document> secondSet = new HashSet<>(iterator.next());
+        Iterator<List<Document>> searchIterator = searchResults.values().iterator();
+        Set<Integer> firstSet = new HashSet<>();
+        Set<Integer> secondSet = new HashSet<>();
+        Map<Integer, Document> docs = new HashMap<>();
+
+        for (Document doc: searchIterator.next()) {
+            firstSet.add(doc.getDocId());
+            docs.put(doc.getDocId(), doc);
+        }
+
+        for (Document doc: searchIterator.next()) {
+            secondSet.add(doc.getDocId());
+            docs.put(doc.getDocId(), doc);
+        }
 
         switch (booleanOperator) {
             case "AND":  firstSet.retainAll(secondSet); break;
@@ -72,7 +83,9 @@ public class BooleanSearch implements Search {
             case "NOT": firstSet.removeAll(secondSet); break;
             default: break;
         }
-
-        results.addAll(firstSet);
+        Iterator<Integer> docIdIterator = firstSet.iterator();
+        while (docIdIterator.hasNext()) {
+            results.add(docs.get(docIdIterator.next()));
+        }
     }
 }

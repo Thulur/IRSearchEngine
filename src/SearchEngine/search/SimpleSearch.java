@@ -36,25 +36,22 @@ public class SimpleSearch implements Search {
     }
 
     private ArrayList<Document> processSimpleQuery() {
-        String strippedQuery = new String();
         List<String> wildcardTokens = new LinkedList<>();
 
+        List<String> searchWords = new LinkedList<>();
         // TODO: According to the exercise sheet 5 wildcards are part of boolean queries
-        for (String queryToken: searchTerm.split(" ")) {
+        for (String queryToken: searchTerm.split("[\\s.,!?:;]")) {
             if (queryToken.contains("*")) wildcardTokens.add(queryToken);
-            else strippedQuery += queryToken + " ";
+            else searchWords.add(WordParser.getInstance().stemSingleWord(queryToken));
         }
 
-        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(strippedQuery, true);
-
         for (String wildcardToken: wildcardTokens) {
-            searchWords.put(wildcardToken, null);
+            searchWords.add(wildcardToken);
         }
 
         ArrayList<Document> documents = new ArrayList<>();
-
-        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
-            documents.addAll(index.lookUpPostingInFileWithCompression(entry.getKey()));
+        for (String searchWord: searchWords) {
+            documents.addAll(index.lookUpPostingInFileWithCompression(searchWord));
         }
 
         return documents;

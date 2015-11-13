@@ -71,9 +71,17 @@ public class WordParser {
     }
 
     public String stemSingleWord(String word) {
-        Map<String, List<Long>> result = genericStem(word, false, 0l);
+        StringTokenizer test = new StringTokenizer(word);
+        EnglishStemmer stemmer = new EnglishStemmer();
+        stemmer.setCurrent(test.nextToken());
 
-        return result.keySet().iterator().next();
+        if (stemmer.stem()) {
+            word = stemmer.getCurrent();
+        } else {
+            System.out.println("Stemmer error");
+        }
+
+        return word;
     }
 
     /**
@@ -124,45 +132,38 @@ public class WordParser {
     private Map<String, List<Long>> genericStem(String text, Boolean filterStopwords, Long pos) {
         // Negative values should not be passed as position
         assert pos >= 0;
+        String[] inputWords = text.split("[\\s+,.?!()]");
 
         EnglishStemmer stemmer = new EnglishStemmer();
         Map<String, List<Long>> words = new HashMap<>();
-        Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos");
-        StanfordCoreNLP pipeline = new StanfordCoreNLP(props, false);
-        Annotation document = pipeline.process(text);
+        long numWord = 0;
+        String word;
 
-        for(CoreMap sentence: document.get(CoreAnnotations.SentencesAnnotation.class))
-        {
-            for(CoreLabel token: sentence.get(CoreAnnotations.TokensAnnotation.class))
-            {
-                String word = token.get(CoreAnnotations.TextAnnotation.class).toLowerCase();
-                Long tmpInt = token.beginPosition() + pos;
-                stemmer.setCurrent(word);
-
-                if (stemmer.stem()) {
-                     word = stemmer.getCurrent();
-                } else {
-                    System.out.println("Stemmer error");
-                }
-
-                // Do not save stopwords if the user does not want them as a part of the result
-                if (filterStopwords && stopWords.contains(word)) {
-                    continue;
-                }
-
-                if (words.get(word) == null) {
-                    List<Long> tmpList = new LinkedList<>();
-                    tmpList.add(tmpInt);
-                    words.put(word, tmpList);
-                } else {
-                    List<Long> tmpList = words.get(word);
-                    tmpList.add(tmpInt);
-                }
+        for (String tmpWord: inputWords) {
+            word = tmpWord.toLowerCase();
+            if ((filterStopwords && stopWords.contains(word)) | word.length() == 0) {
+                continue;
             }
-        }
 
-        punctuation.forEach(words::remove);
+            stemmer.setCurrent(word);
+
+            if (stemmer.stem()) {
+                word = stemmer.getCurrent();
+            } else {
+                System.out.println("Stemmer error");
+            }
+
+            if (words.get(word) == null) {
+                List<Long> tmpList = new LinkedList<>();
+                tmpList.add(numWord);
+                words.put(word, tmpList);
+            } else {
+                List<Long> tmpList = words.get(word);
+                tmpList.add(numWord);
+            }
+
+            ++numWord;
+        }
 
         return words;
     }
