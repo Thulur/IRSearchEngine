@@ -166,90 +166,83 @@ public class Index {
     public void compressIndex() {
         //read entry from file
         try {
-            BufferedReader postingReader = new BufferedReader(new FileReader(FilePaths.POSTINGLIST_PATH));
+            RandomAccessFile postingReader = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "r");
             RandomAccessFile indexWriter = new RandomAccessFile(FilePaths.COMPRESSED_INDEX_PATH, "rw");
             RandomAccessFile postingWriter = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "rw");
 
             loadFromFile(FilePaths.INDEX_PATH);
 
+            String curLine;
+            StringBuilder compressed = new StringBuilder();
+            int i;
+            int semicolonPos;
+            int commaPos;
+            int separatorPos;
+            long lastPatentId;
+            long patentIdDelta;
+            long lastOccurrence = 0;
+            long occurrenceDelta;
+            int numCount;
+            long numOcc;
+            long curNum;
+            long seek;
+            boolean lastEntry;
             for (String key: values.keySet()) {
-                String[] input = postingReader.readLine().split(";");
+                compressed.setLength(0);
+                i = 0;
+                lastEntry = false;
+                numCount = 0;
+                numOcc = 0;
+                lastPatentId = 0;
+                curLine = postingReader.readLine();
 
-                int[] docIds = new int[input.length];
-                long[] patentDocIds = new long[input.length];
-                int[] numberOfOccurrences = new int[input.length];
-                LinkedList<long[]> occurrences = new LinkedList<>();
-                long[] abstractPositions = new long[input.length];
-                int[] abstractLenghts = new int[input.length];
-                long[] invTitlePositions = new long[input.length];
-                int[] invTitleLenghts = new int[input.length];
+                while (i < curLine.length()) {
+                    commaPos = curLine.indexOf(",", i);
+                    semicolonPos = curLine.indexOf(";", i);
+                    if (commaPos != -1 && commaPos < semicolonPos) {
+                        separatorPos = commaPos;
+                    } else {
+                        separatorPos = semicolonPos;
 
-                for (int i = 0; i < input.length; i++) {
-                    String[] split = input[i].split(",");
-
-                    docIds[i] = Integer.parseInt(split[0]);
-                    patentDocIds[i] = Long.parseLong(split[1]);
-                    invTitlePositions[i] = Long.parseLong(split[2]);
-                    abstractPositions[i] = Long.parseLong(split[3]);
-                    invTitleLenghts[i] = Integer.parseInt(split[4]);
-                    abstractLenghts[i] = Integer.parseInt(split[5]);
-                    numberOfOccurrences[i] = Integer.parseInt(split[6]);
-
-                    occurrences.add(i, new long[numberOfOccurrences[i]]);
-
-                    for (int j = 0; j < numberOfOccurrences[i]; j++) {
-                        occurrences.get(i)[j] = Long.parseLong(split[j+7]);
-                    }
-                }
-
-                long[] patentDocIdDeltas = new long[input.length];
-                patentDocIdDeltas[0] = patentDocIds[0];
-
-                LinkedList<long[]> occurrenceDeltas = new LinkedList<>();
-
-                for (int i = 1; i < input.length ; i++) {
-                    patentDocIdDeltas[i] = patentDocIds[i] - patentDocIds[i-1];
-                }
-
-                for (int i = 0; i < input.length; i++) {
-                    occurrenceDeltas.add(i, new long[numberOfOccurrences[i]]);
-
-                    // error prevention, see issue #10 on github
-                    if (numberOfOccurrences[i] > 0) {
-
-                        occurrenceDeltas.get(i)[0] = occurrences.get(i)[0];
-
-                        for (int j = 1; j < occurrences.get(i).length ; j++) {
-                            occurrenceDeltas.get(i)[j] = occurrences.get(i)[j] - occurrences.get(i)[j-1];
+                        if (commaPos == -1) {
+                            lastEntry = true;
                         }
-
-                    }
-                }
-
-                // create compressed string
-
-                String compressed = new String();
-
-                for (int i = 0; i < input.length; i++) {
-                    compressed += IndexEncoder.convertToVByte(docIds[i]);
-                    compressed += IndexEncoder.convertToVByte(patentDocIdDeltas[i]);
-                    compressed += IndexEncoder.convertToVByte(invTitlePositions[i]);
-                    compressed += IndexEncoder.convertToVByte(abstractPositions[i]);
-                    compressed += IndexEncoder.convertToVByte(invTitleLenghts[i]);
-                    compressed += IndexEncoder.convertToVByte(abstractLenghts[i]);
-                    compressed += IndexEncoder.convertToVByte(numberOfOccurrences[i]);
-
-                    for (int j = 0; j < occurrenceDeltas.get(i).length; j++) {
-                        compressed += IndexEncoder.convertToVByte(occurrenceDeltas.get(i)[j]);
                     }
 
-                    compressed += ";";
+                    curNum = Long.parseLong(curLine.substring(i, separatorPos));
+
+                    if (numCount == 1) {
+                        patentIdDelta = curNum - lastPatentId;
+                        lastPatentId = curNum;
+                        compressed.append(IndexEncoder.convertToVByte(patentIdDelta));
+                    } else if (numCount == 6) {
+                        compressed.append(IndexEncoder.convertToVByte(curNum));
+                        numOcc = curNum;
+                    } else if (numCount >= 7) {
+                        occurrenceDelta = curNum - lastOccurrence;
+                        lastOccurrence = curNum;
+                        compressed.append(IndexEncoder.convertToVByte(occurrenceDelta));
+
+                            if (numCount == numOcc + 6) {
+                            compressed.append(";");
+                            numCount = -1;
+                            lastOccurrence = 0;
+
+                            if (lastEntry) {
+                                break;
+                            }
+                        }
+                    } else {
+                        compressed.append(IndexEncoder.convertToVByte(curNum));
+                    }
+
+                    i = separatorPos + 1;
+                    ++numCount;
                 }
 
-                long seek = postingWriter.getChannel().position();
+                seek = postingWriter.getFilePointer();
 
                 postingWriter.writeBytes(compressed + "\n");
-
                 indexWriter.writeUTF(key + " " + seek);
             }
             postingWriter.close();
