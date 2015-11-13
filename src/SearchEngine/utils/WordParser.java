@@ -71,8 +71,9 @@ public class WordParser {
     }
 
     public String stemSingleWord(String word) {
+        StringTokenizer test = new StringTokenizer(word);
         EnglishStemmer stemmer = new EnglishStemmer();
-        stemmer.setCurrent(word);
+        stemmer.setCurrent(test.nextToken());
 
         if (stemmer.stem()) {
             word = stemmer.getCurrent();

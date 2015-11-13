@@ -40,9 +40,9 @@ public class SimpleSearch implements Search {
 
         List<String> searchWords = new LinkedList<>();
         // TODO: According to the exercise sheet 5 wildcards are part of boolean queries
-        for (String queryToken: searchTerm.split(" ")) {
+        for (String queryToken: searchTerm.split("[\\s.,!?:;-]")) {
             if (queryToken.contains("*")) wildcardTokens.add(queryToken);
-            else searchWords.add(queryToken);
+            else searchWords.add(WordParser.getInstance().stemSingleWord(queryToken));
         }
 
         for (String wildcardToken: wildcardTokens) {
