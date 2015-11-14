@@ -92,7 +92,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        
+
         // Join all indices at the end
         index.mergePartialIndices(files);
     }

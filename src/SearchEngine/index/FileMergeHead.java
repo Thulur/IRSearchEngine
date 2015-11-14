@@ -1,6 +1,7 @@
 package SearchEngine.index;
 
 import SearchEngine.data.FilePaths;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -35,7 +36,7 @@ public class FileMergeHead {
         }
     }
 
-    public Boolean nextLine() {
+    public Boolean nextIndexLine() {
         String curLine = null;
 
         try {
@@ -60,21 +61,8 @@ public class FileMergeHead {
     }
 
     public String getPostinglistLine() {
-        String result = "";
-
-        // First take a look at cached values
-        if (lastReadPostingLine != null) {
-            result = lastReadPostingLine;
-        } else {
-            try {
-                result = postinglistFile.readLine();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        // Something should be read every time
-        assert result != "";
+        loadPostinglistLine();
+        String result = lastReadPostingLine;
 
         // Empty the cache
         lastReadPostingLine = null;
@@ -82,16 +70,17 @@ public class FileMergeHead {
         return result;
     }
 
+    public int docNumInCurLine() {
+        loadPostinglistLine();
+        // Every patent entry ends with a semicolon
+        return StringUtils.countMatches(lastReadPostingLine, ";");
+    }
+
     public int getFirstPatentId() {
-        try {
-            lastReadPostingLine = postinglistFile.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        loadPostinglistLine();
 
         int firstComma = lastReadPostingLine.indexOf(",");
         int secondComma = lastReadPostingLine.indexOf(",", firstComma + 1);
-
         int patentId = Integer.parseInt(lastReadPostingLine.substring(firstComma + 1, secondComma));
 
         return patentId;
@@ -103,5 +92,15 @@ public class FileMergeHead {
 
     public long getPosition() {
         return position;
+    }
+
+    private void loadPostinglistLine() {
+        if (lastReadPostingLine == null) {
+            try {
+                lastReadPostingLine = postinglistFile.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

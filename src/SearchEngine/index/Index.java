@@ -104,7 +104,7 @@ public class Index {
                     for (FileMergeHead file: curTokens.get(curWord)) {
                         sortedPostings.put(file.getFirstPatentId(), file);
 
-                        if (file.nextLine()) {
+                        if (file.nextIndexLine()) {
                             if (curTokens.containsKey(file.getToken())) {
                                 List<FileMergeHead> tmpList = curTokens.get(file.getToken());
                                 tmpList.add(file);
