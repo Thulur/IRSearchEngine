@@ -16,6 +16,8 @@
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-snowball:3.0.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-core:3.0.3" level="project" />
     <orderEntry type="library" name="Maven: org.jsoup:jsoup:1.8.3" level="project" />
     <orderEntry type="library" name="Maven: sax:sax:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.lucene:lucene-snowball:3.0.3" level="project" />

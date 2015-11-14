@@ -22,8 +22,6 @@ public class SimpleSearch implements Search {
 
     @Override
     public ArrayList<Document> execute() {
-        WordParser.getInstance().disableErrorOutput();
-
         ArrayList<Document> documents;
 
         if (searchTerm.startsWith("\"") && searchTerm.endsWith("\"")) {

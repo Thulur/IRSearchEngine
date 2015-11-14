@@ -35,7 +35,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private int numRemainingFiles;
     private List<String> files = new LinkedList<>();
     private Long start;
-    private int maxThreads = 4;
+    private int maxThreads = 1;
     private int curFileNum = -1;
     private Thread[] fileThreads;
     private SearchFactory searchFactory;
@@ -74,9 +74,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        // Suppress output from corenlp for tokens send to the error output
-        WordParser.getInstance().disableErrorOutput();
 
         for (int i = 0; i < maxThreads && i < files.size(); ++i) {
             ++curFileNum;
@@ -131,7 +128,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
         // TODO: Update the code to use current implementations
         Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
-        WordParser.getInstance().disableErrorOutput();
         ArrayList<String> results = new ArrayList<>();
 
         for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
@@ -172,7 +168,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
 
         if (numRemainingFiles == 0) {
-            WordParser.getInstance().enableErrorOutput();
             System.out.println("Finished parsing!");
             Long end = System.nanoTime();
             System.out.println("Indexing took " + ((end - start)/1000000000) + " seconds.");

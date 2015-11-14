@@ -24,6 +24,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     private String filenameId;
     private String filename;
     private int docId;
+    private StringBuilder tmpFileBuffer = new StringBuilder();
 
     public FileIndexer(String filename, int docId, ParsedEventListener parsingStateListener) {
         xmlApp.addDocumentParsedListener(parsingStateListener);
@@ -52,6 +53,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             e.printStackTrace();
         }
 
+        flush();
         save();
     }
 
@@ -107,17 +109,39 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
             try {
                 if (values.get(word) == null) {
-                    values.put(word, tmpPostingList.getFilePointer());
-                    tmpPostingList.writeBytes("-1," + metaData.toString());
+                    values.put(word, tmpPostingList.getFilePointer() + tmpFileBuffer.length());
+                    write("-1," + metaData.toString());
                 } else {
-                    long tmpPos = tmpPostingList.getFilePointer();
-                    tmpPostingList.writeBytes(values.get(word).toString() + "," + metaData.toString());
+                    long tmpPos = tmpPostingList.getFilePointer() + tmpFileBuffer.length();
+                    write(values.get(word).toString() + "," + metaData.toString());
                     values.put(word, tmpPos);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void write(String s) {
+        tmpFileBuffer.append(s);
+
+        if (tmpFileBuffer.length() > 16384) {
+            writeResetBuffer();
+        }
+    }
+
+    private void flush() {
+        writeResetBuffer();
+    }
+
+    private void writeResetBuffer() {
+        try {
+            tmpPostingList.writeBytes(tmpFileBuffer.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        tmpFileBuffer.setLength(0);
     }
 
     private void save() {

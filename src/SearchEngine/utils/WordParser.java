@@ -19,7 +19,6 @@ import java.util.*;
 public class WordParser {
     private static WordParser instance;
     private List<String> stopWords = new LinkedList<>();
-    private PrintStream err = System.err;
     List<String> punctuation = new LinkedList<>();
 
     private WordParser() {
@@ -46,19 +45,6 @@ public class WordParser {
             WordParser.instance = new WordParser();
         }
         return WordParser.instance;
-    }
-
-    public void disableErrorOutput() {
-        if (Configuration.DISABLE_ERROR_OUTPUT) {
-            System.setErr(new PrintStream(new OutputStream() {
-                public void write(int b) {
-                }
-            }));
-        }
-    }
-
-    public void enableErrorOutput() {
-        System.setErr(err);
     }
 
     /**
