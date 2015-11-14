@@ -21,15 +21,11 @@ public class WordMetaData {
 
     }
 
-    public WordMetaData(String metaDataString) {
-
-    }
-
     public void addWordOccurrence(long pos) {
         occurrences.add(pos);
     }
 
-    public void sortOccurences() {
+    public void sortOccurrences() {
         Collections.sort(occurrences);
     }
 
@@ -38,7 +34,7 @@ public class WordMetaData {
         String metaDataString = new String();
 
         metaDataString += docId + "," + patentDocId + ",";
-        metaDataString += inventionTitlePos + "," + abstractPos + "," + inventionTitleLength + "," + abstractLength + ",";
+        metaDataString += inventionTitlePos + "," + abstractPos + ",";
         metaDataString += occurrences.size();
 
         for (long occurrence: occurrences) {

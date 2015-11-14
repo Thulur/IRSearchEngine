@@ -70,10 +70,10 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     }
 
     public void addToIndex(Document document) {
-        Map<String, List<Long>> words = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
-        Map<String, List<Long>> stemmedTitle = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
+        Map<String, List<Long>> words = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
+        Map<String, List<Long>> stemmedAbstract = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
 
-        for (Map.Entry<String, List<Long>> entry : stemmedTitle.entrySet()) {
+        for (Map.Entry<String, List<Long>> entry : stemmedAbstract.entrySet()) {
             String word = entry.getKey();
             List<Long> occurrences = entry.getValue();
 
@@ -99,11 +99,11 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            metaData.setAbstractLength(document.getPatentAbstractLength());
+
             metaData.setInventionTitleLength(document.getInventionTitleLength());
 
             occurrences.forEach(metaData::addWordOccurrence);
-            metaData.sortOccurences();
+            metaData.sortOccurrences();
 
             try {
                 if (values.get(word) == null) {

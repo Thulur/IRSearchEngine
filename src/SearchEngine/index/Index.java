@@ -215,15 +215,15 @@ public class Index {
                         patentIdDelta = curNum - lastPatentId;
                         lastPatentId = curNum;
                         compressed.append(IndexEncoder.convertToVByte(patentIdDelta));
-                    } else if (numCount == 6) {
+                    } else if (numCount == 4) {
                         compressed.append(IndexEncoder.convertToVByte(curNum));
                         numOcc = curNum;
-                    } else if (numCount >= 7) {
+                    } else if (numCount >= 5) {
                         occurrenceDelta = curNum - lastOccurrence;
                         lastOccurrence = curNum;
                         compressed.append(IndexEncoder.convertToVByte(occurrenceDelta));
 
-                            if (numCount == numOcc + 6) {
+                            if (numCount == numOcc + 4) {
                             numCount = -1;
                             lastOccurrence = 0;
 
@@ -268,14 +268,14 @@ public class Index {
                 if (numCount == 1) {
                     patentId += curNum;
                     decompressed.append(patentId + ",");
-                } else if (numCount == 6) {
+                } else if (numCount == 4) {
                     decompressed.append(curNum + ",");
                     numOcc = curNum;
-                } else if (numCount >= 7) {
+                } else if (numCount >= 5) {
                     occurrence += curNum;
                     decompressed.append(occurrence);
 
-                    if (numCount == numOcc + 6) {
+                    if (numCount == numOcc + 4) {
                         decompressed.append(";");
                         numCount = -1;
                         occurrence = 0;
