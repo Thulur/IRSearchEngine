@@ -25,6 +25,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     private String filename;
     private int docId;
     private StringBuilder tmpFileBuffer = new StringBuilder();
+    private int numPatents = 0;
 
     public FileIndexer(String filename, int docId, ParsedEventListener parsingStateListener) {
         xmlApp.addDocumentParsedListener(parsingStateListener);
@@ -72,6 +73,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     }
 
     public void addToIndex(Document document) {
+        ++numPatents;
         Map<String, List<Long>> words = WordParser.getInstance().stem(document.getInventionTitle(), true, document.getInventionTitlePos());
         Map<String, List<Long>> stemmedAbstract = WordParser.getInstance().stem(document.getPatentAbstract(), true, document.getPatentAbstractPos());
 
@@ -120,6 +122,10 @@ public class FileIndexer implements Runnable, ParsedEventListener {
                 e.printStackTrace();
             }
         }
+    }
+
+    public int getNumPatents() {
+        return numPatents;
     }
 
     private void write(String s) {

@@ -38,7 +38,9 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private int maxThreads = 1;
     private int curFileNum = -1;
     private Thread[] fileThreads;
+    private FileIndexer[] fileIndexers;
     private SearchFactory searchFactory;
+    private int numPatents = 0;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -55,12 +57,14 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             String filesString = reader.readLine();
             files = Arrays.asList(filesString.split("[,]"));
             numRemainingFiles = files.size();
+            fileIndexers = new FileIndexer[files.size()];
             fileThreads = new Thread[files.size()];
 
             docIdFile = new BufferedWriter(new FileWriter(FilePaths.DOC_IDS_FILE));
 
             for (int i = 0; i < files.size(); ++i) {
-                fileThreads[i] = new Thread(new FileIndexer(files.get(i), i, this));
+                fileIndexers[i] = new FileIndexer(files.get(i), i, this);
+                fileThreads[i] = new Thread(fileIndexers[i]);
                 String fileId = "";
                 String filename = files.get(i);
 
@@ -83,11 +87,12 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         try {
             for (int i = 0; i < files.size(); ++i) {
                 fileThreads[i].join();
+                numPatents += fileIndexers[i].getNumPatents();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
+        
         // Join all indices at the end
         index.mergePartialIndices(files);
     }
