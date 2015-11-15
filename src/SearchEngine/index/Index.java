@@ -132,7 +132,7 @@ public class Index {
                     }
 
                     docWeights.put(values[Document.patentIdPos], docVectorSum);
-                    vectorLine.append(values[Document.patentIdPos] + "," + docVector.toString() + ";");
+                    vectorLine.append(values[Document.patentIdPos] + "," + (Math.round(100 * docVector) / 100f) + ";");
                 }
 
                 tmpVectorFile.writeBytes(vectorLine.toString() + "\n");
@@ -150,7 +150,7 @@ public class Index {
                 for (String entry: line.split("[;]")) {
                     String[] entryValues = entry.split("[,]");
                     Double normalizedWeight = Double.parseDouble(entryValues[1]) / Math.sqrt(docWeights.get(entryValues[0]));
-                    processedLine.append(entryValues[0] + "," + normalizedWeight + ";");
+                    processedLine.append(entryValues[0] + "," + (Math.round(100 * normalizedWeight) / 100f) + ";");
                 }
 
                 processedLine.append("\n");
