@@ -42,8 +42,8 @@ public class SearchEngineTest {
         //myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
         //System.out.println("\nmethods NOT inventions:");
         //myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
-        System.out.println("\ndata OR method:");
-        myEngine.search("data OR method", 0, 0).forEach(System.out::println);
+//        System.out.println("\ndata OR method:");
+//        myEngine.search("data OR method", 0, 0).forEach(System.out::println);
 
         /*System.out.println("\nprov* NOT free:");
         myEngine.search("prov* NOT free", 0, 0).forEach(System.out::println);
@@ -54,6 +54,10 @@ public class SearchEngineTest {
         myEngine.search("\"the presented invention\"", 0, 0).forEach(System.out::println);
         System.out.println("\n\"mobile devices\":");
         myEngine.search("\"mobile devices\"", 0, 0).forEach(System.out::println);*/
+
+        System.out.println("data device mobile data");
+        myEngine.search("data device mobile data", 10, 0).forEach(System.out::println);
+
 
         time = System.nanoTime() - start;
 

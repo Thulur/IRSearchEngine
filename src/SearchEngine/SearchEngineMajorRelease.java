@@ -116,6 +116,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     boolean loadCompressedIndex(String directory) {
         index.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH);
+        index.loadVectorIndexFromFile(FilePaths.VECTOR_INDEX_PATH);
         searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
         return true;
@@ -150,8 +151,10 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         ArrayList<Document> documents = searchFactory.getSearchFromQuery(query, topK, prf).execute();
         ArrayList<String> results = new ArrayList<>();
 
-        for (Document document: documents) {
-            results.add(document.getDocId() + "------" + document.getInventionTitle());
+        for (int i = 0; i < topK; ++i) {
+            if (documents.get(i) != null) {
+                results.add(documents.get(i).getDocId() + " " + documents.get(i).getInventionTitle());
+            }
         }
 
         return results;

@@ -18,6 +18,9 @@ import java.util.regex.Pattern;
 public class Index {
     TreeMap<String, Long> values = new TreeMap<>();
     Map<Integer, String> docIds = new HashMap<>();
+    Map<String, List<Long>> vectorIndex = new TreeMap<>();
+    int numDocuments;
+
 
     public Index() {
 
@@ -64,9 +67,37 @@ public class Index {
         }
     }
 
+    // TODO: remove code duplication by generalizing the loadFromFile method
+
+    public void loadVectorIndexFromFile(String file) {
+        try {
+            String line;
+
+            RandomAccessFile indexFile = indexFile = new RandomAccessFile(file, "r");
+            vectorIndex = new TreeMap<>();
+
+            while ((line = indexFile.readUTF()) != null) {
+                if (line == null) {
+                    int i = 0;
+                }
+
+                String[] splitEntry = line.split("[ ]");
+
+                // Skip empty lines at the end of the file
+                if (splitEntry.length < 2) continue;
+                List<Long> tempList = new ArrayList<>();
+                tempList.add(0, Long.parseLong(splitEntry[1]));
+                tempList.add(1, Long.parseLong(splitEntry[2]));
+                vectorIndex.put(splitEntry[0], tempList);
+            }
+        } catch (IOException e) {
+
+        }
+    }
+
     public void mergePartialIndices(List<String> paritalFiles, int numPatents) {
         Map<String, List<FileMergeHead>> curTokens = new TreeMap<>();
-
+        numDocuments = numPatents;
         for (String partialFile: paritalFiles) {
             FileMergeHead file = new FileMergeHead(getIpgId(partialFile));
 
@@ -84,9 +115,10 @@ public class Index {
             RandomAccessFile index = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");;
             RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
             RandomAccessFile tmpVectorFile = new RandomAccessFile("data/tmpVectors.txt", "rw");
-            RandomAccessFile vectorFile = new RandomAccessFile("data/vectors.txt", "rw");
-            RandomAccessFile vectorIndexFile = new RandomAccessFile("data/vectorsIndex.txt", "rw");
+            RandomAccessFile vectorFile = new RandomAccessFile(FilePaths.VECTOR_PATH, "rw");
+            RandomAccessFile vectorIndexFile = new RandomAccessFile(FilePaths.VECTOR_INDEX_PATH, "rw");
             Map<String, Double> docWeights = new HashMap<>();
+            Map<String, Integer> entryCounts = new HashMap<>();
 
             // The iterator use is intended here because the collection changes every iteration
             while (curTokens.keySet().iterator().hasNext()) {
@@ -121,6 +153,7 @@ public class Index {
                 }
 
                 for (String entry: line.toString().split("[;]")) {
+                    entryCounts.put(curWord, entryCount);
                     String[] values = entry.split(",");
                     Double docVector = (1 + Math.log10(Double.parseDouble(values[Document.numOccurrencePos]))) * Math.log10(numPatents / entryCount);
                     double docVectorSum;
@@ -154,7 +187,9 @@ public class Index {
                 }
 
                 processedLine.append("\n");
-                vectorIndexFile.writeUTF(indexEntryIterator.next() + " " + vectorFile.getFilePointer());
+                String temp = indexEntryIterator.next();
+                Integer entryCount = entryCounts.get(temp);
+                vectorIndexFile.writeUTF(temp + " " + vectorFile.getFilePointer() + " " + entryCount);
                 vectorFile.writeBytes(processedLine.toString());
                 processedLine.setLength(0);
             }
@@ -452,5 +487,13 @@ public class Index {
         }
 
         return results;
+    }
+
+    public Map<String, List<Long>> getVectorIndex() {
+        return vectorIndex;
+    }
+
+    public int getNumDocuments() {
+        return numDocuments;
     }
 }
