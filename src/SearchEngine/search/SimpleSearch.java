@@ -61,6 +61,19 @@ public class SimpleSearch implements Search {
             documents.addAll(index.lookUpPostingInFileWithCompression(searchWord));
         }
 
+        // remove duplicates
+
+        Set<Integer> uniqueDocIds = new HashSet<>();
+
+        for (Iterator<Document> iterator = documents.iterator(); iterator.hasNext();) {
+            Document tempDocument = iterator.next();
+            if (uniqueDocIds.contains(tempDocument.getDocId())) {
+                iterator.remove();
+            } else {
+                uniqueDocIds.add(tempDocument.getDocId());
+            }
+        }
+
         documents = rankResults(documents, searchWords);
 
         return documents;
