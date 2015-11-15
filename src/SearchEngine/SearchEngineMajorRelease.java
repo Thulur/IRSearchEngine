@@ -94,7 +94,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
 
         // Join all indices at the end
-        index.mergePartialIndices(files);
+        index.mergePartialIndices(files, numPatents);
     }
 
     @Override

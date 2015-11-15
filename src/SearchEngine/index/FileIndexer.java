@@ -104,8 +104,6 @@ public class FileIndexer implements Runnable, ParsedEventListener {
                 e.printStackTrace();
             }
 
-            metaData.setInventionTitleLength(document.getInventionTitleLength());
-
             occurrences.forEach(metaData::addWordOccurrence);
             metaData.sortOccurrences();
 

@@ -64,75 +64,108 @@ public class Index {
         }
     }
 
-    public void mergePartialIndices(List<String> paritalFiles) {
-        if (paritalFiles.size() == 1) {
-            String filenameId = "";
-            String filename = paritalFiles.get(0);
+    public void mergePartialIndices(List<String> paritalFiles, int numPatents) {
+        Map<String, List<FileMergeHead>> curTokens = new TreeMap<>();
 
-            if (filename.indexOf("ipg") != -1) {
-                filenameId = getIpgId(filename);
+        for (String partialFile: paritalFiles) {
+            FileMergeHead file = new FileMergeHead(getIpgId(partialFile));
+
+            if (curTokens.containsKey(file.getToken())) {
+                List<FileMergeHead> tmpList = curTokens.get(file.getToken());
+                tmpList.add(file);
+            } else {
+                List<FileMergeHead> tmpList = new LinkedList<>();
+                tmpList.add(file);
+                curTokens.put(file.getToken(), tmpList);
             }
+        }
 
-            replaceIndexWithPartial(filenameId);
-        } else {
-            Map<String, List<FileMergeHead>> curTokens = new TreeMap<>();
+        try {
+            RandomAccessFile index = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");;
+            RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
+            RandomAccessFile tmpVectorFile = new RandomAccessFile("data/tmpVectors.txt", "rw");
+            RandomAccessFile vectorFile = new RandomAccessFile("data/vectors.txt", "rw");
+            Map<String, Double> docWeights = new HashMap<>();
 
-            for (String partialFile: paritalFiles) {
-                FileMergeHead file = new FileMergeHead(getIpgId(partialFile));
+            // The iterator use is intended here because the collection changes every iteration
+            while (curTokens.keySet().iterator().hasNext()) {
+                String curWord = curTokens.keySet().iterator().next();
+                Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
 
-                if (curTokens.containsKey(file.getToken())) {
-                    List<FileMergeHead> tmpList = curTokens.get(file.getToken());
-                    tmpList.add(file);
-                } else {
-                    List<FileMergeHead> tmpList = new LinkedList<>();
-                    tmpList.add(file);
-                    curTokens.put(file.getToken(), tmpList);
-                }
-            }
+                index.writeUTF(curWord + " " + postingList.getChannel().position());
 
-            try {
-                RandomAccessFile index = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");;
-                RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
+                for (FileMergeHead file: curTokens.get(curWord)) {
+                    sortedPostings.put(file.getFirstPatentId(), file);
 
-                // The iterator use is intended here because the collection changes every iteration
-                while (curTokens.keySet().iterator().hasNext()) {
-                    String curWord = curTokens.keySet().iterator().next();
-                    Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
-
-                    index.writeUTF(curWord + " " + postingList.getChannel().position());
-
-                    for (FileMergeHead file: curTokens.get(curWord)) {
-                        sortedPostings.put(file.getFirstPatentId(), file);
-
-                        if (file.nextIndexLine()) {
-                            if (curTokens.containsKey(file.getToken())) {
-                                List<FileMergeHead> tmpList = curTokens.get(file.getToken());
-                                tmpList.add(file);
-                            } else {
-                                List<FileMergeHead> tmpList = new LinkedList<>();
-                                tmpList.add(file);
-                                curTokens.put(file.getToken(), tmpList);
-                            }
+                    if (file.nextIndexLine()) {
+                        if (curTokens.containsKey(file.getToken())) {
+                            List<FileMergeHead> tmpList = curTokens.get(file.getToken());
+                            tmpList.add(file);
+                        } else {
+                            List<FileMergeHead> tmpList = new LinkedList<>();
+                            tmpList.add(file);
+                            curTokens.put(file.getToken(), tmpList);
                         }
                     }
+                }
 
-                    Iterator<FileMergeHead> files = sortedPostings.values().iterator();
-                    while (files.hasNext()) {
-                        FileMergeHead file = files.next();
-                        postingList.writeBytes(file.getPostinglistLine());
+                Iterator<FileMergeHead> files = sortedPostings.values().iterator();
+                StringBuilder line = new StringBuilder();
+                StringBuilder vectorLine = new StringBuilder();
+                int entryCount = 0;
+                while (files.hasNext()) {
+                    FileMergeHead file = files.next();
+                    entryCount += file.docNumInCurLine();
+                    line.append(file.getPostinglistLine());
+                }
+
+                for (String entry: line.toString().split("[;]")) {
+                    String[] values = entry.split(",");
+                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Document.numOccurrencePos]))) * Math.log10(numPatents / entryCount);
+                    double docVectorSum;
+
+                    if (docWeights.containsKey(values[Document.patentIdPos])) {
+                        docVectorSum = docWeights.get(values[Document.patentIdPos]) + docVector * docVector;
+                    } else {
+                        docVectorSum = docVector * docVector;
                     }
 
-                    postingList.writeBytes("\n");
-
-                    curTokens.remove(curWord);
+                    docWeights.put(values[Document.patentIdPos], docVectorSum);
+                    vectorLine.append(values[Document.patentIdPos] + "," + docVector.toString() + ";");
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+
+                tmpVectorFile.writeBytes(vectorLine.toString() + "\n");
+                postingList.writeBytes(line.toString() + "\n");
+                curTokens.remove(curWord);
             }
+
+            // Reset vector file position
+            tmpVectorFile.seek(0);
+            String line;
+            StringBuilder processedLine = new StringBuilder();
+            while ((line = tmpVectorFile.readLine()) != null) {
+                for (String entry: line.split("[;]")) {
+                    String[] entryValues = entry.split("[,]");
+                    Double normalizedWeight = Double.parseDouble(entryValues[1]) / Math.sqrt(docWeights.get(entryValues[0]));
+                    processedLine.append(entryValues[0] + "," + normalizedWeight + ";");
+                }
+
+                processedLine.append("\n");
+                vectorFile.writeBytes(processedLine.toString());
+                processedLine.setLength(0);
+            }
+
+            tmpVectorFile.close();
+            File deleteTmpVectorFile = new File("data/tmpVectors.txt");
+            deleteTmpVectorFile.delete();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     private String getIpgId(String filename) {
+        if (filename.indexOf("ipg") < 0) return "";
+
         return filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
     }
 
@@ -211,11 +244,11 @@ public class Index {
 
                     curNum = Long.parseLong(curLine.substring(i, separatorPos));
 
-                    if (numCount == 1) {
+                    if (numCount == Document.patentIdPos) {
                         patentIdDelta = curNum - lastPatentId;
                         lastPatentId = curNum;
                         compressed.append(IndexEncoder.convertToVByte(patentIdDelta));
-                    } else if (numCount == 4) {
+                    } else if (numCount == Document.numOccurrencePos) {
                         compressed.append(IndexEncoder.convertToVByte(curNum));
                         numOcc = curNum;
                     } else if (numCount >= 5) {
@@ -265,10 +298,10 @@ public class Index {
             if (line.charAt(i) >= '8') {
                 curNum = convertToDecimal(NumberParser.parseHexadecimalLong(line.substring(lastStart, i + 2)));
 
-                if (numCount == 1) {
+                if (numCount == Document.patentIdPos) {
                     patentId += curNum;
                     decompressed.append(patentId + ",");
-                } else if (numCount == 4) {
+                } else if (numCount == Document.numOccurrencePos) {
                     decompressed.append(curNum + ",");
                     numOcc = curNum;
                 } else if (numCount >= 5) {

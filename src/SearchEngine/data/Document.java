@@ -6,13 +6,13 @@ import SearchEngine.SearchEngine;
  * Created by sebastian on 22.10.2015.
  */
 public class Document {
+    public static int patentIdPos = 1;
+    public static int numOccurrencePos = 4;
     private int docId;
     private String inventionTitle;
-    private long inventionTitlePos;
-    private int inventionTitleLength;
+    private long inventionTitlePos;;
     private String patentAbstract;
     private long patentAbstractPos;
-    private int patentAbstractLength;
 
     public Document() {
 
@@ -40,14 +40,6 @@ public class Document {
         this.inventionTitlePos = inventionTitlePos;
     }
 
-    public int getInventionTitleLength() {
-        return inventionTitleLength;
-    }
-
-    public void setInventionTitleLength(int inventionTitleLength) {
-        this.inventionTitleLength = inventionTitleLength;
-    }
-
     public int getDocId() {
         return docId;
     }
@@ -70,13 +62,5 @@ public class Document {
 
     public void setPatentAbstractPos(long patentAbstractPos) {
         this.patentAbstractPos = patentAbstractPos;
-    }
-
-    public int getPatentAbstractLength() {
-        return patentAbstractLength;
-    }
-
-    public void setPatentAbstractLength(int patentAbstractLength) {
-        this.patentAbstractLength = patentAbstractLength;
     }
 }

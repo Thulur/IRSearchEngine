@@ -157,8 +157,6 @@ public class XMLParser extends DefaultHandler {
 			} else {
 				document.setInventionTitle(new String(ch, start, length));
 			}
-
-			document.setInventionTitleLength(document.getInventionTitleLength() + length);
 		}
 
 		if (this.abstractEntered && abstractParagraphEntered) {
@@ -167,7 +165,6 @@ public class XMLParser extends DefaultHandler {
 			} else {
 				document.setPatentAbstract(new String(ch, start, length));
 			}
-			document.setPatentAbstractLength(document.getPatentAbstractLength() + length);
 		}
 	}
 
