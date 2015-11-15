@@ -85,6 +85,7 @@ public class Index {
             RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
             RandomAccessFile tmpVectorFile = new RandomAccessFile("data/tmpVectors.txt", "rw");
             RandomAccessFile vectorFile = new RandomAccessFile("data/vectors.txt", "rw");
+            RandomAccessFile vectorIndexFile = new RandomAccessFile("data/vectorsIndex.txt", "rw");
             Map<String, Double> docWeights = new HashMap<>();
 
             // The iterator use is intended here because the collection changes every iteration
@@ -143,6 +144,8 @@ public class Index {
             tmpVectorFile.seek(0);
             String line;
             StringBuilder processedLine = new StringBuilder();
+            loadFromFile(FilePaths.INDEX_PATH);
+            Iterator<String> indexEntryIterator = values.keySet().iterator();
             while ((line = tmpVectorFile.readLine()) != null) {
                 for (String entry: line.split("[;]")) {
                     String[] entryValues = entry.split("[,]");
@@ -151,6 +154,7 @@ public class Index {
                 }
 
                 processedLine.append("\n");
+                vectorIndexFile.writeUTF(indexEntryIterator.next() + " " + vectorFile.getFilePointer());
                 vectorFile.writeBytes(processedLine.toString());
                 processedLine.setLength(0);
             }
