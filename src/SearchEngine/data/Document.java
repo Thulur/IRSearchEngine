@@ -8,14 +8,17 @@ import java.io.RandomAccessFile;
  * Created by sebastian on 22.10.2015.
  */
 public class Document {
-    public static int patentIdPos = 1;
-    public static int numOccurrencePos = 4;
+    public static int weightPos = 0;
+    public static int docIdPos = 1;
+    public static int patentIdPos = 2;
+    public static int numOccurrencePos = 5;
     private int docId;
     private String inventionTitle = "";
     private long inventionTitlePos;
     private String patentAbstract = "";
     private long patentAbstractPos;
     private String cacheFile;
+    private Double weight;
 
     public Document() {
 
@@ -94,5 +97,13 @@ public class Document {
 
     public void setPatentAbstractPos(long patentAbstractPos) {
         this.patentAbstractPos = patentAbstractPos;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
     }
 }

@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 public class Index {
     TreeMap<String, Long> values = new TreeMap<>();
     Map<Integer, String> docIds = new HashMap<>();
-    Map<String, List<Long>> vectorIndex = new TreeMap<>();
     int numDocuments;
 
 
@@ -67,34 +66,6 @@ public class Index {
         }
     }
 
-    // TODO: remove code duplication by generalizing the loadFromFile method
-
-    public void loadVectorIndexFromFile(String file) {
-        try {
-            String line;
-
-            RandomAccessFile indexFile = indexFile = new RandomAccessFile(file, "r");
-            vectorIndex = new TreeMap<>();
-
-            while ((line = indexFile.readUTF()) != null) {
-                if (line == null) {
-                    int i = 0;
-                }
-
-                String[] splitEntry = line.split("[ ]");
-
-                // Skip empty lines at the end of the file
-                if (splitEntry.length < 2) continue;
-                List<Long> tempList = new ArrayList<>();
-                tempList.add(0, Long.parseLong(splitEntry[1]));
-                tempList.add(1, Long.parseLong(splitEntry[2]));
-                vectorIndex.put(splitEntry[0], tempList);
-            }
-        } catch (IOException e) {
-
-        }
-    }
-
     public void mergePartialIndices(List<String> paritalFiles, int numPatents) {
         Map<String, List<FileMergeHead>> curTokens = new TreeMap<>();
         numDocuments = numPatents;
@@ -112,20 +83,18 @@ public class Index {
         }
 
         try {
-            RandomAccessFile index = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");;
+            RandomAccessFile tmpIndexFile = new RandomAccessFile(FilePaths.INDEX_PATH + ".tmp", "rw");
+            RandomAccessFile tmpPostingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH + ".tmp", "rw");
+            RandomAccessFile indexFile = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");
             RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
-            RandomAccessFile tmpVectorFile = new RandomAccessFile("data/tmpVectors.txt", "rw");
-            RandomAccessFile vectorFile = new RandomAccessFile(FilePaths.VECTOR_PATH, "rw");
-            RandomAccessFile vectorIndexFile = new RandomAccessFile(FilePaths.VECTOR_INDEX_PATH, "rw");
             Map<String, Double> docWeights = new HashMap<>();
-            Map<String, Integer> entryCounts = new HashMap<>();
 
             // The iterator use is intended here because the collection changes every iteration
             while (curTokens.keySet().iterator().hasNext()) {
                 String curWord = curTokens.keySet().iterator().next();
                 Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
 
-                index.writeUTF(curWord + " " + postingList.getChannel().position());
+                tmpIndexFile.writeUTF(curWord + " " + tmpPostingList.getChannel().position());
 
                 for (FileMergeHead file: curTokens.get(curWord)) {
                     sortedPostings.put(file.getFirstPatentId(), file);
@@ -153,50 +122,50 @@ public class Index {
                 }
 
                 for (String entry: line.toString().split("[;]")) {
-                    entryCounts.put(curWord, entryCount);
                     String[] values = entry.split(",");
-                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Document.numOccurrencePos]))) * Math.log10(numPatents / entryCount);
+                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Document.numOccurrencePos - 1]))) * Math.log10(numPatents / entryCount);
                     double docVectorSum;
 
-                    if (docWeights.containsKey(values[Document.patentIdPos])) {
-                        docVectorSum = docWeights.get(values[Document.patentIdPos]) + docVector * docVector;
+                    if (docWeights.containsKey(values[Document.patentIdPos - 1])) {
+                        docVectorSum = docWeights.get(values[Document.patentIdPos - 1]) + docVector * docVector;
                     } else {
                         docVectorSum = docVector * docVector;
                     }
 
-                    docWeights.put(values[Document.patentIdPos], docVectorSum);
-                    vectorLine.append(values[Document.patentIdPos] + "," + (Math.round(100 * docVector) / 100f) + ";");
+                    docWeights.put(values[Document.patentIdPos - 1], docVectorSum);
+                    vectorLine.append(Math.round(docVector) + "," + entry + ";");
                 }
 
-                tmpVectorFile.writeBytes(vectorLine.toString() + "\n");
-                postingList.writeBytes(line.toString() + "\n");
+                tmpPostingList.writeBytes(vectorLine.toString() + "\n");
                 curTokens.remove(curWord);
             }
 
             // Reset vector file position
-            tmpVectorFile.seek(0);
+            tmpPostingList.seek(0);
             String line;
             StringBuilder processedLine = new StringBuilder();
-            loadFromFile(FilePaths.INDEX_PATH);
+            loadFromFile(FilePaths.INDEX_PATH + ".tmp");
             Iterator<String> indexEntryIterator = values.keySet().iterator();
-            while ((line = tmpVectorFile.readLine()) != null) {
+            while ((line = tmpPostingList.readLine()) != null && indexEntryIterator.hasNext()) {
                 for (String entry: line.split("[;]")) {
                     String[] entryValues = entry.split("[,]");
-                    Double normalizedWeight = Double.parseDouble(entryValues[1]) / Math.sqrt(docWeights.get(entryValues[0]));
-                    processedLine.append(entryValues[0] + "," + (Math.round(100 * normalizedWeight) / 100f) + ";");
+                    Double normalizedWeight = Double.parseDouble(entryValues[Document.weightPos]) / Math.sqrt(docWeights.get(entryValues[Document.patentIdPos]));
+                    processedLine.append(Math.round(1000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
                 }
 
                 processedLine.append("\n");
                 String temp = indexEntryIterator.next();
-                Integer entryCount = entryCounts.get(temp);
-                vectorIndexFile.writeUTF(temp + " " + vectorFile.getFilePointer() + " " + entryCount);
-                vectorFile.writeBytes(processedLine.toString());
+                indexFile.writeUTF(temp + " " + tmpPostingList.getFilePointer());
+                postingList.writeBytes(processedLine.toString());
                 processedLine.setLength(0);
             }
 
-            tmpVectorFile.close();
-            File deleteTmpVectorFile = new File("data/tmpVectors.txt");
-            deleteTmpVectorFile.delete();
+            tmpIndexFile.close();
+            tmpPostingList.close();
+            File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
+            deleteTmpIndexFile.delete();
+            File deleteTmpPostinglistFile = new File(FilePaths.INDEX_PATH + ".tmp");
+            deleteTmpPostinglistFile.delete();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -206,20 +175,6 @@ public class Index {
         if (filename.indexOf("ipg") < 0) return "";
 
         return filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
-    }
-
-    private void replaceIndexWithPartial(String filenameId) {
-        File oldIndex = new File(FilePaths.PARTIAL_PATH + "index" + filenameId + ".txt");
-        File newIndex = new File(FilePaths.INDEX_PATH);
-        File oldPostingList = new File(FilePaths.PARTIAL_PATH + "postinglist" + filenameId + ".txt");
-        File newPostingList = new File(FilePaths.POSTINGLIST_PATH);
-
-        try {
-            Files.copy(oldIndex.toPath(), newIndex.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(oldPostingList.toPath(), newPostingList.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private String readStringFromFile(RandomAccessFile file, long pos) {
@@ -290,12 +245,12 @@ public class Index {
                     } else if (numCount == Document.numOccurrencePos) {
                         compressed.append(IndexEncoder.convertToVByte(curNum));
                         numOcc = curNum;
-                    } else if (numCount >= 5) {
+                    } else if (numCount >= 6) {
                         occurrenceDelta = curNum - lastOccurrence;
                         lastOccurrence = curNum;
                         compressed.append(IndexEncoder.convertToVByte(occurrenceDelta));
 
-                            if (numCount == numOcc + 4) {
+                            if (numCount == numOcc + 5) {
                             numCount = -1;
                             lastOccurrence = 0;
 
@@ -343,11 +298,11 @@ public class Index {
                 } else if (numCount == Document.numOccurrencePos) {
                     decompressed.append(curNum + ",");
                     numOcc = curNum;
-                } else if (numCount >= 5) {
+                } else if (numCount >= 6) {
                     occurrence += curNum;
                     decompressed.append(occurrence);
 
-                    if (numCount == numOcc + 4) {
+                    if (numCount == numOcc + 5) {
                         decompressed.append(";");
                         numCount = -1;
                         occurrence = 0;
@@ -459,15 +414,20 @@ public class Index {
                 RandomAccessFile xmlReader = new RandomAccessFile(FilePaths.CACHE_PATH + docIds.get(0), "r");
                 String[] metaDataCollection = posting.split("[;]");
 
+                int curDocId;
+                int patentDocId;
+                long inventionTitlePos;
+                long abstractPos;
                 for (String metaData: metaDataCollection) {
                     String[] metaDataValues = metaData.split("[,]");
-                    int curDocId = Integer.parseInt(metaDataValues[0]);
 
-                    int patentDocId = Integer.parseInt(metaDataValues[1]);
-                    long inventionTitlePos = Long.parseLong(metaDataValues[2]);
-                    long abstractPos = Long.parseLong(metaDataValues[3]);
+                    curDocId = Integer.parseInt(metaDataValues[Document.docIdPos]);
+                    patentDocId = Integer.parseInt(metaDataValues[Document.patentIdPos]);
+                    inventionTitlePos = Long.parseLong(metaDataValues[3]);
+                    abstractPos = Long.parseLong(metaDataValues[4]);
 
                     Document document = new Document(patentDocId, FilePaths.CACHE_PATH + docIds.get(curDocId));
+                    document.setWeight(Double.parseDouble(metaDataValues[Document.weightPos]) / 1000f);
                     document.setInventionTitlePos(inventionTitlePos);
                     document.setPatentAbstractPos(abstractPos);
 
@@ -480,10 +440,6 @@ public class Index {
         }
 
         return results;
-    }
-
-    public Map<String, List<Long>> getVectorIndex() {
-        return vectorIndex;
     }
 
     public int getNumDocuments() {

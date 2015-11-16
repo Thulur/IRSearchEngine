@@ -116,7 +116,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     boolean loadCompressedIndex(String directory) {
         index.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH);
-        index.loadVectorIndexFromFile(FilePaths.VECTOR_INDEX_PATH);
         searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
         return true;

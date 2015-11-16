@@ -67,17 +67,24 @@ public class SimpleSearch implements Search {
         computeQueryVector(searchWords);
 
         ArrayList<Document> documents = new ArrayList<>();
-        Set<Integer> uniqueDocIds = new HashSet<>();
-        for (String searchWord: searchWords) {
-            for (Document doc: index.lookUpPostingInFileWithCompression(searchWord)) {
-                if (!uniqueDocIds.contains(doc.getDocId())) {
-                    documents.add(doc);
-                    uniqueDocIds.add(doc.getDocId());
-                }
-            }
+        double docWeightSum = 0;
+        for (String searchWord: queryVector.keySet()) {
+            List<Document> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
+            documents.addAll(tmpDocList);
+
+            Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(index.getNumDocuments() / tmpDocList.size()));
+            queryVector.put(searchWord, docVector);
+            docWeightSum += docVector*docVector;
 
             System.out.println("Search word done.");
         }
+
+        // Normalize query weights
+        docWeightSum = Math.sqrt(docWeightSum);
+        for (String key: queryVector.keySet()) {
+            queryVector.put(key, queryVector.get(key)/docWeightSum);
+        }
+
         System.out.println("Searched all documents.");
         documents = rankResults(documents, searchWords);
 
@@ -140,26 +147,6 @@ public class SimpleSearch implements Search {
 
             queryVector.put(searchWord,wordCount+1);
         }
-
-        try {
-            RandomAccessFile vectorFile = new RandomAccessFile(FilePaths.VECTOR_PATH, "rw");
-            double docWeightSum = 0;
-
-            for (String key: queryVector.keySet()) {
-                Double docVector = (1 + Math.log10(queryVector.get(key)) * Math.log10(index.getNumDocuments() / index.getVectorIndex().get(key).get(1)));
-                queryVector.put(key, docVector);
-                docWeightSum += docVector*docVector;
-            }
-
-            docWeightSum = Math.sqrt(docWeightSum);
-
-            for (String key: queryVector.keySet()) {
-                queryVector.put(key, queryVector.get(key)/docWeightSum);
-            }
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
     }
 
     private ArrayList<Document> rankResults(ArrayList<Document> documents, List<String> searchWords) {
@@ -179,35 +166,13 @@ public class SimpleSearch implements Search {
             }
         }
 
-        // Read term weights from file
-        try {
-            RandomAccessFile vectorFile = new RandomAccessFile(FilePaths.VECTOR_PATH, "rw");
-
-            for (String searchWord: searchWords) {
-                vectorFile.seek(index.getVectorIndex().get(searchWord).get(0));
-                String line = vectorFile.readLine();
-
-                for (String entry: line.split(";")) {
-                    String[] splitEntry = entry.split(",");
-                    int docId = Integer.parseInt(splitEntry[0]);
-                    if (documentVectors.keySet().contains(docId)) {
-                        double termWeight = Double.parseDouble(splitEntry[1]);
-                        documentVectors.get(docId).put(searchWord, termWeight);
-                    }
-                }
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         // Compute cosine similarities
         Map<Integer, Double> rankings = new HashMap<>();
         for (int i = 0; i < documents.size(); ++i) {
             double ranking = 0;
 
             for (String searchWord: searchWords) {
-                ranking += documentVectors.get(documents.get(i).getDocId()).get(searchWord) * queryVector.get(searchWord);
+                ranking += documents.get(i).getWeight() * queryVector.get(searchWord);
             }
 
             rankings.put(documents.get(i).getDocId(), ranking);

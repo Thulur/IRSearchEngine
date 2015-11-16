@@ -12,6 +12,4 @@ public class FilePaths {
     public static String COMPRESSED_POSTINGLIST_PATH = "data/compressed_postinglist.txt";
     public static String DOC_IDS_FILE = "data/docids.txt";
     public static String CACHE_PATH = "data/cache/";
-    public static String VECTOR_INDEX_PATH = "data/vectorsIndex.txt";
-    public static String VECTOR_PATH = "data/vectors.txt";
 }
