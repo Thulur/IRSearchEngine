@@ -2,14 +2,9 @@ package SearchEngine.search;
 
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
-import SearchEngine.data.FilePaths;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
 
-import javax.print.Doc;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.*;
 
 /**
@@ -150,7 +145,6 @@ public class SimpleSearch implements Search {
     }
 
     private ArrayList<Document> rankResults(ArrayList<Document> documents, List<String> searchWords) {
-        Map<Integer, Map<String, Double>> documentVectors = new HashMap<>();
         Map<Integer, Document> documentTable = new HashMap<>();
         System.out.println("Start computing rankings");
 
@@ -158,24 +152,19 @@ public class SimpleSearch implements Search {
         for (Document document: documents) {
             int docId = document.getDocId();
             documentTable.put(docId, document);
-
-            documentVectors.put(document.getDocId(), new HashMap<>());
-
-            for (String searchWord: searchWords) {
-                documentVectors.get(docId).put(searchWord, 0.0);
-            }
         }
 
         // Compute cosine similarities
         Map<Integer, Double> rankings = new HashMap<>();
         for (int i = 0; i < documents.size(); ++i) {
-            double ranking = 0;
+            double weight = documents.get(i).getWeight();
+            double ranking = weight * queryVector.get(documents.get(i).getToken());
 
-            for (String searchWord: searchWords) {
-                ranking += documents.get(i).getWeight() * queryVector.get(searchWord);
+            if (rankings.containsKey(documents.get(i).getDocId())) {
+                rankings.put(documents.get(i).getDocId(), ranking + rankings.get(documents.get(i).getDocId()));
+            } else {
+                rankings.put(documents.get(i).getDocId(), ranking);
             }
-
-            rankings.put(documents.get(i).getDocId(), ranking);
         }
 
         System.out.println("Start sorting rankings");

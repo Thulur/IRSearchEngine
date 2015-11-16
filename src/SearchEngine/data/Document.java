@@ -12,6 +12,7 @@ public class Document {
     public static int docIdPos = 1;
     public static int patentIdPos = 2;
     public static int numOccurrencePos = 5;
+    private String token;
     private int docId;
     private String inventionTitle = "";
     private long inventionTitlePos;
@@ -105,5 +106,13 @@ public class Document {
 
     public void setWeight(Double weight) {
         this.weight = weight;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

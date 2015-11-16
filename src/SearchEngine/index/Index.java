@@ -6,8 +6,6 @@ import SearchEngine.utils.IndexEncoder;
 import SearchEngine.utils.NumberParser;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -133,7 +131,7 @@ public class Index {
                     }
 
                     docWeights.put(values[Document.patentIdPos - 1], docVectorSum);
-                    vectorLine.append(Math.round(docVector) + "," + entry + ";");
+                    vectorLine.append(docVector + "," + entry + ";");
                 }
 
                 tmpPostingList.writeBytes(vectorLine.toString() + "\n");
@@ -164,8 +162,8 @@ public class Index {
             tmpPostingList.close();
             File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
             deleteTmpIndexFile.delete();
-            File deleteTmpPostinglistFile = new File(FilePaths.INDEX_PATH + ".tmp");
-            deleteTmpPostinglistFile.delete();
+            //File deleteTmpPostinglistFile = new File(FilePaths.INDEX_PATH + ".tmp");
+            //deleteTmpPostinglistFile.delete();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -427,6 +425,7 @@ public class Index {
                     abstractPos = Long.parseLong(metaDataValues[4]);
 
                     Document document = new Document(patentDocId, FilePaths.CACHE_PATH + docIds.get(curDocId));
+                    document.setToken(word);
                     document.setWeight(Double.parseDouble(metaDataValues[Document.weightPos]) / 1000f);
                     document.setInventionTitlePos(inventionTitlePos);
                     document.setPatentAbstractPos(abstractPos);
