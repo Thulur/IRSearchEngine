@@ -19,17 +19,20 @@ public class SimpleSearch implements Search {
     private String searchTerm;
     private Index index;
     private Map<String, Double> queryVector;
+    private int topK;
 
     @Override
     public void setupSearch(String searchTerm, Index index, int topK, int prf) {
         this.searchTerm = searchTerm;
         this.index = index;
         this.queryVector = new HashMap<>();
+        this.topK = topK;
     }
 
     @Override
     public ArrayList<Document> execute() {
         ArrayList<Document> documents;
+        ArrayList<Document> result = new ArrayList<>();
 
         if (searchTerm.startsWith("\"") && searchTerm.endsWith("\"")) {
             documents = processPhraseQuery();
@@ -37,7 +40,14 @@ public class SimpleSearch implements Search {
             documents = processSimpleQuery();
         }
 
-        return documents;
+        Document doc;
+        for (int i = 0; i < topK; ++i) {
+            doc = documents.get(i);
+            doc.loadPatentData();
+            result.add(doc);
+        }
+
+        return result;
     }
 
     private ArrayList<Document> processSimpleQuery() {
@@ -57,23 +67,18 @@ public class SimpleSearch implements Search {
         computeQueryVector(searchWords);
 
         ArrayList<Document> documents = new ArrayList<>();
-        for (String searchWord: searchWords) {
-            documents.addAll(index.lookUpPostingInFileWithCompression(searchWord));
-        }
-
-        // remove duplicates
-
         Set<Integer> uniqueDocIds = new HashSet<>();
-
-        for (Iterator<Document> iterator = documents.iterator(); iterator.hasNext();) {
-            Document tempDocument = iterator.next();
-            if (uniqueDocIds.contains(tempDocument.getDocId())) {
-                iterator.remove();
-            } else {
-                uniqueDocIds.add(tempDocument.getDocId());
+        for (String searchWord: searchWords) {
+            for (Document doc: index.lookUpPostingInFileWithCompression(searchWord)) {
+                if (!uniqueDocIds.contains(doc.getDocId())) {
+                    documents.add(doc);
+                    uniqueDocIds.add(doc.getDocId());
+                }
             }
-        }
 
+            System.out.println("Search word done.");
+        }
+        System.out.println("Searched all documents.");
         documents = rankResults(documents, searchWords);
 
         return documents;
@@ -159,11 +164,13 @@ public class SimpleSearch implements Search {
 
     private ArrayList<Document> rankResults(ArrayList<Document> documents, List<String> searchWords) {
         Map<Integer, Map<String, Double>> documentVectors = new HashMap<>();
+        Map<Integer, Document> documentTable = new HashMap<>();
+        System.out.println("Start computing rankings");
 
         // Initialize data structure
-
         for (Document document: documents) {
             int docId = document.getDocId();
+            documentTable.put(docId, document);
 
             documentVectors.put(document.getDocId(), new HashMap<>());
 
@@ -173,7 +180,6 @@ public class SimpleSearch implements Search {
         }
 
         // Read term weights from file
-
         try {
             RandomAccessFile vectorFile = new RandomAccessFile(FilePaths.VECTOR_PATH, "rw");
 
@@ -196,9 +202,7 @@ public class SimpleSearch implements Search {
         }
 
         // Compute cosine similarities
-
-        List<Double> rankings = new ArrayList<>();
-
+        Map<Integer, Double> rankings = new HashMap<>();
         for (int i = 0; i < documents.size(); ++i) {
             double ranking = 0;
 
@@ -206,27 +210,21 @@ public class SimpleSearch implements Search {
                 ranking += documentVectors.get(documents.get(i).getDocId()).get(searchWord) * queryVector.get(searchWord);
             }
 
-            rankings.add(i, ranking);
+            rankings.put(documents.get(i).getDocId(), ranking);
         }
 
-        // Order documents by ranking
-        // TODO: implement faster sorting algorithm
+        System.out.println("Start sorting rankings");
+        List<HashMap.Entry<Integer, Double>> tmpList = new ArrayList<>(rankings.entrySet());
+        Collections.sort(tmpList, (obj1, obj2) -> ((Comparable) ((obj1)).getValue()).compareTo(((obj2)).getValue()));
+        Collections.reverse(tmpList);
+        ArrayList<Document> result = new ArrayList<>();
 
-        for (int i = 0; i < rankings.size(); ++i) {
-            for (int j = 0; j < rankings.size() - 1; ++j) {
-                if (rankings.get(j) < rankings.get(j+1)) {
-                    double temp = rankings.get(j+1);
-                    rankings.set(j+1, rankings.get(j));
-                    rankings.set(j, temp);
-
-                    Document tempDocument = documents.get(j+1);
-                    documents.set(j+1, documents.get(j));
-                    documents.set(j, tempDocument);
-                }
-            }
+        for (int i = 0; i < topK; ++i) {
+            int docId = tmpList.get(i).getKey();
+            result.add(documentTable.get(docId));
         }
 
-        return documents;
+        return result;
     }
 
 }

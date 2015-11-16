@@ -457,26 +457,19 @@ public class Index {
                 // TODO:
                 // Most random line ever, just open a file so java does not throw an error (improve this solution somehow!!!)
                 RandomAccessFile xmlReader = new RandomAccessFile(FilePaths.CACHE_PATH + docIds.get(0), "r");
-
-                int lastDocId = 0;
                 String[] metaDataCollection = posting.split("[;]");
 
                 for (String metaData: metaDataCollection) {
                     String[] metaDataValues = metaData.split("[,]");
                     int curDocId = Integer.parseInt(metaDataValues[0]);
 
-                    if (lastDocId != curDocId) {
-                        xmlReader = new RandomAccessFile(FilePaths.CACHE_PATH + docIds.get(curDocId), "r");
-                    }
-
                     int patentDocId = Integer.parseInt(metaDataValues[1]);
                     long inventionTitlePos = Long.parseLong(metaDataValues[2]);
                     long abstractPos = Long.parseLong(metaDataValues[3]);
 
-                    String patentAbstract = readStringFromFile(xmlReader, abstractPos);
-                    String title = readStringFromFile(xmlReader, inventionTitlePos);
-
-                    Document document = new Document(patentDocId, title, patentAbstract);
+                    Document document = new Document(patentDocId, FilePaths.CACHE_PATH + docIds.get(curDocId));
+                    document.setInventionTitlePos(inventionTitlePos);
+                    document.setPatentAbstractPos(abstractPos);
 
                     results.add(document);
                 }
