@@ -151,7 +151,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         ArrayList<String> results = new ArrayList<>();
 
         // topK should be used in the Search class not here
-        for (int i = 0; i < topK; ++i) {
+        for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
                 results.add(documents.get(i).getDocId() + " " + documents.get(i).getInventionTitle());
             }

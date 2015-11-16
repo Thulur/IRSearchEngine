@@ -153,7 +153,7 @@ public class Index {
 
                 processedLine.append("\n");
                 String temp = indexEntryIterator.next();
-                indexFile.writeUTF(temp + " " + tmpPostingList.getFilePointer());
+                indexFile.writeUTF(temp + " " + postingList.getFilePointer());
                 postingList.writeBytes(processedLine.toString());
                 processedLine.setLength(0);
             }
@@ -162,8 +162,8 @@ public class Index {
             tmpPostingList.close();
             File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
             deleteTmpIndexFile.delete();
-            //File deleteTmpPostinglistFile = new File(FilePaths.INDEX_PATH + ".tmp");
-            //deleteTmpPostinglistFile.delete();
+            File deleteTmpPostinglistFile = new File(FilePaths.INDEX_PATH + ".tmp");
+            deleteTmpPostinglistFile.delete();
         } catch (IOException e) {
             e.printStackTrace();
         }
