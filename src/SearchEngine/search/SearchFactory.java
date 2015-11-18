@@ -31,6 +31,8 @@ public class SearchFactory {
 
         if (queryIsBoolean) {
             search = new BooleanSearch();
+        } else if (prf > 0) {
+            search = new PRFSearch();
         } else {
             search = new VectorSpaceSearch();
         }
