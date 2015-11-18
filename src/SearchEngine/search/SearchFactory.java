@@ -32,7 +32,7 @@ public class SearchFactory {
         if (queryIsBoolean) {
             search = new BooleanSearch();
         } else {
-            search = new SimpleSearch();
+            search = new VectorSpaceSearch();
         }
 
         search.setupSearch(query, index, topK, prf);

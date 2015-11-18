@@ -1,16 +1,8 @@
 package SearchEngine.utils;
 
-import SearchEngine.data.Configuration;
-import edu.stanford.nlp.ling.CoreAnnotations;
-import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.util.CoreMap;
 import org.tartarus.snowball.ext.EnglishStemmer;
 
 import java.io.FileInputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -81,44 +73,35 @@ public class WordParser {
     }
 
     public String stemToString(String text, Boolean filterStopwords) {
+        StringBuilder result = new StringBuilder();
+        String[] inputWords = text.split("[\\s+,;:.?!()]");
         EnglishStemmer stemmer = new EnglishStemmer();
-        String result = "";
-        Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos");
-        StanfordCoreNLP pipeline = new StanfordCoreNLP(props, false);
-        Annotation document = pipeline.process(text);
+        String word;
 
-        for(CoreMap sentence: document.get(CoreAnnotations.SentencesAnnotation.class))
-        {
-            for(CoreLabel token: sentence.get(CoreAnnotations.TokensAnnotation.class))
-            {
-                String word = token.get(CoreAnnotations.TextAnnotation.class).toLowerCase();
-                stemmer.setCurrent(word);
-
-                if (stemmer.stem()) {
-                    word = stemmer.getCurrent();
-                } else {
-                    System.out.println("Stemmer error");
-                }
-
-                // Do not save stopwords if the user does not want them as a part of the result
-                if (filterStopwords && stopWords.contains(word)) {
-                    continue;
-                }
-
-                if (!punctuation.contains(word)) {
-                    result += word + " ";
-                }
+        for (String tmpWord: inputWords) {
+            word = tmpWord.toLowerCase();
+            if ((filterStopwords && stopWords.contains(word)) | word.length() == 0) {
+                continue;
             }
+
+            stemmer.setCurrent(word);
+
+            if (stemmer.stem()) {
+                word = stemmer.getCurrent();
+            } else {
+                System.out.println("Stemmer error");
+            }
+
+            result.append(word + " ");
         }
 
-        return result;
+        return result.toString();
     }
 
     private Map<String, List<Long>> genericStem(String text, Boolean filterStopwords, Long pos) {
         // Negative values should not be passed as position
         assert pos >= 0;
-        String[] inputWords = text.split("[\\s+,.?!()]");
+        String[] inputWords = text.split("[\\s+,;:.?!()]");
 
         EnglishStemmer stemmer = new EnglishStemmer();
         Map<String, List<Long>> words = new HashMap<>();

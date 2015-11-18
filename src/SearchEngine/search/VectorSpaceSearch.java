@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Created by sebastian on 10.11.2015.
  */
-public class SimpleSearch implements Search {
+public class VectorSpaceSearch implements Search {
     private String searchTerm;
     private Index index;
     private Map<String, Double> queryVector;
@@ -67,7 +67,8 @@ public class SimpleSearch implements Search {
             List<Document> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
             documents.addAll(tmpDocList);
 
-            Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(index.getNumDocuments() / tmpDocList.size()));
+            int numDocs = index.getNumDocuments();
+            Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
             queryVector.put(searchWord, docVector);
             docWeightSum += docVector*docVector;
         }
@@ -84,48 +85,69 @@ public class SimpleSearch implements Search {
     }
 
     private ArrayList<Document> processPhraseQuery() {
-        Map<Integer, Document> docs = new HashMap<>();
-        HashSet<Integer> docIds = new HashSet<>();
+        Map<Integer, List<Document>> docs = new HashMap<>();
         String removedQuotationMarks = searchTerm.substring(1, searchTerm.length() - 1);
         Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES).keySet();
         String stemmedQuery = WordParser.getInstance().stemToString(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES);
 
+        computeQueryVector(new LinkedList<>(tokens));
+        int numDocs = index.getNumDocuments();
+        double docWeightSum = 0;
         Iterator<String> tokenIterator = tokens.iterator();
         // Initialize HashSet with first documents
-        for (Document doc: index.lookUpPostingInFileWithCompression(tokenIterator.next())) {
-            docs.put(doc.getDocId(), doc);
-            docIds.add(doc.getDocId());
+        String searchWord = tokenIterator.next();
+        List<Document> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
+        for (Document doc: tmpDocList) {
+            LinkedList<Document> tmpList = new LinkedList<>();
+            tmpList.add(doc);
+            docs.put(doc.getDocId(), tmpList);
+
+            Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
+            queryVector.put(searchWord, docVector);
+            docWeightSum += docVector * docVector;
         }
 
         while (tokenIterator.hasNext()) {
-            HashSet<Integer> newDocIds = new HashSet<>();
+            searchWord = tokenIterator.next();
+            tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
 
-            for (Document doc: index.lookUpPostingInFileWithCompression(tokenIterator.next())) {
-                docs.put(doc.getDocId(), doc);
-                newDocIds.add(doc.getDocId());
+            for (Document doc: tmpDocList) {
+                if (docs.containsKey(doc.getDocId())) {
+                    List<Document> tmpList = docs.get(doc.getDocId());
+                    tmpList.add(doc);
+                    docs.put(doc.getDocId(), tmpList);
+                }
+
+                Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
+                queryVector.put(searchWord, docVector);
+                docWeightSum += docVector * docVector;
             }
-
-            docIds.retainAll(newDocIds);
         }
 
-        ArrayList<Document> documents = new ArrayList<>();
+        // Normalize query weights
+        docWeightSum = Math.sqrt(docWeightSum);
+        for (String key: queryVector.keySet()) {
+            queryVector.put(key, queryVector.get(key)/docWeightSum);
+        }
 
-        // TODO: Introduce all possible results for phrase queries (the exercise sheet one is quite inaccurate,
-        //      if a particular query is needed in a document it should not be stemmed at all, also stop words should stay in the query)
-        Iterator<Integer> docIdIterator = docIds.iterator();
-        while (docIdIterator.hasNext()) {
-            int curDocId = docIdIterator.next();
-            Document curDoc = docs.get(curDocId);
-            String stemmedTitle = WordParser.getInstance().stemToString(curDoc.getInventionTitle(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
-            String stemmedAbstract = WordParser.getInstance().stemToString(curDoc.getPatentAbstract(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
+
+        ArrayList<Document> result = new ArrayList<>();
+        ArrayList<Document> documents = new ArrayList<>();
+        docs.values().forEach(documents::addAll);
+        documents = rankResults(documents, new LinkedList<>(tokens));
+
+        for (Document doc: documents) {
+            doc.loadPatentData();
+            String stemmedTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
+            String stemmedAbstract = WordParser.getInstance().stemToString(doc.getPatentAbstract(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
 
             if (stemmedTitle.indexOf(stemmedQuery) >= 0 ||
                     stemmedAbstract.indexOf(stemmedQuery) >= 0) {
-                documents.add(curDoc);
+                result.add(doc);
             }
         }
 
-        return documents;
+        return result;
     }
 
     private void computeQueryVector(List<String> searchWords) {

@@ -18,7 +18,6 @@ public class Index {
     Map<Integer, String> docIds = new HashMap<>();
     int numDocuments;
 
-
     public Index() {
 
     }

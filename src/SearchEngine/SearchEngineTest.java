@@ -55,8 +55,8 @@ public class SearchEngineTest {
         System.out.println("\n\"mobile devices\":");
         myEngine.search("\"mobile devices\"", 0, 0).forEach(System.out::println);*/
 
-        System.out.println("data device mobile data");
-        myEngine.search("data device mobile data", 10, 0).forEach(System.out::println);
+        //System.out.println("data device mobile data");
+        //myEngine.search("data device mobile data", 10, 0).forEach(System.out::println);
 
         System.out.println("\nprocessing:");
         myEngine.search("processing", 10, 0).forEach(System.out::println);
@@ -64,8 +64,8 @@ public class SearchEngineTest {
         System.out.println("\ncomputers:");
         myEngine.search("computers", 10, 0).forEach(System.out::println);
 
-        System.out.println("\n\"mobile devices:\"");
-        myEngine.search("\"mobile devices:\"", 10, 0).forEach(System.out::println);
+        System.out.println("\n\"mobile devices\":");
+        myEngine.search("\"mobile devices\"", 10, 0).forEach(System.out::println);
 
         System.out.println("\ndata:");
         myEngine.search("data", 10, 0).forEach(System.out::println);
