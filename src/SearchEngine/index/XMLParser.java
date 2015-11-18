@@ -153,7 +153,7 @@ public class XMLParser extends DefaultHandler {
 
 		if (this.inventionTitleEntered) {
 			if (document.getInventionTitle() != null && document.getInventionTitle() != "") {
-				document.setInventionTitle(document.getInventionTitle() + " " + new String(ch, start, length));
+				document.setInventionTitle(document.getInventionTitle() + new String(ch, start, length));
 			} else {
 				document.setInventionTitle(new String(ch, start, length));
 			}
@@ -161,7 +161,7 @@ public class XMLParser extends DefaultHandler {
 
 		if (this.abstractEntered && abstractParagraphEntered) {
 			if (document.getPatentAbstract() != null && document.getPatentAbstract() != "") {
-				document.setPatentAbstract(document.getPatentAbstract() + " " + new String(ch, start,length));
+				document.setPatentAbstract(document.getPatentAbstract() + new String(ch, start,length));
 			} else {
 				document.setPatentAbstract(new String(ch, start, length));
 			}
