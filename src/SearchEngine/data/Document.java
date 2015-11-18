@@ -8,16 +8,18 @@ import java.io.RandomAccessFile;
  * Created by sebastian on 22.10.2015.
  */
 public class Document {
-    public static int weightPos = 0;
-    public static int docIdPos = 1;
-    public static int patentIdPos = 2;
-    public static int numOccurrencePos = 5;
+    public static int POSTING_WEIGHT_POS = 0;
+    public static int POSTING_FILE_ID_POS = 1;
+    public static int POSTING_DOC_ID_POS = 2;
+    public static int POSTING_NUM_OCC_POS = 7;
     private String token;
     private int docId;
     private String inventionTitle = "";
     private long inventionTitlePos;
+    private long inventionTitleLength;
     private String patentAbstract = "";
     private long patentAbstractPos;
+    private long patentAbstractLength;
     private String cacheFile;
     private Double weight;
 
@@ -40,24 +42,26 @@ public class Document {
         try {
             RandomAccessFile cacheReader = new RandomAccessFile(cacheFile, "r");
 
-            patentAbstract = readLineFromFile(cacheReader, patentAbstractPos);
-            inventionTitle = readLineFromFile(cacheReader, inventionTitlePos);
+            patentAbstract = readLineFromFile(cacheReader, patentAbstractPos, patentAbstractLength);
+            inventionTitle = readLineFromFile(cacheReader, inventionTitlePos, inventionTitleLength);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    private String readLineFromFile(RandomAccessFile file, long pos) {
-        String result = "";
+    private String readLineFromFile(RandomAccessFile file, long pos, long length) {
+        int tmpLength = Math.toIntExact(length);
+        byte[] readData = new byte[tmpLength];
 
         try {
             file.seek(pos);
-            result = file.readUTF();
+            file.read(readData);
+            return new String(readData, 0, tmpLength);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return result;
+        return "";
     }
 
     public String getInventionTitle() {
@@ -74,6 +78,14 @@ public class Document {
 
     public void setInventionTitlePos(long inventionTitlePos) {
         this.inventionTitlePos = inventionTitlePos;
+    }
+
+    public long getInventionTitleLength() {
+        return inventionTitleLength;
+    }
+
+    public void setInventionTitleLength(long inventionTitleLength) {
+        this.inventionTitleLength = inventionTitleLength;
     }
 
     public int getDocId() {
@@ -98,6 +110,14 @@ public class Document {
 
     public void setPatentAbstractPos(long patentAbstractPos) {
         this.patentAbstractPos = patentAbstractPos;
+    }
+
+    public long getPatentAbstractLength() {
+        return patentAbstractLength;
+    }
+
+    public void setPatentAbstractLength(long patentAbstractLength) {
+        this.patentAbstractLength = patentAbstractLength;
     }
 
     public Double getWeight() {

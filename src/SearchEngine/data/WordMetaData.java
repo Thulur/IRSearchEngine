@@ -8,12 +8,12 @@ import java.util.List;
  * Created by Sebastian on 24.10.2015.
  */
 public class WordMetaData {
+    private int fileId;
     private int docId;
-    private int patentDocId;
     private long abstractPos;
-    private int abstractLength;
+    private long abstractLength;
     private long inventionTitlePos;
-    private int inventionTitleLength;
+    private long inventionTitleLength;
     private List<Long> occurrences = new LinkedList<>();
     private String word;
 
@@ -31,19 +31,19 @@ public class WordMetaData {
 
     @Override
     public String toString() {
-        String metaDataString = new String();
+        StringBuilder metaDataStringBuilder = new StringBuilder();
 
-        metaDataString += docId + "," + patentDocId + ",";
-        metaDataString += inventionTitlePos + "," + abstractPos + ",";
-        metaDataString += occurrences.size();
+        metaDataStringBuilder.append(fileId + "," + docId + "," + inventionTitlePos + "," +
+                                    abstractPos + "," + inventionTitleLength + "," +
+                                    abstractLength + "," + occurrences.size());
 
         for (long occurrence: occurrences) {
-            metaDataString += "," + occurrence ;
+            metaDataStringBuilder.append("," + occurrence);
         }
 
-        metaDataString += ";";
+        metaDataStringBuilder.append(";");
 
-        return metaDataString;
+        return metaDataStringBuilder.toString();
     }
 
     //GETTER & SETTER
@@ -56,14 +56,6 @@ public class WordMetaData {
         this.abstractPos = pos;
     }
 
-    public int getPatentDocId() {
-        return patentDocId;
-    }
-
-    public void setPatentDocId(int patentDocId) {
-        this.patentDocId = patentDocId;
-    }
-
     public int getDocId() {
         return docId;
     }
@@ -72,19 +64,27 @@ public class WordMetaData {
         this.docId = docId;
     }
 
-    public int getAbstractLength() {
+    public int getFileId() {
+        return fileId;
+    }
+
+    public void setFileId(int fileId) {
+        this.fileId = fileId;
+    }
+
+    public long getAbstractLength() {
         return abstractLength;
     }
 
-    public void setAbstractLength(int abstractLength) {
+    public void setAbstractLength(long abstractLength) {
         this.abstractLength = abstractLength;
     }
 
-    public int getInventionTitleLength() {
+    public long getInventionTitleLength() {
         return inventionTitleLength;
     }
 
-    public void setInventionTitleLength(int inventionTitleLength) {
+    public void setInventionTitleLength(long inventionTitleLength) {
         this.inventionTitleLength = inventionTitleLength;
     }
 

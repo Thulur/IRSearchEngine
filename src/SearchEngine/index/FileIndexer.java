@@ -93,17 +93,12 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             String word = entry.getKey();
             List<Long> occurrences = entry.getValue();
             WordMetaData metaData = new WordMetaData();
-            metaData.setDocId(docId);
-            metaData.setPatentDocId(document.getDocId());
-            try {
-                metaData.setInventionTitlePos(cacheFile.getFilePointer());
-                cacheFile.writeUTF(document.getInventionTitle());
-                metaData.setAbstractPos(cacheFile.getFilePointer());
-                cacheFile.writeUTF(document.getPatentAbstract());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            metaData.setFileId(docId);
+            metaData.setDocId(document.getDocId());
+            metaData.setInventionTitlePos(document.getInventionTitlePos());
+            metaData.setAbstractPos(document.getPatentAbstractPos());
+            metaData.setInventionTitleLength(document.getInventionTitleLength());
+            metaData.setAbstractLength(document.getPatentAbstractLength());
             occurrences.forEach(metaData::addWordOccurrence);
             metaData.sortOccurrences();
 

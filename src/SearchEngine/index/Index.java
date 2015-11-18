@@ -26,7 +26,7 @@ public class Index {
         try {
             String line;
 
-            BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.DOC_IDS_FILE));
+            BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.FILE_IDS_FILE));
 
             while ((line = docIdsFile.readLine()) != null) {
                 String[] splitEntry = line.split("[ ]");
@@ -120,16 +120,16 @@ public class Index {
 
                 for (String entry: line.toString().split("[;]")) {
                     String[] values = entry.split(",");
-                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Document.numOccurrencePos - 1]))) * Math.log10(numPatents / entryCount);
+                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Document.POSTING_NUM_OCC_POS - 1]))) * Math.log10(numPatents / entryCount);
                     double docVectorSum;
 
-                    if (docWeights.containsKey(values[Document.patentIdPos - 1])) {
-                        docVectorSum = docWeights.get(values[Document.patentIdPos - 1]) + docVector * docVector;
+                    if (docWeights.containsKey(values[Document.POSTING_DOC_ID_POS - 1])) {
+                        docVectorSum = docWeights.get(values[Document.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
                     } else {
                         docVectorSum = docVector * docVector;
                     }
 
-                    docWeights.put(values[Document.patentIdPos - 1], docVectorSum);
+                    docWeights.put(values[Document.POSTING_DOC_ID_POS - 1], docVectorSum);
                     vectorLine.append(docVector + "," + entry + ";");
                 }
 
@@ -146,7 +146,7 @@ public class Index {
             while ((line = tmpPostingList.readLine()) != null && indexEntryIterator.hasNext()) {
                 for (String entry: line.split("[;]")) {
                     String[] entryValues = entry.split("[,]");
-                    Double normalizedWeight = Double.parseDouble(entryValues[Document.weightPos]) / Math.sqrt(docWeights.get(entryValues[Document.patentIdPos]));
+                    Double normalizedWeight = Double.parseDouble(entryValues[Document.POSTING_WEIGHT_POS]) / Math.sqrt(docWeights.get(entryValues[Document.POSTING_DOC_ID_POS]));
                     processedLine.append(Math.round(1000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
                 }
 
@@ -235,19 +235,19 @@ public class Index {
 
                     curNum = Long.parseLong(curLine.substring(i, separatorPos));
 
-                    if (numCount == Document.patentIdPos) {
+                    if (numCount == Document.POSTING_DOC_ID_POS) {
                         patentIdDelta = curNum - lastPatentId;
                         lastPatentId = curNum;
                         compressed.append(IndexEncoder.convertToVByte(patentIdDelta));
-                    } else if (numCount == Document.numOccurrencePos) {
+                    } else if (numCount == Document.POSTING_NUM_OCC_POS) {
                         compressed.append(IndexEncoder.convertToVByte(curNum));
                         numOcc = curNum;
-                    } else if (numCount >= 6) {
+                    } else if (numCount >= Document.POSTING_NUM_OCC_POS + 1) {
                         occurrenceDelta = curNum - lastOccurrence;
                         lastOccurrence = curNum;
                         compressed.append(IndexEncoder.convertToVByte(occurrenceDelta));
 
-                            if (numCount == numOcc + 5) {
+                            if (numCount == numOcc + Document.POSTING_NUM_OCC_POS) {
                             numCount = -1;
                             lastOccurrence = 0;
 
@@ -289,17 +289,17 @@ public class Index {
             if (line.charAt(i) >= '8') {
                 curNum = convertToDecimal(NumberParser.parseHexadecimalLong(line.substring(lastStart, i + 2)));
 
-                if (numCount == Document.patentIdPos) {
+                if (numCount == Document.POSTING_DOC_ID_POS) {
                     patentId += curNum;
                     decompressed.append(patentId + ",");
-                } else if (numCount == Document.numOccurrencePos) {
+                } else if (numCount == Document.POSTING_NUM_OCC_POS) {
                     decompressed.append(curNum + ",");
                     numOcc = curNum;
-                } else if (numCount >= 6) {
+                } else if (numCount >= Document.POSTING_NUM_OCC_POS + 1) {
                     occurrence += curNum;
                     decompressed.append(occurrence);
 
-                    if (numCount == numOcc + 5) {
+                    if (numCount == numOcc + Document.POSTING_NUM_OCC_POS) {
                         decompressed.append(";");
                         numCount = -1;
                         occurrence = 0;
@@ -353,7 +353,6 @@ public class Index {
 
             for (String metaData: metaDataCollection) {
                 String[] metaDataValues = metaData.split("[,]");
-                int size = metaDataValues.length;
                 int patentDocId = Integer.parseInt(metaDataValues[1]);
                 long inventionTitlePos = Long.parseLong(metaDataValues[2]);
                 long abstractPos = Long.parseLong(metaDataValues[3]);
@@ -415,19 +414,25 @@ public class Index {
                 int patentDocId;
                 long inventionTitlePos;
                 long abstractPos;
+                long inventionTitleLength;
+                long abstractLength;
                 for (String metaData: metaDataCollection) {
                     String[] metaDataValues = metaData.split("[,]");
 
-                    curDocId = Integer.parseInt(metaDataValues[Document.docIdPos]);
-                    patentDocId = Integer.parseInt(metaDataValues[Document.patentIdPos]);
+                    curDocId = Integer.parseInt(metaDataValues[Document.POSTING_FILE_ID_POS]);
+                    patentDocId = Integer.parseInt(metaDataValues[Document.POSTING_DOC_ID_POS]);
                     inventionTitlePos = Long.parseLong(metaDataValues[3]);
                     abstractPos = Long.parseLong(metaDataValues[4]);
+                    inventionTitleLength = Long.parseLong(metaDataValues[5]);
+                    abstractLength = Long.parseLong(metaDataValues[6]);
 
                     Document document = new Document(patentDocId, FilePaths.CACHE_PATH + docIds.get(curDocId));
                     document.setToken(word);
-                    document.setWeight(Double.parseDouble(metaDataValues[Document.weightPos]) / 1000f);
+                    document.setWeight(Double.parseDouble(metaDataValues[Document.POSTING_WEIGHT_POS]) / 1000f);
                     document.setInventionTitlePos(inventionTitlePos);
                     document.setPatentAbstractPos(abstractPos);
+                    document.setInventionTitleLength(inventionTitleLength);
+                    document.setPatentAbstractLength(abstractLength);
 
                     results.add(document);
                 }

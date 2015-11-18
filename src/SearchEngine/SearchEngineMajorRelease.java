@@ -47,7 +47,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     void index(String directory){
-        BufferedWriter docIdFile;
+        BufferedWriter fileIdFile;
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader("data/xmlfiles.txt"));
@@ -56,21 +56,16 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             fileIndexers = new FileIndexer[files.size()];
             fileThreads = new Thread[files.size()];
 
-            docIdFile = new BufferedWriter(new FileWriter(FilePaths.DOC_IDS_FILE));
+            fileIdFile = new BufferedWriter(new FileWriter(FilePaths.FILE_IDS_FILE));
 
             for (int i = 0; i < files.size(); ++i) {
                 fileIndexers[i] = new FileIndexer(files.get(i), i, this);
                 fileThreads[i] = new Thread(fileIndexers[i]);
-                String fileId = "";
-                String filename = files.get(i);
 
-                if (filename.indexOf("ipg") >= 0) {
-                    fileId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
-                }
-                docIdFile.write(i + " cache" + fileId + ".txt" + "\n");
+                fileIdFile.write(i + " " + files.get(i) + "\n");
             }
 
-            docIdFile.close();
+            fileIdFile.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

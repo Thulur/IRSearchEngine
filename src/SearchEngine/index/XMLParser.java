@@ -8,6 +8,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -152,18 +153,44 @@ public class XMLParser extends DefaultHandler {
 		}
 
 		if (this.inventionTitleEntered) {
+			long filePos = 0;
+
+			if (document.getDocId() == 8353050) {
+				int i = 0;
+			}
+
+			try {
+				filePos = fileInput.getChannel().position() - ch.length + start;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
 			if (document.getInventionTitle() != null && document.getInventionTitle() != "") {
 				document.setInventionTitle(document.getInventionTitle() + new String(ch, start, length));
+				document.setInventionTitleLength(filePos + length - document.getInventionTitlePos());
 			} else {
 				document.setInventionTitle(new String(ch, start, length));
+				document.setInventionTitlePos(filePos);
+				document.setInventionTitleLength(length);
 			}
 		}
 
 		if (this.abstractEntered && abstractParagraphEntered) {
+			long filePos = 0;
+
+			try {
+				filePos = fileInput.getChannel().position() - ch.length + start;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
 			if (document.getPatentAbstract() != null && document.getPatentAbstract() != "") {
 				document.setPatentAbstract(document.getPatentAbstract() + new String(ch, start,length));
+				document.setPatentAbstractLength(filePos + length - document.getPatentAbstractPos());
 			} else {
 				document.setPatentAbstract(new String(ch, start, length));
+				document.setPatentAbstractPos(filePos);
+				document.setPatentAbstractLength(length);
 			}
 		}
 	}
