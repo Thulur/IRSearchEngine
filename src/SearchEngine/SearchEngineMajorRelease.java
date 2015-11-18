@@ -32,9 +32,7 @@ import java.util.*;
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private Index index = new Index();
-    private int numRemainingFiles;
     private List<String> files = new LinkedList<>();
-    private Long start;
     private int maxThreads = 1;
     private int curFileNum = -1;
     private Thread[] fileThreads;
@@ -49,14 +47,12 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     void index(String directory){
-        start = System.nanoTime();
         BufferedWriter docIdFile;
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader("data/xmlfiles.txt"));
             String filesString = reader.readLine();
             files = Arrays.asList(filesString.split("[,]"));
-            numRemainingFiles = files.size();
             fileIndexers = new FileIndexer[files.size()];
             fileThreads = new Thread[files.size()];
 
@@ -168,17 +164,10 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     public void finishedParsing() {
-        --numRemainingFiles;
         ++curFileNum;
 
         if (curFileNum < files.size()) {
             fileThreads[curFileNum].start();
-        }
-
-        if (numRemainingFiles == 0) {
-            System.out.println("Finished parsing!");
-            Long end = System.nanoTime();
-            System.out.println("Indexing took " + ((end - start)/1000000000) + " seconds.");
         }
     }
 }

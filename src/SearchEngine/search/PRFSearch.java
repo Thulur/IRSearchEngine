@@ -24,6 +24,16 @@ public class PRFSearch implements Search {
 
     @Override
     public ArrayList<Document> execute() {
+        SearchFactory searchFactory = new SearchFactory();
+        searchFactory.setIndex(index);
+
+        Search firstSearch = searchFactory.getSearchFromQuery(searchTerm, topK, 0);
+        ArrayList<Document> firstSearchResults = firstSearch.execute();
+
+        String modifiedSearchTerm = "";
+        Search secondSearch = searchFactory.getSearchFromQuery("", topK, 0);
+        ArrayList<Document> secondSearchResults = secondSearch.execute();
+
         return null;
     }
 }
