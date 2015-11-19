@@ -155,10 +155,6 @@ public class XMLParser extends DefaultHandler {
 		if (this.inventionTitleEntered) {
 			long filePos = 0;
 
-			if (document.getDocId() == 8353050) {
-				int i = 0;
-			}
-
 			try {
 				filePos = fileInput.getChannel().position() - ch.length + start;
 			} catch (IOException e) {

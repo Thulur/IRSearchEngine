@@ -2,6 +2,7 @@ package SearchEngine.index;
 
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
+import SearchEngine.data.WordMetaData;
 import SearchEngine.utils.IndexEncoder;
 import SearchEngine.utils.NumberParser;
 
@@ -120,16 +121,16 @@ public class Index {
 
                 for (String entry: line.toString().split("[;]")) {
                     String[] values = entry.split(",");
-                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Document.POSTING_NUM_OCC_POS - 1]))) * Math.log10(numPatents / entryCount);
+                    Double docVector = (1 + Math.log10(Double.parseDouble(values[WordMetaData.POSTING_NUM_OCC_POS - 1]))) * Math.log10(numPatents / entryCount);
                     double docVectorSum;
 
-                    if (docWeights.containsKey(values[Document.POSTING_DOC_ID_POS - 1])) {
-                        docVectorSum = docWeights.get(values[Document.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
+                    if (docWeights.containsKey(values[WordMetaData.POSTING_DOC_ID_POS - 1])) {
+                        docVectorSum = docWeights.get(values[WordMetaData.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
                     } else {
                         docVectorSum = docVector * docVector;
                     }
 
-                    docWeights.put(values[Document.POSTING_DOC_ID_POS - 1], docVectorSum);
+                    docWeights.put(values[WordMetaData.POSTING_DOC_ID_POS - 1], docVectorSum);
                     vectorLine.append(docVector + "," + entry + ";");
                 }
 
@@ -146,7 +147,8 @@ public class Index {
             while ((line = tmpPostingList.readLine()) != null && indexEntryIterator.hasNext()) {
                 for (String entry: line.split("[;]")) {
                     String[] entryValues = entry.split("[,]");
-                    Double normalizedWeight = Double.parseDouble(entryValues[Document.POSTING_WEIGHT_POS]) / Math.sqrt(docWeights.get(entryValues[Document.POSTING_DOC_ID_POS]));
+                    Double normalizedWeight = Double.parseDouble(entryValues[WordMetaData.POSTING_WEIGHT_POS]) /
+                            Math.sqrt(docWeights.get(entryValues[WordMetaData.POSTING_DOC_ID_POS]));
                     processedLine.append(Math.round(1000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
                 }
 
@@ -235,19 +237,19 @@ public class Index {
 
                     curNum = Long.parseLong(curLine.substring(i, separatorPos));
 
-                    if (numCount == Document.POSTING_DOC_ID_POS) {
+                    if (numCount == WordMetaData.POSTING_DOC_ID_POS) {
                         patentIdDelta = curNum - lastPatentId;
                         lastPatentId = curNum;
                         compressed.append(IndexEncoder.convertToVByte(patentIdDelta));
-                    } else if (numCount == Document.POSTING_NUM_OCC_POS) {
+                    } else if (numCount == WordMetaData.POSTING_NUM_OCC_POS) {
                         compressed.append(IndexEncoder.convertToVByte(curNum));
                         numOcc = curNum;
-                    } else if (numCount >= Document.POSTING_NUM_OCC_POS + 1) {
+                    } else if (numCount >= WordMetaData.POSTING_NUM_OCC_POS + 1) {
                         occurrenceDelta = curNum - lastOccurrence;
                         lastOccurrence = curNum;
                         compressed.append(IndexEncoder.convertToVByte(occurrenceDelta));
 
-                            if (numCount == numOcc + Document.POSTING_NUM_OCC_POS) {
+                            if (numCount == numOcc + WordMetaData.POSTING_NUM_OCC_POS) {
                             numCount = -1;
                             lastOccurrence = 0;
 
@@ -275,39 +277,49 @@ public class Index {
         }
     }
 
-    public String decompressLine(String line) {
-        StringBuilder decompressed = new StringBuilder();
-
+    public List<Document> decompressLine(String line) {
+        List<Document> documents = new LinkedList<>();
         int numCount = 0;
         long patentId = 0;
         long occurrence = 0;
         long numOcc = 0;
         int lastStart = 0;
         long curNum;
+        Document document = new Document();
+
         for (int i = 0; i < line.length() - 1; i += 2) {
             // A hexadecimal value greater or equal 8 is found => the 8th bit of a byte is set
             if (line.charAt(i) >= '8') {
                 curNum = convertToDecimal(NumberParser.parseHexadecimalLong(line.substring(lastStart, i + 2)));
 
-                if (numCount == Document.POSTING_DOC_ID_POS) {
+                if (numCount == WordMetaData.POSTING_WEIGHT_POS) {
+                    document.setWeight(Math.toIntExact(curNum) / 1000d);
+                }
+                else if (numCount == WordMetaData.POSTING_FILE_ID_POS) {
+                    document.setCacheFile(FilePaths.CACHE_PATH + docIds.get(Math.toIntExact(curNum)));
+                }
+                else if (numCount == WordMetaData.POSTING_DOC_ID_POS) {
                     patentId += curNum;
-                    decompressed.append(patentId + ",");
-                } else if (numCount == Document.POSTING_NUM_OCC_POS) {
-                    decompressed.append(curNum + ",");
+                    document.setDocId(Math.toIntExact(patentId));
+                } else if (numCount == WordMetaData.POSTING_TITLE_L_POS) {
+                    document.setInventionTitlePos(curNum);
+                } else if (numCount == WordMetaData.POSTING_ABSTRACT_L_POS) {
+                    document.setPatentAbstractPos(curNum);
+                } else if (numCount == WordMetaData.POSTING_TITLE_P_POS) {
+                    document.setInventionTitleLength(curNum);
+                } else if (numCount == WordMetaData.POSTING_ABSTRACT_P_POS) {
+                    document.setPatentAbstractLength(curNum);
+                } else if (numCount == WordMetaData.POSTING_NUM_OCC_POS) {
                     numOcc = curNum;
-                } else if (numCount >= Document.POSTING_NUM_OCC_POS + 1) {
+                } else if (numCount >= WordMetaData.POSTING_NUM_OCC_POS + 1) {
                     occurrence += curNum;
-                    decompressed.append(occurrence);
 
-                    if (numCount == numOcc + Document.POSTING_NUM_OCC_POS) {
-                        decompressed.append(";");
+                    if (numCount == numOcc + WordMetaData.POSTING_NUM_OCC_POS) {
                         numCount = -1;
                         occurrence = 0;
-                    } else {
-                        decompressed.append(",");
+                        documents.add(document);
+                        document = new Document();
                     }
-                } else {
-                    decompressed.append(curNum + ",");
                 }
 
                 ++numCount;
@@ -315,7 +327,7 @@ public class Index {
             }
         }
 
-        return decompressed.toString();
+        return documents;
     }
 
     private long convertToDecimal(long vByteValue) {
@@ -401,42 +413,13 @@ public class Index {
 
                 postingReader.seek(postingListSeek);
                 String posting = postingReader.readLine();
+                results = decompressLine(posting);
 
-                posting = decompressLine(posting);
+                for (Document doc: results) {
+                    doc.setToken(word);
+                }
 
                 postingReader.close();
-                // TODO:
-                // Most random line ever, just open a file so java does not throw an error (improve this solution somehow!!!)
-                RandomAccessFile xmlReader = new RandomAccessFile(FilePaths.CACHE_PATH + docIds.get(0), "r");
-                String[] metaDataCollection = posting.split("[;]");
-
-                int curDocId;
-                int patentDocId;
-                long inventionTitlePos;
-                long abstractPos;
-                long inventionTitleLength;
-                long abstractLength;
-                for (String metaData: metaDataCollection) {
-                    String[] metaDataValues = metaData.split("[,]");
-
-                    curDocId = Integer.parseInt(metaDataValues[Document.POSTING_FILE_ID_POS]);
-                    patentDocId = Integer.parseInt(metaDataValues[Document.POSTING_DOC_ID_POS]);
-                    inventionTitlePos = Long.parseLong(metaDataValues[3]);
-                    abstractPos = Long.parseLong(metaDataValues[4]);
-                    inventionTitleLength = Long.parseLong(metaDataValues[5]);
-                    abstractLength = Long.parseLong(metaDataValues[6]);
-
-                    Document document = new Document(patentDocId, FilePaths.CACHE_PATH + docIds.get(curDocId));
-                    document.setToken(word);
-                    document.setWeight(Double.parseDouble(metaDataValues[Document.POSTING_WEIGHT_POS]) / 1000f);
-                    document.setInventionTitlePos(inventionTitlePos);
-                    document.setPatentAbstractPos(abstractPos);
-                    document.setInventionTitleLength(inventionTitleLength);
-                    document.setPatentAbstractLength(abstractLength);
-
-                    results.add(document);
-                }
-                xmlReader.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -8,10 +8,6 @@ import java.io.RandomAccessFile;
  * Created by sebastian on 22.10.2015.
  */
 public class Document {
-    public static int POSTING_WEIGHT_POS = 0;
-    public static int POSTING_FILE_ID_POS = 1;
-    public static int POSTING_DOC_ID_POS = 2;
-    public static int POSTING_NUM_OCC_POS = 7;
     private String token;
     private int docId;
     private String inventionTitle = "";
@@ -134,5 +130,13 @@ public class Document {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getCacheFile() {
+        return cacheFile;
+    }
+
+    public void setCacheFile(String cacheFile) {
+        this.cacheFile = cacheFile;
     }
 }

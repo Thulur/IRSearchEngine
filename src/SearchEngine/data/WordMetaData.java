@@ -8,6 +8,14 @@ import java.util.List;
  * Created by Sebastian on 24.10.2015.
  */
 public class WordMetaData {
+    public static int POSTING_WEIGHT_POS = 0;
+    public static int POSTING_FILE_ID_POS = 1;
+    public static int POSTING_DOC_ID_POS = 2;
+    public static int POSTING_TITLE_L_POS = 3;
+    public static int POSTING_ABSTRACT_L_POS = 4;
+    public static int POSTING_TITLE_P_POS = 5;
+    public static int POSTING_ABSTRACT_P_POS = 6;
+    public static int POSTING_NUM_OCC_POS = 7;
     private int fileId;
     private int docId;
     private long abstractPos;
