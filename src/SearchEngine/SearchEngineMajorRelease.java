@@ -25,6 +25,7 @@ import SearchEngine.index.FileIndexer;
 import SearchEngine.index.Index;
 import SearchEngine.index.ParsedEventListener;
 import SearchEngine.search.SearchFactory;
+import SearchEngine.utils.SpellingCorrector;
 import SearchEngine.utils.WordParser;
 
 import java.io.*;
@@ -114,11 +115,24 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     ArrayList<String> search(String query, int topK, int prf) {
-        if (Configuration.COMPRESSED) {
-            return searchWithCompression(query, topK, prf);
-        } else {
-            return searchWithoutCompression(query, topK, prf);
+        if (Configuration.ENABLE_SPELLING_CORRECTION) {
+            SpellingCorrector.setup(index);
         }
+
+        ArrayList<String> results = searchWithCompression(query, topK, prf);
+
+        if (results.size() == 0) {
+            String correctedQuery = SpellingCorrector.getInstance().correctSpelling(query);
+            results = searchWithCompression(correctedQuery, topK, prf);
+        }
+
+        return results;
+
+//        if (Configuration.COMPRESSED) {
+//            return searchWithCompression(query, topK, prf);
+//        } else {
+//            return searchWithoutCompression(query, topK, prf);
+//        }
     }
 
     private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
