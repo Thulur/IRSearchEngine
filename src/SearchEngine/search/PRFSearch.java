@@ -2,8 +2,9 @@ package SearchEngine.search;
 
 import SearchEngine.data.Document;
 import SearchEngine.index.Index;
+import SearchEngine.utils.WordParser;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Created by sebastian on 18.11.2015.
@@ -30,10 +31,43 @@ public class PRFSearch implements Search {
         Search firstSearch = searchFactory.getSearchFromQuery(searchTerm, topK, 0);
         ArrayList<Document> firstSearchResults = firstSearch.execute();
 
-        String modifiedSearchTerm = "";
-        Search secondSearch = searchFactory.getSearchFromQuery("", topK, 0);
+        Map<String, List<Long>> words = new HashMap<>();
+        for (int i = 0; i < prf; ++i) {
+            Document curDoc = firstSearchResults.get(i);
+            curDoc.loadPatentData();
+            for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.getInventionTitle() + " " + curDoc.getPatentAbstract(), true).entrySet()) {
+                if (words.containsKey(entry.getKey())) {
+                    words.get(entry.getKey()).addAll(entry.getValue());
+                } else {
+                    words.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        List<HashMap.Entry<String, List<Long>>> tmpList = new ArrayList<>(words.entrySet());
+        Collections.sort(tmpList, (obj1, obj2) -> ((Comparable) ((obj1)).getValue().size()).compareTo(((obj2)).getValue().size()));
+        Collections.reverse(tmpList);
+
+        StringBuilder modifiedSearchTerm = new StringBuilder(searchTerm);
+        Iterator<HashMap.Entry<String, List<Long>>> iterator = tmpList.iterator();
+        HashMap.Entry<String, List<Long>> curEntry;
+        for (int i = 0; i < 3 && iterator.hasNext(); ++i) {
+            curEntry = iterator.next();
+            modifiedSearchTerm.append(" ");
+            modifiedSearchTerm.append(curEntry.getKey());
+        }
+
+        Search secondSearch = searchFactory.getSearchFromQuery(modifiedSearchTerm.toString(), topK, 0);
         ArrayList<Document> secondSearchResults = secondSearch.execute();
 
-        return null;
+        ArrayList<Document> result = new ArrayList<>();
+        Document curDoc;
+        for (int i = 0; i < topK && i < secondSearchResults.size(); ++i) {
+            curDoc = secondSearchResults.get(i);
+            curDoc.loadPatentData();
+            result.add(curDoc);
+        }
+
+        return result;
     }
 }

@@ -70,6 +70,12 @@ public class SearchEngineTest {
         System.out.println("\ndata:");
         myEngine.search("data", 10, 0).forEach(System.out::println);
 
+        System.out.println("\ndigital (without prf):");
+        myEngine.search("digital", 10, 0).forEach(System.out::println);
+
+        System.out.println("\ndigital (with prf = 2):");
+        myEngine.search("digital", 10, 2).forEach(System.out::println);
+
         time = System.nanoTime() - start;
 
         System.out.print("Search time:\t" + (time/1000) + "\tmicroseconds\n");
