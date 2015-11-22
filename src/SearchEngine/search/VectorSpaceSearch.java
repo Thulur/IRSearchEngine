@@ -2,6 +2,8 @@ package SearchEngine.search;
 
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
+import SearchEngine.data.FilePaths;
+import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
 
@@ -61,11 +63,11 @@ public class VectorSpaceSearch implements Search {
 
         computeQueryVector(searchWords);
 
-        ArrayList<Document> documents = new ArrayList<>();
+        ArrayList<Posting> postings = new ArrayList<>();
         double docWeightSum = 0;
         for (String searchWord: queryVector.keySet()) {
-            List<Document> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
-            documents.addAll(tmpDocList);
+            List<Posting> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
+            postings.addAll(tmpDocList);
 
             int numDocs = index.getNumDocuments();
             Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
@@ -79,13 +81,18 @@ public class VectorSpaceSearch implements Search {
             queryVector.put(key, queryVector.get(key)/docWeightSum);
         }
 
-        documents = rankResults(documents, searchWords);
+        postings = rankResults(postings, searchWords);
 
-        return documents;
+        ArrayList<Document> result = new ArrayList<>();
+        for (Posting posting: postings) {
+            result.add(new Document(posting, FilePaths.CACHE_PATH + index.getCacheFile(posting.getFileId())));
+        }
+
+        return result;
     }
 
     private ArrayList<Document> processPhraseQuery() {
-        Map<Integer, List<Document>> docs = new HashMap<>();
+        Map<Integer, List<Posting>> docs = new HashMap<>();
         String removedQuotationMarks = searchTerm.substring(1, searchTerm.length() - 1);
         Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES).keySet();
         String stemmedQuery = WordParser.getInstance().stemToString(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES);
@@ -96,9 +103,9 @@ public class VectorSpaceSearch implements Search {
         Iterator<String> tokenIterator = tokens.iterator();
         // Initialize HashSet with first documents
         String searchWord = tokenIterator.next();
-        List<Document> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
-        for (Document doc: tmpDocList) {
-            LinkedList<Document> tmpList = new LinkedList<>();
+        List<Posting> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
+        for (Posting doc: tmpDocList) {
+            LinkedList<Posting> tmpList = new LinkedList<>();
             tmpList.add(doc);
             docs.put(doc.getDocId(), tmpList);
 
@@ -111,9 +118,9 @@ public class VectorSpaceSearch implements Search {
             searchWord = tokenIterator.next();
             tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
 
-            for (Document doc: tmpDocList) {
+            for (Posting doc: tmpDocList) {
                 if (docs.containsKey(doc.getDocId())) {
-                    List<Document> tmpList = docs.get(doc.getDocId());
+                    List<Posting> tmpList = docs.get(doc.getDocId());
                     tmpList.add(doc);
                     docs.put(doc.getDocId(), tmpList);
                 }
@@ -132,12 +139,13 @@ public class VectorSpaceSearch implements Search {
 
 
         ArrayList<Document> result = new ArrayList<>();
-        ArrayList<Document> documents = new ArrayList<>();
-        docs.values().forEach(documents::addAll);
-        documents = rankResults(documents, new LinkedList<>(tokens));
+        ArrayList<Posting> postings = new ArrayList<>();
+        docs.values().forEach(postings::addAll);
+        postings = rankResults(postings, new LinkedList<>(tokens));
+        Document doc;
 
-        for (Document doc: documents) {
-            doc.loadPatentData();
+        for (Posting posting: postings) {
+            doc = new Document(posting, FilePaths.CACHE_PATH + index.getCacheFile(posting.getFileId()));
             String stemmedTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
             String stemmedAbstract = WordParser.getInstance().stemToString(doc.getPatentAbstract(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
 
@@ -163,36 +171,36 @@ public class VectorSpaceSearch implements Search {
         }
     }
 
-    private ArrayList<Document> rankResults(ArrayList<Document> documents, List<String> searchWords) {
-        Map<Integer, Document> documentTable = new HashMap<>();
+    private ArrayList<Posting> rankResults(ArrayList<Posting> postings, List<String> searchWords) {
+        Map<Integer, Posting> postingTable = new HashMap<>();
 
         // Initialize data structure
-        for (Document document: documents) {
-            int docId = document.getDocId();
-            documentTable.put(docId, document);
+        for (Posting posting: postings) {
+            int docId = posting.getDocId();
+            postingTable.put(docId, posting);
         }
 
         // Compute cosine similarities
         Map<Integer, Double> rankings = new HashMap<>();
-        for (int i = 0; i < documents.size(); ++i) {
-            double weight = documents.get(i).getWeight();
-            double ranking = weight * queryVector.get(documents.get(i).getToken());
+        for (int i = 0; i < postings.size(); ++i) {
+            double weight = postings.get(i).getWeight();
+            double ranking = weight * queryVector.get(postings.get(i).getToken());
 
-            if (rankings.containsKey(documents.get(i).getDocId())) {
-                rankings.put(documents.get(i).getDocId(), ranking + rankings.get(documents.get(i).getDocId()));
+            if (rankings.containsKey(postings.get(i).getDocId())) {
+                rankings.put(postings.get(i).getDocId(), ranking + rankings.get(postings.get(i).getDocId()));
             } else {
-                rankings.put(documents.get(i).getDocId(), ranking);
+                rankings.put(postings.get(i).getDocId(), ranking);
             }
         }
 
         List<HashMap.Entry<Integer, Double>> tmpList = new ArrayList<>(rankings.entrySet());
         Collections.sort(tmpList, (obj1, obj2) -> ((Comparable) ((obj1)).getValue()).compareTo(((obj2)).getValue()));
         Collections.reverse(tmpList);
-        ArrayList<Document> result = new ArrayList<>();
+        ArrayList<Posting> result = new ArrayList<>();
 
         for (int i = 0; i < topK && i < tmpList.size(); ++i) {
             int docId = tmpList.get(i).getKey();
-            result.add(documentTable.get(docId));
+            result.add(postingTable.get(docId));
         }
 
         return result;

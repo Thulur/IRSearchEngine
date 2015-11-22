@@ -8,7 +8,6 @@ import java.io.RandomAccessFile;
  * Created by sebastian on 22.10.2015.
  */
 public class Document {
-    private String token;
     private int docId;
     private String inventionTitle = "";
     private long inventionTitlePos;
@@ -17,7 +16,6 @@ public class Document {
     private long patentAbstractPos;
     private long patentAbstractLength;
     private String cacheFile;
-    private Double weight;
 
     public Document() {
 
@@ -26,6 +24,17 @@ public class Document {
     public Document(int docId, String cacheFile) {
         this.docId = docId;
         this.cacheFile = cacheFile;
+    }
+
+    public Document(Posting posting, String cacheFile) {
+        this.docId = posting.getDocId();
+        this.inventionTitlePos = posting.getInventionTitlePos();
+        this.patentAbstractPos = posting.getAbstractPos();
+        this.inventionTitleLength = posting.getInventionTitleLength();
+        this.patentAbstractLength = posting.getAbstractLength();
+        this.cacheFile = cacheFile;
+
+        loadPatentData();
     }
 
     public Document(int docId, String inventionTitle, String patentAbstract) {
@@ -114,22 +123,6 @@ public class Document {
 
     public void setPatentAbstractLength(long patentAbstractLength) {
         this.patentAbstractLength = patentAbstractLength;
-    }
-
-    public Double getWeight() {
-        return weight;
-    }
-
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
     }
 
     public String getCacheFile() {

@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  */
 public class Index {
     TreeMap<String, Long> values = new TreeMap<>();
-    Map<Integer, String> docIds = new HashMap<>();
+    Map<Integer, String> fileIds = new HashMap<>();
     int numDocuments;
 
     public Index() {
@@ -35,7 +35,7 @@ public class Index {
                 // Skip empty lines at the end of the file
                 if (splitEntry.length < 2) continue;
 
-                docIds.put(Integer.parseInt(splitEntry[0]), splitEntry[1]);
+                fileIds.put(Integer.parseInt(splitEntry[0]), splitEntry[1]);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -277,15 +277,15 @@ public class Index {
         }
     }
 
-    public List<Document> decompressLine(String line) {
-        List<Document> documents = new LinkedList<>();
+    public List<Posting> decompressLine(String line) {
+        List<Posting> postings = new LinkedList<>();
         int numCount = 0;
         long patentId = 0;
         long occurrence = 0;
         long numOcc = 0;
         int lastStart = 0;
         long curNum;
-        Document document = new Document();
+        Posting posting = new Posting();
 
         for (int i = 0; i < line.length() - 1; i += 2) {
             // A hexadecimal value greater or equal 8 is found => the 8th bit of a byte is set
@@ -293,32 +293,33 @@ public class Index {
                 curNum = convertToDecimal(NumberParser.parseHexadecimalLong(line.substring(lastStart, i + 2)));
 
                 if (numCount == Posting.POSTING_WEIGHT_POS) {
-                    document.setWeight(Math.toIntExact(curNum) / 1000d);
+                    posting.setWeight(Math.toIntExact(curNum) / 1000d);
                 }
                 else if (numCount == Posting.POSTING_FILE_ID_POS) {
-                    document.setCacheFile(FilePaths.CACHE_PATH + docIds.get(Math.toIntExact(curNum)));
+                    posting.setCacheFile(FilePaths.CACHE_PATH + fileIds.get(Math.toIntExact(curNum)));
                 }
                 else if (numCount == Posting.POSTING_DOC_ID_POS) {
                     patentId += curNum;
-                    document.setDocId(Math.toIntExact(patentId));
+                    posting.setDocId(Math.toIntExact(patentId));
                 } else if (numCount == Posting.POSTING_TITLE_L_POS) {
-                    document.setInventionTitlePos(curNum);
+                    posting.setInventionTitlePos(curNum);
                 } else if (numCount == Posting.POSTING_ABSTRACT_L_POS) {
-                    document.setPatentAbstractPos(curNum);
+                    posting.setAbstractPos(curNum);
                 } else if (numCount == Posting.POSTING_TITLE_P_POS) {
-                    document.setInventionTitleLength(curNum);
+                    posting.setInventionTitleLength(curNum);
                 } else if (numCount == Posting.POSTING_ABSTRACT_P_POS) {
-                    document.setPatentAbstractLength(curNum);
+                    posting.setAbstractLength(curNum);
                 } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
                     numOcc = curNum;
                 } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
                     occurrence += curNum;
+                    posting.addWordOccurrence(occurrence);
 
                     if (numCount == numOcc + Posting.POSTING_NUM_OCC_POS) {
                         numCount = -1;
                         occurrence = 0;
-                        documents.add(document);
-                        document = new Document();
+                        postings.add(posting);
+                        posting = new Posting();
                     }
                 }
 
@@ -327,7 +328,7 @@ public class Index {
             }
         }
 
-        return documents;
+        return postings;
     }
 
     private long convertToDecimal(long vByteValue) {
@@ -384,8 +385,8 @@ public class Index {
         return results;
     }
 
-    public List<Document> lookUpPostingInFileWithCompression(String word) {
-        List<Document> results = new LinkedList<>();
+    public List<Posting> lookUpPostingInFileWithCompression(String word) {
+        List<Posting> results = new LinkedList<>();
 
         ArrayList<Long> matches = new ArrayList<>();
 
@@ -412,11 +413,11 @@ public class Index {
                 RandomAccessFile postingReader = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "r");
 
                 postingReader.seek(postingListSeek);
-                String posting = postingReader.readLine();
-                results = decompressLine(posting);
+                String postingListLine = postingReader.readLine();
+                results = decompressLine(postingListLine);
 
-                for (Document doc: results) {
-                    doc.setToken(word);
+                for (Posting posting: results) {
+                    posting.setToken(word);
                 }
 
                 postingReader.close();
@@ -430,5 +431,9 @@ public class Index {
 
     public int getNumDocuments() {
         return numDocuments;
+    }
+
+    public String getCacheFile(int fileId) {
+        return fileIds.get(fileId);
     }
 }

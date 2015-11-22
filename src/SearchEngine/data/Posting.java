@@ -22,8 +22,10 @@ public class Posting {
     private long abstractLength;
     private long inventionTitlePos;
     private long inventionTitleLength;
+    private String cacheFile;
+    private Double weight;
     private List<Long> occurrences = new LinkedList<>();
-    private String word;
+    private String token;
 
     public Posting() {
 
@@ -105,11 +107,27 @@ public class Posting {
     }
 
 
-    public String getWord() {
-        return word;
+    public String getToken() {
+        return token;
     }
 
-    public void setWord(String word) {
-        this.word = word;
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
+    public String getCacheFile() {
+        return cacheFile;
+    }
+
+    public void setCacheFile(String cacheFile) {
+        this.cacheFile = cacheFile;
     }
 }

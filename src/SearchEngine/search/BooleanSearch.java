@@ -1,6 +1,8 @@
 package SearchEngine.search;
 
 import SearchEngine.data.Document;
+import SearchEngine.data.FilePaths;
+import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
 
@@ -12,7 +14,7 @@ import java.util.*;
 public class BooleanSearch implements Search {
     private String searchTerm;
     private List<String> booleanTokens;
-    private HashMap<String, List<Document>> searchResults;
+    private HashMap<String, List<Posting>> searchResults;
     private String booleanOperator;
     private Index index;
     private WordParser wordParser;
@@ -62,19 +64,19 @@ public class BooleanSearch implements Search {
     }
 
     private void executeBooleanOperation() {
-        Iterator<List<Document>> searchIterator = searchResults.values().iterator();
+        Iterator<List<Posting>> searchIterator = searchResults.values().iterator();
         Set<Integer> firstSet = new HashSet<>();
         Set<Integer> secondSet = new HashSet<>();
-        Map<Integer, Document> docs = new HashMap<>();
+        Map<Integer, Posting> postings = new HashMap<>();
 
-        for (Document doc: searchIterator.next()) {
-            firstSet.add(doc.getDocId());
-            docs.put(doc.getDocId(), doc);
+        for (Posting posting: searchIterator.next()) {
+            firstSet.add(posting.getDocId());
+            postings.put(posting.getDocId(), posting);
         }
 
-        for (Document doc: searchIterator.next()) {
-            secondSet.add(doc.getDocId());
-            docs.put(doc.getDocId(), doc);
+        for (Posting posting: searchIterator.next()) {
+            secondSet.add(posting.getDocId());
+            postings.put(posting.getDocId(), posting);
         }
 
         switch (booleanOperator) {
@@ -84,8 +86,10 @@ public class BooleanSearch implements Search {
             default: break;
         }
         Iterator<Integer> docIdIterator = firstSet.iterator();
+        int curDocId;
         while (docIdIterator.hasNext()) {
-            results.add(docs.get(docIdIterator.next()));
+            curDocId = docIdIterator.next();
+            results.add(new Document(postings.get(curDocId), FilePaths.CACHE_PATH + index.getCacheFile(postings.get(curDocId).getFileId())));
         }
     }
 }
