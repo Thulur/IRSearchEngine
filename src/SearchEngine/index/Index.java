@@ -2,7 +2,7 @@ package SearchEngine.index;
 
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
-import SearchEngine.data.WordMetaData;
+import SearchEngine.data.Posting;
 import SearchEngine.utils.IndexEncoder;
 import SearchEngine.utils.NumberParser;
 
@@ -121,16 +121,16 @@ public class Index {
 
                 for (String entry: line.toString().split("[;]")) {
                     String[] values = entry.split(",");
-                    Double docVector = (1 + Math.log10(Double.parseDouble(values[WordMetaData.POSTING_NUM_OCC_POS - 1]))) * Math.log10(numPatents / entryCount);
+                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Posting.POSTING_NUM_OCC_POS - 1]))) * Math.log10(numPatents / entryCount);
                     double docVectorSum;
 
-                    if (docWeights.containsKey(values[WordMetaData.POSTING_DOC_ID_POS - 1])) {
-                        docVectorSum = docWeights.get(values[WordMetaData.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
+                    if (docWeights.containsKey(values[Posting.POSTING_DOC_ID_POS - 1])) {
+                        docVectorSum = docWeights.get(values[Posting.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
                     } else {
                         docVectorSum = docVector * docVector;
                     }
 
-                    docWeights.put(values[WordMetaData.POSTING_DOC_ID_POS - 1], docVectorSum);
+                    docWeights.put(values[Posting.POSTING_DOC_ID_POS - 1], docVectorSum);
                     vectorLine.append(docVector + "," + entry + ";");
                 }
 
@@ -147,8 +147,8 @@ public class Index {
             while ((line = tmpPostingList.readLine()) != null && indexEntryIterator.hasNext()) {
                 for (String entry: line.split("[;]")) {
                     String[] entryValues = entry.split("[,]");
-                    Double normalizedWeight = Double.parseDouble(entryValues[WordMetaData.POSTING_WEIGHT_POS]) /
-                            Math.sqrt(docWeights.get(entryValues[WordMetaData.POSTING_DOC_ID_POS]));
+                    Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
+                            Math.sqrt(docWeights.get(entryValues[Posting.POSTING_DOC_ID_POS]));
                     processedLine.append(Math.round(1000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
                 }
 
@@ -237,19 +237,19 @@ public class Index {
 
                     curNum = Long.parseLong(curLine.substring(i, separatorPos));
 
-                    if (numCount == WordMetaData.POSTING_DOC_ID_POS) {
+                    if (numCount == Posting.POSTING_DOC_ID_POS) {
                         patentIdDelta = curNum - lastPatentId;
                         lastPatentId = curNum;
                         compressed.append(IndexEncoder.convertToVByte(patentIdDelta));
-                    } else if (numCount == WordMetaData.POSTING_NUM_OCC_POS) {
+                    } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
                         compressed.append(IndexEncoder.convertToVByte(curNum));
                         numOcc = curNum;
-                    } else if (numCount >= WordMetaData.POSTING_NUM_OCC_POS + 1) {
+                    } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
                         occurrenceDelta = curNum - lastOccurrence;
                         lastOccurrence = curNum;
                         compressed.append(IndexEncoder.convertToVByte(occurrenceDelta));
 
-                            if (numCount == numOcc + WordMetaData.POSTING_NUM_OCC_POS) {
+                            if (numCount == numOcc + Posting.POSTING_NUM_OCC_POS) {
                             numCount = -1;
                             lastOccurrence = 0;
 
@@ -292,29 +292,29 @@ public class Index {
             if (line.charAt(i) >= '8') {
                 curNum = convertToDecimal(NumberParser.parseHexadecimalLong(line.substring(lastStart, i + 2)));
 
-                if (numCount == WordMetaData.POSTING_WEIGHT_POS) {
+                if (numCount == Posting.POSTING_WEIGHT_POS) {
                     document.setWeight(Math.toIntExact(curNum) / 1000d);
                 }
-                else if (numCount == WordMetaData.POSTING_FILE_ID_POS) {
+                else if (numCount == Posting.POSTING_FILE_ID_POS) {
                     document.setCacheFile(FilePaths.CACHE_PATH + docIds.get(Math.toIntExact(curNum)));
                 }
-                else if (numCount == WordMetaData.POSTING_DOC_ID_POS) {
+                else if (numCount == Posting.POSTING_DOC_ID_POS) {
                     patentId += curNum;
                     document.setDocId(Math.toIntExact(patentId));
-                } else if (numCount == WordMetaData.POSTING_TITLE_L_POS) {
+                } else if (numCount == Posting.POSTING_TITLE_L_POS) {
                     document.setInventionTitlePos(curNum);
-                } else if (numCount == WordMetaData.POSTING_ABSTRACT_L_POS) {
+                } else if (numCount == Posting.POSTING_ABSTRACT_L_POS) {
                     document.setPatentAbstractPos(curNum);
-                } else if (numCount == WordMetaData.POSTING_TITLE_P_POS) {
+                } else if (numCount == Posting.POSTING_TITLE_P_POS) {
                     document.setInventionTitleLength(curNum);
-                } else if (numCount == WordMetaData.POSTING_ABSTRACT_P_POS) {
+                } else if (numCount == Posting.POSTING_ABSTRACT_P_POS) {
                     document.setPatentAbstractLength(curNum);
-                } else if (numCount == WordMetaData.POSTING_NUM_OCC_POS) {
+                } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
                     numOcc = curNum;
-                } else if (numCount >= WordMetaData.POSTING_NUM_OCC_POS + 1) {
+                } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
                     occurrence += curNum;
 
-                    if (numCount == numOcc + WordMetaData.POSTING_NUM_OCC_POS) {
+                    if (numCount == numOcc + Posting.POSTING_NUM_OCC_POS) {
                         numCount = -1;
                         occurrence = 0;
                         documents.add(document);

@@ -2,7 +2,7 @@ package SearchEngine.index;
 
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
-import SearchEngine.data.WordMetaData;
+import SearchEngine.data.Posting;
 import SearchEngine.utils.WordParser;
 
 import java.io.File;
@@ -92,7 +92,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
         for (Map.Entry<String, List<Long>> entry : words.entrySet()) {
             String word = entry.getKey();
             List<Long> occurrences = entry.getValue();
-            WordMetaData metaData = new WordMetaData();
+            Posting metaData = new Posting();
             metaData.setFileId(docId);
             metaData.setDocId(document.getDocId());
             metaData.setInventionTitlePos(document.getInventionTitlePos());

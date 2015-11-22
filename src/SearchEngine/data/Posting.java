@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Created by Sebastian on 24.10.2015.
  */
-public class WordMetaData {
+public class Posting {
     public static int POSTING_WEIGHT_POS = 0;
     public static int POSTING_FILE_ID_POS = 1;
     public static int POSTING_DOC_ID_POS = 2;
@@ -25,7 +25,7 @@ public class WordMetaData {
     private List<Long> occurrences = new LinkedList<>();
     private String word;
 
-    public WordMetaData() {
+    public Posting() {
 
     }
 
