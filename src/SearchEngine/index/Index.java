@@ -1,5 +1,6 @@
 package SearchEngine.index;
 
+import SearchEngine.data.CustomFileReader;
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
 import SearchEngine.data.Posting;
@@ -43,15 +44,10 @@ public class Index {
 
         try {
             String line;
-
-            RandomAccessFile indexFile = indexFile = new RandomAccessFile(file, "r");
+            CustomFileReader indexFile = new CustomFileReader(file);
             values = new TreeMap<>();
 
-            while ((line = indexFile.readUTF()) != null) {
-                if (line == null) {
-                    int i = 0;
-                }
-
+            while ((line = indexFile.readLine()) != null) {
                 String[] splitEntry = line.split("[ ]");
 
                 // Skip empty lines at the end of the file
@@ -59,6 +55,8 @@ public class Index {
 
                 values.put(splitEntry[0], Long.parseLong(splitEntry[1]));
             }
+
+            indexFile.close();
         } catch (IOException e) {
 
         }
@@ -97,8 +95,7 @@ public class Index {
             while (curTokens.keySet().iterator().hasNext()) {
                 String curWord = curTokens.keySet().iterator().next();
                 Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
-
-                tmpIndexFile.writeUTF(curWord + " " + tmpPostingList.getChannel().position());
+                tmpIndexFile.write((curWord + " " + tmpPostingList.getChannel().position() + "\n").getBytes("UTF-8"));
 
                 for (FileMergeHead file: curTokens.get(curWord)) {
                     sortedPostings.put(file.getFirstPatentId(), file);
@@ -160,7 +157,7 @@ public class Index {
 
                 processedLine.append("\n");
                 String temp = indexEntryIterator.next();
-                indexFile.writeUTF(temp + " " + postingList.getFilePointer());
+                indexFile.write((temp + " " + postingList.getFilePointer() + "\n").getBytes("UTF-8"));
                 postingList.writeBytes(processedLine.toString());
                 processedLine.setLength(0);
             }
@@ -169,7 +166,7 @@ public class Index {
             tmpPostingList.close();
             File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
             deleteTmpIndexFile.delete();
-            File deleteTmpPostinglistFile = new File(FilePaths.INDEX_PATH + ".tmp");
+            File deleteTmpPostinglistFile = new File(FilePaths.POSTINGLIST_PATH + ".tmp");
             deleteTmpPostinglistFile.delete();
         } catch (IOException e) {
             e.printStackTrace();
@@ -274,7 +271,8 @@ public class Index {
                 seek = postingWriter.getFilePointer();
 
                 postingWriter.writeBytes(compressed + "\n");
-                indexWriter.writeUTF(key + " " + seek);
+
+                indexWriter.write((key + " " + seek + "\n").getBytes("UTF-8"));
             }
             postingWriter.close();
             indexWriter.close();

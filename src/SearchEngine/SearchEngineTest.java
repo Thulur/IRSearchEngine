@@ -58,11 +58,6 @@ public class SearchEngineTest {
         //System.out.println("data device mobile data");
         //myEngine.search("data device mobile data", 10, 0).forEach(System.out::println);
 
-        /*RandomAccessFile test = new RandomAccessFile(FilePaths.CACHE_PATH + "ipg150317.xml", "rw");
-        test.seek(653538546);
-        byte[] test2 = new byte[64];
-        test.read(test2);
-        System.out.println(new String(test2));*/
         System.out.println("\nprocessing:");
         myEngine.search("processing", 10, 0).forEach(System.out::println);
 
@@ -75,11 +70,11 @@ public class SearchEngineTest {
         //System.out.println("\ndata:");
         //myEngine.search("data", 10, 0).forEach(System.out::println);
 
-        //System.out.println("\ndigital (without prf):");
-        //myEngine.search("digital", 10, 0).forEach(System.out::println);
+        System.out.println("\ndigital (without prf):");
+        myEngine.search("digital", 10, 0).forEach(System.out::println);
 
-        //System.out.println("\ndigital (with prf = 2):");
-        //myEngine.search("digital", 10, 2).forEach(System.out::println);
+        System.out.println("\ndigital (with prf = 2):");
+        myEngine.search("digital", 10, 2).forEach(System.out::println);
 
         time = System.currentTimeMillis() - start;
 
