@@ -2,7 +2,6 @@ package SearchEngine.search;
 
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
-import SearchEngine.data.FilePaths;
 import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
@@ -83,7 +82,7 @@ public class VectorSpaceSearch implements Search {
         postings = rankResults(postings, searchWords);
 
         ArrayList<Document> result = new ArrayList<>();
-        for (int i = 0; i < topK; ++i) {
+        for (int i = 0; i < topK && i < postings.size(); ++i) {
             result.add(new Document(postings.get(i)));
         }
 

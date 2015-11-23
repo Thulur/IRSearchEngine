@@ -1,9 +1,5 @@
 package SearchEngine;
 
-import SearchEngine.data.FilePaths;
-
-import java.io.RandomAccessFile;
-
 /**
  *
  * @author: Your team name
@@ -23,7 +19,7 @@ public class SearchEngineTest {
         
         long start = System.currentTimeMillis();
 
-        //myEngine.index("");
+        myEngine.index("");
         
         long time = System.currentTimeMillis() - start;
         
@@ -34,7 +30,7 @@ public class SearchEngineTest {
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        //myEngine.compressIndex("");
+        myEngine.compressIndex("");
         myEngine.loadCompressedIndex("");
 
         start = System.currentTimeMillis();
