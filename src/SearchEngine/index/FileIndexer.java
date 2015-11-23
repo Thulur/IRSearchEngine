@@ -21,10 +21,12 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     private HashMap<String, Long> values = new HashMap<>();
     private RandomAccessFile tmpPostingList;
     private RandomAccessFile dictionaryFile;
+    private RandomAccessFile postingListFile;
     private String filenameId;
     private String filename;
     private int docId;
     private StringBuilder tmpFileBuffer = new StringBuilder();
+    private StringBuilder postingListBuffer = new StringBuilder();
     private StringBuilder dictionaryBuffer = new StringBuilder();
     private int numPatents = 0;
 
@@ -42,6 +44,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
         try {
             tmpPostingList = new RandomAccessFile(FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt", "rw");
             dictionaryFile = new RandomAccessFile(FilePaths.PARTIAL_PATH + "index" + filenameId + ".txt", "rw");
+            postingListFile = new RandomAccessFile(FilePaths.PARTIAL_PATH + "postinglist" + filenameId + ".txt", "rw");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -58,10 +61,15 @@ public class FileIndexer implements Runnable, ParsedEventListener {
         flush(tmpFileBuffer, tmpPostingList);
         save();
         flush(dictionaryBuffer, dictionaryFile);
+        flush(postingListBuffer, postingListFile);
+        dictionaryBuffer = null;
+        postingListBuffer = null;
+        tmpFileBuffer = null;
 
         try {
             dictionaryFile.close();
             tmpPostingList.close();
+            postingListFile.close();
             File tmpFile = new File (FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt");
             tmpFile.delete();
         } catch (IOException e) {
@@ -135,7 +143,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     private void write(String s, StringBuilder buffer, RandomAccessFile file) {
         buffer.append(s);
 
-        if (buffer.length() > 16384) {
+        if (buffer.length() > (2 << 15)) {
             writeResetBuffer(buffer, file);
         }
     }
@@ -156,7 +164,6 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
     private void save() {
         try {
-            RandomAccessFile postingListFile = new RandomAccessFile(FilePaths.PARTIAL_PATH + "postinglist" + filenameId + ".txt", "rw");
             Map<String, Long> sortedMap = new TreeMap<>(values);
 
             for (Map.Entry<String, Long> entry : sortedMap.entrySet()) {
@@ -176,12 +183,10 @@ public class FileIndexer implements Runnable, ParsedEventListener {
                     postingListEntry = readString.substring(readString.indexOf(",") + 1) + postingListEntry;
                 }
 
-                Long filePos = postingListFile.getChannel().position();
+                Long filePos = postingListFile.getFilePointer() + postingListBuffer.length();
                 write(key + " " + filePos.toString() + "\n", dictionaryBuffer, dictionaryFile);
-                postingListFile.writeBytes(postingListEntry + "\n");
+                write(postingListEntry + "\n", postingListBuffer, postingListFile);
             }
-
-            postingListFile.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -33,7 +33,7 @@ import java.util.*;
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private Index index = new Index();
     private List<String> files = new LinkedList<>();
-    private int maxThreads = 4;
+    private int maxThreads = 2;
     private int curFileNum = -1;
     private Thread[] fileThreads;
     private FileIndexer[] fileIndexers;
@@ -79,6 +79,8 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             for (int i = 0; i < files.size(); ++i) {
                 fileThreads[i].join();
                 numPatents += fileIndexers[i].getNumPatents();
+                fileThreads[i] = null;
+                fileIndexers[i] = null;
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
