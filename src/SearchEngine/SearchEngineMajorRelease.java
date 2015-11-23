@@ -116,7 +116,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     ArrayList<String> search(String query, int topK, int prf) {
         if (Configuration.ENABLE_SPELLING_CORRECTION) {
-            SpellingCorrector.setup(index);
+            SpellingCorrector.setup();
         }
 
         ArrayList<String> results = searchWithCompression(query, topK, prf);

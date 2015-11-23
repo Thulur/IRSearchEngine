@@ -2,6 +2,7 @@ package SearchEngine.utils;
 
 import SearchEngine.index.Index;
 
+import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
 public class SpellingCorrector {
     private static SpellingCorrector instance;
     private HashMap<String, Integer> languageModel;
+    private int BUFFER_SIZE = 16384;
 
 //    private SpellingCorrector(){
 //        // setup
@@ -28,10 +30,10 @@ public class SpellingCorrector {
         return SpellingCorrector.instance;
     }
 
-    public static void setup(Index index) {
+    public static void setup() {
         if (SpellingCorrector.instance == null) {
             SpellingCorrector.instance = new SpellingCorrector();
-            SpellingCorrector.instance.buildLanguageModel(index);
+            SpellingCorrector.instance.buildLanguageModel();
         }
     }
 
@@ -65,39 +67,37 @@ public class SpellingCorrector {
 
     }
 
-    private void buildLanguageModel(Index index) {
+    private void buildLanguageModel() {
         try {
-            FileReader reader = new FileReader("data/big.txt");
-
             languageModel = new HashMap<>();
 
+            String curString = new String();
             Matcher whiteSpace;
             Matcher wordChar;
 
-            String curString = new String();
-            int temp;
-            String curChar = new String();
+            BufferedReader reader = new BufferedReader(new FileReader("data/big.txt"));
+            char[] buffer = new char[BUFFER_SIZE];
 
-            while ((temp = reader.read()) != -1) {
-                curChar += (char) temp;
+            while (reader.read(buffer) != -1) {
+                for (char curChar: buffer) {
+                    wordChar = Pattern.compile("\\w").matcher(curChar+"");
 
-                wordChar = Pattern.compile("\\w").matcher(curChar);
-
-                if (wordChar.find() && !curChar.equals("_")) {
-                    curString += curChar;
-                } else {
-                    if (!curString.equals("")) {
-                        curString = curString.toLowerCase();
-                        if (languageModel.get(curString) == null) {
-                            languageModel.put(curString, 1);
-                        } else {
-                            languageModel.put(curString, languageModel.get(curString) + 1);
+                    if (wordChar.find() && curChar != '_') {
+                        curString += curChar;
+                    } else {
+                        if (!curString.equals("")) {
+                            curString = curString.toLowerCase();
+                            if (languageModel.get(curString) == null) {
+                                languageModel.put(curString, 1);
+                            } else {
+                                languageModel.put(curString, languageModel.get(curString) + 1);
+                            }
+                            curString = "";
                         }
-                        curString = "";
                     }
                 }
-                curChar = "";
             }
+            reader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
