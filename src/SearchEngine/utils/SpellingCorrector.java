@@ -1,6 +1,7 @@
 package SearchEngine.utils;
 
 import SearchEngine.index.Index;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -17,11 +18,6 @@ public class SpellingCorrector {
     private static SpellingCorrector instance;
     private HashMap<String, Integer> languageModel;
     private int BUFFER_SIZE = 16384;
-
-//    private SpellingCorrector(){
-//        // setup
-//        buildLanguageModel();
-//    }
 
     public static SpellingCorrector getInstance() {
         if (SpellingCorrector.instance == null) {
@@ -96,6 +92,7 @@ public class SpellingCorrector {
                         }
                     }
                 }
+                buffer = new char[BUFFER_SIZE];
             }
             reader.close();
         } catch (IOException e) {
