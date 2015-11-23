@@ -47,8 +47,8 @@ public class Document {
         try {
             RandomAccessFile cacheReader = new RandomAccessFile(cacheFile, "r");
 
-            patentAbstract = readLineFromFile(cacheReader, patentAbstractPos, patentAbstractLength);
             inventionTitle = readLineFromFile(cacheReader, inventionTitlePos, inventionTitleLength);
+            patentAbstract = readLineFromFile(cacheReader, patentAbstractPos, patentAbstractLength);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

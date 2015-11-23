@@ -40,7 +40,6 @@ public class VectorSpaceSearch implements Search {
         Document doc;
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             doc = documents.get(i);
-            doc.loadPatentData();
             result.add(doc);
         }
 

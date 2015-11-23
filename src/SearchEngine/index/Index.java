@@ -283,21 +283,41 @@ public class Index {
         }
     }
 
-    public List<Posting> decompressLine(String line) {
+    public List<Posting> decompressLine(long readPos) {
         List<Posting> postings = new LinkedList<>();
         int numCount = 0;
         long patentId = 0;
         long occurrence = 0;
         long numOcc = 0;
-        int lastStart = 0;
         long curNum;
         int fileId;
         Posting posting = new Posting();
+        RandomAccessFile postingReader = null;
+        int buffersize = 16384;
+        byte[] buffer = new byte[buffersize];
+        byte[] curNumBuffer = new byte[18];
+        int curNumBufferLength = 0;
 
-        for (int i = 0; i < line.length() - 1; i += 2) {
+        try {
+            postingReader = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "r");
+            postingReader.seek(readPos);
+            postingReader.read(buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; ; i += 2) {
+            if (buffer[i] == '\n') {
+                break;
+            }
+
+            curNumBuffer[curNumBufferLength] = buffer[i];
+            curNumBuffer[curNumBufferLength + 1] = buffer[i + 1];
+            curNumBufferLength += 2;
+
             // A hexadecimal value greater or equal 8 is found => the 8th bit of a byte is set
-            if (line.charAt(i) >= '8') {
-                curNum = convertToDecimal(NumberParser.parseHexadecimalLong(line.substring(lastStart, i + 2)));
+            if (buffer[i] >= '8') {
+                curNum = convertToDecimal(NumberParser.parseHexadecimalLong(new String(curNumBuffer, 0, curNumBufferLength)));
 
                 if (numCount == Posting.POSTING_WEIGHT_POS) {
                     posting.setWeight(Math.toIntExact(curNum) / 1000d);
@@ -333,7 +353,17 @@ public class Index {
                 }
 
                 ++numCount;
-                lastStart = i + 2;
+                curNumBufferLength = 0;
+            }
+
+            if (i == buffersize - 2) {
+                try {
+                    postingReader.read(buffer);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                // Set i to -2 because the for loop directly increases it to 0
+                i = -2;
             }
         }
 
@@ -395,7 +425,6 @@ public class Index {
     }
 
     public List<Posting> lookUpPostingInFileWithCompression(String word) {
-        long start = System.currentTimeMillis();
         List<Posting> results = new LinkedList<>();
 
         ArrayList<Long> matches = new ArrayList<>();
@@ -419,23 +448,10 @@ public class Index {
         }
 
         for (long postingListSeek: matches) {
-            try {
-                RandomAccessFile postingReader = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "r");
+            results = decompressLine(postingListSeek);
 
-                postingReader.seek(postingListSeek);
-                long middle = System.currentTimeMillis();
-                System.out.println(middle-start + " ms for getting to readline");
-                String postingListLine = postingReader.readLine();
-                System.out.println((System.currentTimeMillis() - middle) + " ms for executing readline");
-                results = decompressLine(postingListLine);
-
-                for (Posting posting: results) {
-                    posting.setToken(word);
-                }
-
-                postingReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            for (Posting posting: results) {
+                posting.setToken(word);
             }
         }
 
