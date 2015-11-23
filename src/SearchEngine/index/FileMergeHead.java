@@ -5,14 +5,13 @@ import SearchEngine.data.FilePaths;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 /**
  * Created by sebastian on 10.11.2015.
  */
 public class FileMergeHead {
     private CustomFileReader indexFile;
-    private RandomAccessFile postinglistFile;
+    private CustomFileReader postinglistFile;
     private String token;
     private long position;
     private String lastReadPostingLine;
@@ -23,7 +22,7 @@ public class FileMergeHead {
             String indexFilename = FilePaths.PARTIAL_PATH + "index" + fileId + ".txt";
             String postinglistFilename = FilePaths.PARTIAL_PATH + "postinglist" + fileId + ".txt";
             indexFile = new CustomFileReader(indexFilename);
-            postinglistFile = new RandomAccessFile(postinglistFilename, "r");
+            postinglistFile = new CustomFileReader(postinglistFilename);
 
             String curLine = indexFile.readLine();
             String[] lineValues = curLine.split("[ ]");

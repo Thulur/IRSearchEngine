@@ -140,14 +140,14 @@ public class Index {
                 tmpPostingList.writeBytes(vectorLine.toString() + "\n");
                 curTokens.remove(curWord);
             }
+            tmpPostingList.close();
 
-            // Reset vector file position
-            tmpPostingList.seek(0);
+            CustomFileReader tmpPostingListReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH + ".tmp");
             String line;
             StringBuilder processedLine = new StringBuilder();
             loadFromFile(FilePaths.INDEX_PATH + ".tmp");
             Iterator<String> indexEntryIterator = values.keySet().iterator();
-            while ((line = tmpPostingList.readLine()) != null && indexEntryIterator.hasNext()) {
+            while ((line = tmpPostingListReader.readLine()) != null && indexEntryIterator.hasNext()) {
                 for (String entry: line.split("[;]")) {
                     String[] entryValues = entry.split("[,]");
                     Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
@@ -163,7 +163,7 @@ public class Index {
             }
 
             tmpIndexFile.close();
-            tmpPostingList.close();
+            tmpPostingListReader.close();
             File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
             deleteTmpIndexFile.delete();
             File deleteTmpPostinglistFile = new File(FilePaths.POSTINGLIST_PATH + ".tmp");
@@ -195,7 +195,7 @@ public class Index {
     public void compressIndex() {
         //read entry from file
         try {
-            RandomAccessFile postingReader = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "r");
+            CustomFileReader postingReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH);
             RandomAccessFile indexWriter = new RandomAccessFile(FilePaths.COMPRESSED_INDEX_PATH, "rw");
             RandomAccessFile postingWriter = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "rw");
 
@@ -459,8 +459,9 @@ public class Index {
     public int getNumDocuments() {
         if (numDocuments < 0) {
             try {
-                RandomAccessFile indexDataFile = new RandomAccessFile(FilePaths.INDEX_DATA_FILE, "rw");
+                CustomFileReader indexDataFile = new CustomFileReader(FilePaths.INDEX_DATA_FILE);
                 numDocuments = Integer.parseInt(indexDataFile.readLine());
+                indexDataFile.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

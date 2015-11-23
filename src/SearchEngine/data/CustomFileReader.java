@@ -1,8 +1,11 @@
 package SearchEngine.data;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -19,26 +22,27 @@ public class CustomFileReader {
     }
 
     public String readLine() throws IOException {
-        byte[] lineBuffer = new byte[2048];
-        int linePos = 0;
+        ArrayList<Byte> lineBuffer = new ArrayList<>();
         updateBuffer();
 
         while (indexBuffer[indexBufferPos] != '\n' && indexBuffer[indexBufferPos] != 0) {
-            lineBuffer[linePos] = indexBuffer[indexBufferPos];
-            ++linePos;
+            lineBuffer.add(indexBuffer[indexBufferPos]);
             ++indexBufferPos;
 
             updateBuffer();
         }
 
-        if (linePos == 0) {
+        if (lineBuffer.size() == 0) {
             return null;
         }
 
         ++indexBufferPos;
         String result = "";
         try {
-            result = new String(lineBuffer, 0, linePos, "UTF-8");
+            Byte[] tmpBuffer = new Byte[lineBuffer.size()];
+            lineBuffer.toArray(tmpBuffer);
+            result = new String(ArrayUtils.toPrimitive(tmpBuffer), "UTF-8");
+
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
