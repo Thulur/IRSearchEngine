@@ -1,16 +1,10 @@
 package SearchEngine.utils;
 
-import SearchEngine.data.FilePaths;
 import SearchEngine.index.Index;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,24 +28,41 @@ public class SpellingCorrector {
         return SpellingCorrector.instance;
     }
 
+    public static void setup(Index index) {
+        if (SpellingCorrector.instance == null) {
+            SpellingCorrector.instance = new SpellingCorrector();
+            SpellingCorrector.instance.buildLanguageModel(index);
+        }
+    }
+
     public String correctSpelling(String word) {
         if(languageModel.containsKey(word)) return word;
-        ArrayList<String> list = edits(word);
-        HashMap<Integer, String> candidates = new HashMap<Integer, String>();
-        for(String s : list) if(languageModel.containsKey(s)) candidates.put(languageModel.get(s),s);
-        if(candidates.size() > 0) return candidates.get(Collections.max(candidates.keySet()));
-        for(String s : list) for(String w : edits(s)) if(languageModel.containsKey(w)) candidates.put(languageModel.get(w),w);
-        String result = candidates.get(Collections.max(candidates.keySet()));
+
+        ArrayList<String> edits = computeEdits(word);
+        Map<Integer, String> candidates = new HashMap<>();
+        String result = new String();
+
+        for(String s : edits) {
+            if(languageModel.containsKey(s)) candidates.put(languageModel.get(s),s);
+        }
+
+        if (candidates.size() > 0) {
+            result = candidates.get(Collections.max(candidates.keySet()));
+            System.out.println(result);
+            return result;
+        }
+
+
+        for(String edit : edits) {
+            for(String w : computeEdits(edit)) {
+                if(languageModel.containsKey(w)) candidates.put(languageModel.get(w),w);
+            }
+        }
+
+        if (candidates.size() > 0) result = candidates.get(Collections.max(candidates.keySet()));
         System.out.println(result);
         return candidates.size() > 0 ? result : word;
 
-    }
-
-    public static void setup(Index index) {
-       if (SpellingCorrector.instance == null) {
-           SpellingCorrector.instance = new SpellingCorrector();
-           SpellingCorrector.instance.buildLanguageModel(index);
-       }
     }
 
     private void buildLanguageModel(Index index) {
@@ -92,8 +103,8 @@ public class SpellingCorrector {
         }
     }
 
-    private ArrayList<String> edits(String word) {
-        ArrayList<String> result = new ArrayList<String>();
+    private ArrayList<String> computeEdits(String word) {
+        ArrayList<String> result = new ArrayList<>();
         for(int i=0; i < word.length(); ++i) result.add(word.substring(0, i) + word.substring(i+1));
         for(int i=0; i < word.length()-1; ++i) result.add(word.substring(0, i) + word.substring(i+1, i+2) + word.substring(i, i+1) + word.substring(i+2));
         for(int i=0; i < word.length(); ++i) for(char c='a'; c <= 'z'; ++c) result.add(word.substring(0, i) + String.valueOf(c) + word.substring(i+1));

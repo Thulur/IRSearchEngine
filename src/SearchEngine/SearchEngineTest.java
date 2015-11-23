@@ -91,8 +91,8 @@ public class SearchEngineTest {
 //        System.out.println("streem");
 //        myEngine.search("streem", 0, 0).forEach(System.out::println);
 
-        System.out.println("core");
-        myEngine.search("core", 0, 0).forEach(System.out::println);
+        System.out.println("commam");
+        myEngine.search("commam", 10, 0).forEach(System.out::println);
 
         time = System.nanoTime() - start;
 

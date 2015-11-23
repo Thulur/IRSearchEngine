@@ -431,8 +431,4 @@ public class Index {
     public int getNumDocuments() {
         return numDocuments;
     }
-
-    public TreeMap<String, Long> getValues() {
-        return values;
-    }
 }
