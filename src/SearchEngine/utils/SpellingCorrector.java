@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -32,8 +34,17 @@ public class SpellingCorrector {
         return SpellingCorrector.instance;
     }
 
-    public String correctSpelling(String query) {
-        return "";
+    public String correctSpelling(String word) {
+        if(languageModel.containsKey(word)) return word;
+        ArrayList<String> list = edits(word);
+        HashMap<Integer, String> candidates = new HashMap<Integer, String>();
+        for(String s : list) if(languageModel.containsKey(s)) candidates.put(languageModel.get(s),s);
+        if(candidates.size() > 0) return candidates.get(Collections.max(candidates.keySet()));
+        for(String s : list) for(String w : edits(s)) if(languageModel.containsKey(w)) candidates.put(languageModel.get(w),w);
+        String result = candidates.get(Collections.max(candidates.keySet()));
+        System.out.println(result);
+        return candidates.size() > 0 ? result : word;
+
     }
 
     public static void setup(Index index) {
@@ -79,5 +90,14 @@ public class SpellingCorrector {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private ArrayList<String> edits(String word) {
+        ArrayList<String> result = new ArrayList<String>();
+        for(int i=0; i < word.length(); ++i) result.add(word.substring(0, i) + word.substring(i+1));
+        for(int i=0; i < word.length()-1; ++i) result.add(word.substring(0, i) + word.substring(i+1, i+2) + word.substring(i, i+1) + word.substring(i+2));
+        for(int i=0; i < word.length(); ++i) for(char c='a'; c <= 'z'; ++c) result.add(word.substring(0, i) + String.valueOf(c) + word.substring(i+1));
+        for(int i=0; i <= word.length(); ++i) for(char c='a'; c <= 'z'; ++c) result.add(word.substring(0, i) + String.valueOf(c) + word.substring(i));
+        return result;
     }
 }

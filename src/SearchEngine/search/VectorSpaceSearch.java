@@ -65,6 +65,9 @@ public class VectorSpaceSearch implements Search {
         double docWeightSum = 0;
         for (String searchWord: queryVector.keySet()) {
             List<Document> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
+
+            if (tmpDocList.size() == 0) continue;
+
             documents.addAll(tmpDocList);
 
             int numDocs = index.getNumDocuments();

@@ -135,6 +135,20 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 //        }
     }
 
+    private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
+        ArrayList<Document> documents = searchFactory.getSearchFromQuery(query, topK, prf).execute();
+        ArrayList<String> results = new ArrayList<>();
+
+        // topK should be used in the Search class not here
+        for (int i = 0; i < topK && i < documents.size(); ++i) {
+            if (documents.get(i) != null) {
+                results.add(documents.get(i).getDocId() + " " + documents.get(i).getInventionTitle());
+            }
+        }
+
+        return results;
+    }
+
     private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
         // TODO: Update the code to use current implementations
         Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
@@ -145,20 +159,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
             for (Document document: documents) {
                 results.add(document.getInventionTitle());
-            }
-        }
-
-        return results;
-    }
-
-    private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
-        ArrayList<Document> documents = searchFactory.getSearchFromQuery(query, topK, prf).execute();
-        ArrayList<String> results = new ArrayList<>();
-
-        // topK should be used in the Search class not here
-        for (int i = 0; i < topK && i < documents.size(); ++i) {
-            if (documents.get(i) != null) {
-                results.add(documents.get(i).getDocId() + " " + documents.get(i).getInventionTitle());
             }
         }
 

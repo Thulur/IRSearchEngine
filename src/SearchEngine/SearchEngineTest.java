@@ -58,23 +58,41 @@ public class SearchEngineTest {
         //System.out.println("data device mobile data");
         //myEngine.search("data device mobile data", 10, 0).forEach(System.out::println);
 
-        System.out.println("\nprocessing:");
-        myEngine.search("processing", 10, 0).forEach(System.out::println);
+//        System.out.println("\nprocessing:");
+//        myEngine.search("processing", 10, 0).forEach(System.out::println);
+//
+//        System.out.println("\ncomputers:");
+//        myEngine.search("computers", 10, 0).forEach(System.out::println);
+//
+//        System.out.println("\n\"mobile devices\":");
+//        myEngine.search("\"mobile devices\"", 10, 0).forEach(System.out::println);
+//
+//        System.out.println("\ndata:");
+//        myEngine.search("data", 10, 0).forEach(System.out::println);
+//
+//        System.out.println("\ndigital (without prf):");
+//        myEngine.search("digital", 10, 0).forEach(System.out::println);
+//
+//        System.out.println("\ndigital (with prf = 2):");
+//        myEngine.search("digital", 10, 2).forEach(System.out::println);
 
-        System.out.println("\ncomputers:");
-        myEngine.search("computers", 10, 0).forEach(System.out::println);
+//        System.out.println("commom");
+//        myEngine.search("commom", 10, 0).forEach(System.out::println);
+//
+//        System.out.println("common");
+//        myEngine.search("common", 1, 0).forEach(System.out::println);
+//
+//        System.out.println("kontrol");
+//        myEngine.search("kontrol", 0, 0).forEach(System.out::println);
+//
+//        System.out.println("incluce");
+//        myEngine.search("incluce", 0, 0).forEach(System.out::println);
+//
+//        System.out.println("streem");
+//        myEngine.search("streem", 0, 0).forEach(System.out::println);
 
-        System.out.println("\n\"mobile devices\":");
-        myEngine.search("\"mobile devices\"", 10, 0).forEach(System.out::println);
-
-        System.out.println("\ndata:");
-        myEngine.search("data", 10, 0).forEach(System.out::println);
-
-        System.out.println("\ndigital (without prf):");
-        myEngine.search("digital", 10, 0).forEach(System.out::println);
-
-        System.out.println("\ndigital (with prf = 2):");
-        myEngine.search("digital", 10, 2).forEach(System.out::println);
+        System.out.println("core");
+        myEngine.search("core", 0, 0).forEach(System.out::println);
 
         time = System.nanoTime() - start;
 
