@@ -32,7 +32,7 @@ public class PRFSearch implements Search {
         ArrayList<Document> firstSearchResults = firstSearch.execute();
 
         Map<String, List<Long>> words = new HashMap<>();
-        for (int i = 0; i < prf; ++i) {
+        for (int i = 0; i < prf && i < firstSearchResults.size(); ++i) {
             Document curDoc = firstSearchResults.get(i);
             curDoc.loadPatentData();
             for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.getInventionTitle() + " " + curDoc.getPatentAbstract(), true).entrySet()) {
