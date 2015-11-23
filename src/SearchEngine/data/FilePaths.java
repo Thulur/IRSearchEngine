@@ -12,4 +12,5 @@ public class FilePaths {
     public static String COMPRESSED_POSTINGLIST_PATH = "data/compressed_postinglist.txt";
     public static String FILE_IDS_FILE = "data/fileids.txt";
     public static String CACHE_PATH = "data/ipgxml/";
+    public static String INDEX_DATA_FILE = "data/indexdata.txt";
 }

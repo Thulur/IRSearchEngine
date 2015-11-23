@@ -26,13 +26,13 @@ public class Document {
         this.cacheFile = cacheFile;
     }
 
-    public Document(Posting posting, String cacheFile) {
+    public Document(Posting posting) {
         this.docId = posting.getDocId();
         this.inventionTitlePos = posting.getInventionTitlePos();
         this.patentAbstractPos = posting.getAbstractPos();
         this.inventionTitleLength = posting.getInventionTitleLength();
         this.patentAbstractLength = posting.getAbstractLength();
-        this.cacheFile = cacheFile;
+        this.cacheFile = posting.getCacheFile();
 
         loadPatentData();
     }

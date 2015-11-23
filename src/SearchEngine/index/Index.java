@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class Index {
     TreeMap<String, Long> values = new TreeMap<>();
     Map<Integer, String> fileIds = new HashMap<>();
-    int numDocuments;
+    int numDocuments = -1;
 
     public Index() {
 
@@ -67,6 +67,7 @@ public class Index {
     public void mergePartialIndices(List<String> paritalFiles, int numPatents) {
         Map<String, List<FileMergeHead>> curTokens = new TreeMap<>();
         numDocuments = numPatents;
+
         for (String partialFile: paritalFiles) {
             FileMergeHead file = new FileMergeHead(getIpgId(partialFile));
 
@@ -81,11 +82,16 @@ public class Index {
         }
 
         try {
+            RandomAccessFile indexDataFile = new RandomAccessFile(FilePaths.INDEX_DATA_FILE, "rw");
             RandomAccessFile tmpIndexFile = new RandomAccessFile(FilePaths.INDEX_PATH + ".tmp", "rw");
             RandomAccessFile tmpPostingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH + ".tmp", "rw");
             RandomAccessFile indexFile = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");
             RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
             Map<String, Double> docWeights = new HashMap<>();
+
+            // Write number of patents to file
+            indexDataFile.writeBytes(String.valueOf(numDocuments));
+            indexDataFile.close();
 
             // The iterator use is intended here because the collection changes every iteration
             while (curTokens.keySet().iterator().hasNext()) {
@@ -285,6 +291,7 @@ public class Index {
         long numOcc = 0;
         int lastStart = 0;
         long curNum;
+        int fileId;
         Posting posting = new Posting();
 
         for (int i = 0; i < line.length() - 1; i += 2) {
@@ -296,7 +303,9 @@ public class Index {
                     posting.setWeight(Math.toIntExact(curNum) / 1000d);
                 }
                 else if (numCount == Posting.POSTING_FILE_ID_POS) {
-                    posting.setCacheFile(FilePaths.CACHE_PATH + fileIds.get(Math.toIntExact(curNum)));
+                    fileId = Math.toIntExact(curNum);
+                    posting.setCacheFile(FilePaths.CACHE_PATH + fileIds.get(fileId));
+                    posting.setFileId(fileId);
                 }
                 else if (numCount == Posting.POSTING_DOC_ID_POS) {
                     patentId += curNum;
@@ -386,6 +395,7 @@ public class Index {
     }
 
     public List<Posting> lookUpPostingInFileWithCompression(String word) {
+        long start = System.currentTimeMillis();
         List<Posting> results = new LinkedList<>();
 
         ArrayList<Long> matches = new ArrayList<>();
@@ -413,7 +423,10 @@ public class Index {
                 RandomAccessFile postingReader = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "r");
 
                 postingReader.seek(postingListSeek);
+                long middle = System.currentTimeMillis();
+                System.out.println(middle-start + " ms for getting to readline");
                 String postingListLine = postingReader.readLine();
+                System.out.println((System.currentTimeMillis() - middle) + " ms for executing readline");
                 results = decompressLine(postingListLine);
 
                 for (Posting posting: results) {
@@ -430,6 +443,15 @@ public class Index {
     }
 
     public int getNumDocuments() {
+        if (numDocuments < 0) {
+            try {
+                RandomAccessFile indexDataFile = new RandomAccessFile(FilePaths.INDEX_DATA_FILE, "rw");
+                numDocuments = Integer.parseInt(indexDataFile.readLine());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         return numDocuments;
     }
 

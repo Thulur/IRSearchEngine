@@ -84,8 +84,8 @@ public class VectorSpaceSearch implements Search {
         postings = rankResults(postings, searchWords);
 
         ArrayList<Document> result = new ArrayList<>();
-        for (Posting posting: postings) {
-            result.add(new Document(posting, FilePaths.CACHE_PATH + index.getCacheFile(posting.getFileId())));
+        for (int i = 0; i < topK; ++i) {
+            result.add(new Document(postings.get(i)));
         }
 
         return result;
@@ -145,7 +145,7 @@ public class VectorSpaceSearch implements Search {
         Document doc;
 
         for (Posting posting: postings) {
-            doc = new Document(posting, FilePaths.CACHE_PATH + index.getCacheFile(posting.getFileId()));
+            doc = new Document(posting);
             String stemmedTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
             String stemmedAbstract = WordParser.getInstance().stemToString(doc.getPatentAbstract(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
 

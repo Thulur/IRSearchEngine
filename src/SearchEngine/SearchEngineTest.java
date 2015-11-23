@@ -1,5 +1,9 @@
 package SearchEngine;
 
+import SearchEngine.data.FilePaths;
+
+import java.io.RandomAccessFile;
+
 /**
  *
  * @author: Your team name
@@ -19,7 +23,7 @@ public class SearchEngineTest {
         
         long start = System.currentTimeMillis();
 
-        myEngine.index("");
+        //myEngine.index("");
         
         long time = System.currentTimeMillis() - start;
         
@@ -30,10 +34,10 @@ public class SearchEngineTest {
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        myEngine.compressIndex("");
+        //myEngine.compressIndex("");
         myEngine.loadCompressedIndex("");
 
-        start = System.nanoTime();
+        start = System.currentTimeMillis();
 
         //System.out.println("\nselection:");
         //myEngine.search("selection", 0, 0).forEach(System.out::println);
@@ -42,11 +46,11 @@ public class SearchEngineTest {
         //myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
         //System.out.println("\nmethods NOT inventions:");
         //myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
-        System.out.println("\ndata OR method:");
-        myEngine.search("data OR method", 10, 0).forEach(System.out::println);
+        //System.out.println("\ndata OR method:");
+        //myEngine.search("data OR method", 10, 0).forEach(System.out::println);
 
-        System.out.println("\nprov* NOT free:");
-        myEngine.search("prov* NOT free", 10, 0).forEach(System.out::println);
+        //System.out.println("\nprov* NOT free:");
+        //myEngine.search("prov* NOT free", 10, 0).forEach(System.out::println);
         /*System.out.println("\ninc* OR memory:");
         myEngine.search("inc* OR memory", 0, 0).forEach(System.out::println);
 
@@ -58,27 +62,32 @@ public class SearchEngineTest {
         //System.out.println("data device mobile data");
         //myEngine.search("data device mobile data", 10, 0).forEach(System.out::println);
 
+        /*RandomAccessFile test = new RandomAccessFile(FilePaths.CACHE_PATH + "ipg150317.xml", "rw");
+        test.seek(653538546);
+        byte[] test2 = new byte[64];
+        test.read(test2);
+        System.out.println(new String(test2));*/
         System.out.println("\nprocessing:");
         myEngine.search("processing", 10, 0).forEach(System.out::println);
 
-        System.out.println("\ncomputers:");
-        myEngine.search("computers", 10, 0).forEach(System.out::println);
+        //System.out.println("\ncomputers:");
+        //myEngine.search("computers", 10, 0).forEach(System.out::println);
 
-        System.out.println("\n\"mobile devices\":");
-        myEngine.search("\"mobile devices\"", 10, 0).forEach(System.out::println);
+        //System.out.println("\n\"mobile devices\":");
+        //myEngine.search("\"mobile devices\"", 10, 0).forEach(System.out::println);
 
-        System.out.println("\ndata:");
-        myEngine.search("data", 10, 0).forEach(System.out::println);
+        //System.out.println("\ndata:");
+        //myEngine.search("data", 10, 0).forEach(System.out::println);
 
-        System.out.println("\ndigital (without prf):");
-        myEngine.search("digital", 10, 0).forEach(System.out::println);
+        //System.out.println("\ndigital (without prf):");
+        //myEngine.search("digital", 10, 0).forEach(System.out::println);
 
-        System.out.println("\ndigital (with prf = 2):");
-        myEngine.search("digital", 10, 2).forEach(System.out::println);
+        //System.out.println("\ndigital (with prf = 2):");
+        //myEngine.search("digital", 10, 2).forEach(System.out::println);
 
-        time = System.nanoTime() - start;
+        time = System.currentTimeMillis() - start;
 
-        System.out.print("Search time:\t" + (time/1000) + "\tmicroseconds\n");
+        System.out.print("Search time:\t" + (time) + "\tmilliseconds\n");
     }
 
 }

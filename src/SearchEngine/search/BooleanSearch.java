@@ -89,7 +89,7 @@ public class BooleanSearch implements Search {
         int curDocId;
         while (docIdIterator.hasNext()) {
             curDocId = docIdIterator.next();
-            results.add(new Document(postings.get(curDocId), FilePaths.CACHE_PATH + index.getCacheFile(postings.get(curDocId).getFileId())));
+            results.add(new Document(postings.get(curDocId)));
         }
     }
 }
