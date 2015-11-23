@@ -1,5 +1,6 @@
 package SearchEngine.index;
 
+import SearchEngine.data.CustomFileReader;
 import SearchEngine.data.FilePaths;
 import org.apache.commons.lang3.StringUtils;
 
@@ -10,7 +11,7 @@ import java.io.RandomAccessFile;
  * Created by sebastian on 10.11.2015.
  */
 public class FileMergeHead {
-    private RandomAccessFile indexFile;
+    private CustomFileReader indexFile;
     private RandomAccessFile postinglistFile;
     private String token;
     private long position;
@@ -21,7 +22,7 @@ public class FileMergeHead {
 
             String indexFilename = FilePaths.PARTIAL_PATH + "index" + fileId + ".txt";
             String postinglistFilename = FilePaths.PARTIAL_PATH + "postinglist" + fileId + ".txt";
-            indexFile = new RandomAccessFile(indexFilename, "r");
+            indexFile = new CustomFileReader(indexFilename);
             postinglistFile = new RandomAccessFile(postinglistFilename, "r");
 
             String curLine = indexFile.readLine();
@@ -38,25 +39,25 @@ public class FileMergeHead {
 
     public Boolean nextIndexLine() {
         String curLine = null;
-
         try {
             curLine = indexFile.readLine();
         } catch (IOException e) {
-
+            e.printStackTrace();
         }
 
-        if (curLine == null) {
-            return false;
-        } else {
+        if (curLine != null) {
             String[] lineValues = curLine.split("[ ]");
 
             if (lineValues.length == 2) {
                 token = lineValues[0];
+
                 position = Long.parseLong(lineValues[1]);
                 return true;
             } else {
                 return false;
             }
+        } else {
+            return false;
         }
     }
 

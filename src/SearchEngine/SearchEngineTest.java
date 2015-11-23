@@ -42,8 +42,8 @@ public class SearchEngineTest {
         //myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
         //System.out.println("\nmethods NOT inventions:");
         //myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
-        System.out.println("\ndata OR method:");
-        myEngine.search("data OR method", 10, 0).forEach(System.out::println);
+        //System.out.println("\ndata OR method:");
+        //myEngine.search("data OR method", 10, 0).forEach(System.out::println);
 
         //System.out.println("\nprov* NOT free:");
         //myEngine.search("prov* NOT free", 10, 0).forEach(System.out::println);
