@@ -24,7 +24,7 @@ public class FileMergeHead {
             indexFile = new RandomAccessFile(indexFilename, "r");
             postinglistFile = new RandomAccessFile(postinglistFilename, "r");
 
-            String curLine = indexFile.readUTF();
+            String curLine = indexFile.readLine();
             String[] lineValues = curLine.split("[ ]");
             // A line in the index online contains a token and a position (there should be at least one entry)
             assert lineValues.length == 2;
@@ -40,7 +40,7 @@ public class FileMergeHead {
         String curLine = null;
 
         try {
-            curLine = indexFile.readUTF();
+            curLine = indexFile.readLine();
         } catch (IOException e) {
 
         }

@@ -167,7 +167,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
                 }
 
                 Long filePos = postingListFile.getChannel().position();
-                dictionaryFile.writeUTF(key + " " + filePos.toString());
+                dictionaryFile.write((key + " " + filePos.toString() + "\n").getBytes());
                 postingListFile.writeBytes(postingListEntry + "\n");
             }
 

@@ -47,7 +47,7 @@ public class Index {
             RandomAccessFile indexFile = indexFile = new RandomAccessFile(file, "r");
             values = new TreeMap<>();
 
-            while ((line = indexFile.readUTF()) != null) {
+            while ((line = indexFile.readLine()) != null) {
                 if (line == null) {
                     int i = 0;
                 }
@@ -98,7 +98,7 @@ public class Index {
                 String curWord = curTokens.keySet().iterator().next();
                 Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
 
-                tmpIndexFile.writeUTF(curWord + " " + tmpPostingList.getChannel().position());
+                tmpIndexFile.write((curWord + " " + tmpPostingList.getChannel().position() + "\n").getBytes());
 
                 for (FileMergeHead file: curTokens.get(curWord)) {
                     sortedPostings.put(file.getFirstPatentId(), file);
@@ -160,7 +160,7 @@ public class Index {
 
                 processedLine.append("\n");
                 String temp = indexEntryIterator.next();
-                indexFile.writeUTF(temp + " " + postingList.getFilePointer());
+                indexFile.write((temp + " " + postingList.getFilePointer() + "\n").getBytes());
                 postingList.writeBytes(processedLine.toString());
                 processedLine.setLength(0);
             }
@@ -274,7 +274,7 @@ public class Index {
                 seek = postingWriter.getFilePointer();
 
                 postingWriter.writeBytes(compressed + "\n");
-                indexWriter.writeUTF(key + " " + seek);
+                indexWriter.write((key + " " + seek + "\n").getBytes());
             }
             postingWriter.close();
             indexWriter.close();
