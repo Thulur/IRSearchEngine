@@ -22,15 +22,16 @@ public class SearchEngineTest {
         myEngine.index("");
         
         long time = System.currentTimeMillis() - start;
-        
+
         System.out.print("Indexing Time:\t" + time + "\tms\n");
-        
+        start = System.currentTimeMillis();
         // String query = "";
         
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
         myEngine.compressIndex("");
+        System.out.println("Compression time:\t" + (System.currentTimeMillis() - start) + "\tms\n");
         myEngine.loadCompressedIndex("");
 
         start = System.currentTimeMillis();
@@ -58,8 +59,8 @@ public class SearchEngineTest {
         //System.out.println("data device mobile data");
         //myEngine.search("data device mobile data", 10, 0).forEach(System.out::println);
 
-        System.out.println("\nprocessing:");
-        myEngine.search("processing", 10, 0).forEach(System.out::println);
+        //System.out.println("\nprocessing:");
+        //myEngine.search("processing", 10, 0).forEach(System.out::println);
 
         //System.out.println("\ncomputers:");
         //myEngine.search("computers", 10, 0).forEach(System.out::println);
@@ -75,6 +76,18 @@ public class SearchEngineTest {
 
         System.out.println("\ndigital (with prf = 2):");
         myEngine.search("digital", 10, 2).forEach(System.out::println);
+
+        System.out.println("\nrootkit (without prf):");
+        myEngine.search("rootkit", 10, 0).forEach(System.out::println);
+
+        System.out.println("\nrootkit (with prf = 2):");
+        myEngine.search("rootkit", 10, 2).forEach(System.out::println);
+
+        System.out.println("\nnetwork access (without prf):");
+        myEngine.search("network access", 10, 0).forEach(System.out::println);
+
+        System.out.println("\nnetwork access (with prf = 2):");
+        myEngine.search("network access", 10, 2).forEach(System.out::println);
 
         time = System.currentTimeMillis() - start;
 
