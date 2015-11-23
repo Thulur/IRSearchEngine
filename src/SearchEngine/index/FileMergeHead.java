@@ -18,7 +18,6 @@ public class FileMergeHead {
 
     public FileMergeHead(String fileId) {
         try {
-
             String indexFilename = FilePaths.PARTIAL_PATH + "index" + fileId + ".txt";
             String postinglistFilename = FilePaths.PARTIAL_PATH + "postinglist" + fileId + ".txt";
             indexFile = new CustomFileReader(indexFilename);

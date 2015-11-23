@@ -5,6 +5,7 @@ package SearchEngine.data;
  */
 public class FilePaths {
     public static String INDEX_PATH = "data/index.txt";
+    public static String DOCINDEX_FILE = "data/docindex.txt";
     public static String POSTINGLIST_PATH = "data/postinglist.txt";
     public static String RAW_PARTIAL_PATH = "data/ipgxml/";
     public static String PARTIAL_PATH = "data/partialindices/";

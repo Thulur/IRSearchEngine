@@ -1,7 +1,6 @@
 package SearchEngine.search;
 
 import SearchEngine.data.Document;
-import SearchEngine.data.FilePaths;
 import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
@@ -89,7 +88,7 @@ public class BooleanSearch implements Search {
         int curDocId;
         while (docIdIterator.hasNext()) {
             curDocId = docIdIterator.next();
-            results.add(new Document(postings.get(curDocId)));
+            results.add(index.buildDocument(postings.get(curDocId)));
         }
     }
 }

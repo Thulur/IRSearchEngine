@@ -28,13 +28,7 @@ public class Document {
 
     public Document(Posting posting) {
         this.docId = posting.getDocId();
-        this.inventionTitlePos = posting.getInventionTitlePos();
-        this.patentAbstractPos = posting.getAbstractPos();
-        this.inventionTitleLength = posting.getInventionTitleLength();
-        this.patentAbstractLength = posting.getAbstractLength();
         this.cacheFile = posting.getCacheFile();
-
-        loadPatentData();
     }
 
     public Document(int docId, String inventionTitle, String patentAbstract) {
@@ -52,6 +46,10 @@ public class Document {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public String getDocIndexEntry() {
+        return docId + " " + inventionTitlePos + " " + patentAbstractPos + " " + inventionTitleLength + " " + patentAbstractLength;
     }
 
     private String readLineFromFile(RandomAccessFile file, long pos, long length) {

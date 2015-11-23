@@ -65,9 +65,12 @@ public class VectorSpaceSearch implements Search {
         double docWeightSum = 0;
         for (String searchWord: queryVector.keySet()) {
             List<Posting> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
-            postings.addAll(tmpDocList);
+            // Index does not contain the word
+            if (tmpDocList.size() == 0) continue;
 
+            postings.addAll(tmpDocList);
             int numDocs = index.getNumDocuments();
+
             Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
             queryVector.put(searchWord, docVector);
             docWeightSum += docVector*docVector;
@@ -83,7 +86,7 @@ public class VectorSpaceSearch implements Search {
 
         ArrayList<Document> result = new ArrayList<>();
         for (int i = 0; i < topK && i < postings.size(); ++i) {
-            result.add(new Document(postings.get(i)));
+            result.add(index.buildDocument(postings.get(i)));
         }
 
         return result;
@@ -143,7 +146,7 @@ public class VectorSpaceSearch implements Search {
         Document doc;
 
         for (Posting posting: postings) {
-            doc = new Document(posting);
+            doc = index.buildDocument(posting);
             String stemmedTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
             String stemmedAbstract = WordParser.getInstance().stemToString(doc.getPatentAbstract(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
 

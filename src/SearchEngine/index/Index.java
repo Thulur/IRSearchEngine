@@ -1,9 +1,6 @@
 package SearchEngine.index;
 
-import SearchEngine.data.CustomFileReader;
-import SearchEngine.data.Document;
-import SearchEngine.data.FilePaths;
-import SearchEngine.data.Posting;
+import SearchEngine.data.*;
 import SearchEngine.utils.IndexEncoder;
 import SearchEngine.utils.NumberParser;
 
@@ -18,55 +15,46 @@ import java.util.regex.Pattern;
 public class Index {
     TreeMap<String, Long> values = new TreeMap<>();
     Map<Integer, String> fileIds = new HashMap<>();
+    DocumentIndex docIndex = new DocumentIndex();
     int numDocuments = -1;
 
     public Index() {
 
     }
 
-    public void loadFromFile(String file) {
-        try {
-            String line;
+    public void loadFromFile(String file) throws IOException {
+        String line;
 
-            BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.FILE_IDS_FILE));
+        BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.FILE_IDS_FILE));
+        while ((line = docIdsFile.readLine()) != null) {
+            String[] splitEntry = line.split("[ ]");
 
-            while ((line = docIdsFile.readLine()) != null) {
-                String[] splitEntry = line.split("[ ]");
+            // Skip empty lines at the end of the file
+            if (splitEntry.length < 2) continue;
 
-                // Skip empty lines at the end of the file
-                if (splitEntry.length < 2) continue;
-
-                fileIds.put(Integer.parseInt(splitEntry[0]), splitEntry[1]);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            fileIds.put(Integer.parseInt(splitEntry[0]), splitEntry[1]);
         }
 
-        try {
-            String line;
-            CustomFileReader indexFile = new CustomFileReader(file);
-            values = new TreeMap<>();
+        CustomFileReader indexFile = new CustomFileReader(file);
+        values = new TreeMap<>();
+        while ((line = indexFile.readLine()) != null) {
+            String[] splitEntry = line.split("[ ]");
 
-            while ((line = indexFile.readLine()) != null) {
-                String[] splitEntry = line.split("[ ]");
+            // Skip empty lines at the end of the file
+            if (splitEntry.length < 2) continue;
 
-                // Skip empty lines at the end of the file
-                if (splitEntry.length < 2) continue;
-
-                values.put(splitEntry[0], Long.parseLong(splitEntry[1]));
-            }
-
-            indexFile.close();
-        } catch (IOException e) {
-
+            values.put(splitEntry[0], Long.parseLong(splitEntry[1]));
         }
+
+        indexFile.close();
+        docIndex.load();
     }
 
-    public void mergePartialIndices(List<String> paritalFiles, int numPatents) {
+    public void mergePartialIndices(List<String> paritalFileIds, int numPatents) {
         Map<String, List<FileMergeHead>> curTokens = new TreeMap<>();
         numDocuments = numPatents;
 
-        for (String partialFile: paritalFiles) {
+        for (String partialFile: paritalFileIds) {
             FileMergeHead file = new FileMergeHead(getIpgId(partialFile));
 
             if (curTokens.containsKey(file.getToken())) {
@@ -86,6 +74,9 @@ public class Index {
             RandomAccessFile indexFile = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");
             RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
             Map<String, Double> docWeights = new HashMap<>();
+
+            // Create document index
+            createDocIndex(paritalFileIds);
 
             // Write number of patents to file
             indexDataFile.writeBytes(String.valueOf(numDocuments));
@@ -171,6 +162,28 @@ public class Index {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void createDocIndex(List<String> paritalFileIds) throws IOException {
+        CustomFileWriter docIndexWriter = new CustomFileWriter(FilePaths.DOCINDEX_FILE);
+
+        for (String fileId: paritalFileIds) {
+            CustomFileReader docIndexReader = new CustomFileReader(FilePaths.PARTIAL_PATH + "docindex" + getIpgId(fileId) + ".txt");
+            String line;
+
+            while ((line = docIndexReader.readLine()) != null) {
+                docIndexWriter.write(line + "\n");
+            }
+
+            docIndexReader.close();
+        }
+
+        docIndexWriter.flush();
+        docIndexWriter.close();
+    }
+
+    public Document buildDocument(Posting posting) {
+        return docIndex.buildDocument(posting);
     }
 
     private String getIpgId(String filename) {
@@ -328,14 +341,6 @@ public class Index {
                 else if (numCount == Posting.POSTING_DOC_ID_POS) {
                     patentId += curNum;
                     posting.setDocId(Math.toIntExact(patentId));
-                } else if (numCount == Posting.POSTING_TITLE_L_POS) {
-                    posting.setInventionTitlePos(curNum);
-                } else if (numCount == Posting.POSTING_ABSTRACT_L_POS) {
-                    posting.setAbstractPos(curNum);
-                } else if (numCount == Posting.POSTING_TITLE_P_POS) {
-                    posting.setInventionTitleLength(curNum);
-                } else if (numCount == Posting.POSTING_ABSTRACT_P_POS) {
-                    posting.setAbstractLength(curNum);
                 } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
                     numOcc = curNum;
                 } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
