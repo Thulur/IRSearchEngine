@@ -27,6 +27,7 @@ import SearchEngine.index.FileIndexer;
 import SearchEngine.index.Index;
 import SearchEngine.index.ParsedEventListener;
 import SearchEngine.search.SearchFactory;
+import SearchEngine.utils.SpellingCorrector;
 import SearchEngine.utils.WordParser;
 
 import java.io.*;
@@ -126,24 +127,20 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     ArrayList<String> search(String query, int topK, int prf) {
-        if (Configuration.COMPRESSED) {
-            return searchWithCompression(query, topK, prf);
-        } else {
-            return searchWithoutCompression(query, topK, prf);
+        if (Configuration.ENABLE_SPELLING_CORRECTION) {
+            SpellingCorrector.setup();
         }
-    }
 
-    private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
-        // TODO: Update the code to use current implementations
-        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
-        ArrayList<String> results = new ArrayList<>();
+        ArrayList<String> results = searchWithCompression(query, topK, prf);
 
-        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
-            List<Document> documents = index.lookUpPostingInFile(entry.getKey());
-
-            for (Document document: documents) {
-                results.add(document.getInventionTitle());
+        if (results.size() == 0 && Configuration.ENABLE_SPELLING_CORRECTION) {
+            StringBuilder correctedQuery = new StringBuilder();
+            for (String queryWord: query.split(" ")) {
+                correctedQuery.append(SpellingCorrector.getInstance().correctSpelling(queryWord));
+                correctedQuery.append(" ");
             }
+
+            results = searchWithCompression(correctedQuery.toString(), topK, prf);
         }
 
         return results;
@@ -157,6 +154,22 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
                 results.add("0" + documents.get(i).getDocId() + " " + documents.get(i).getInventionTitle());
+            }
+        }
+
+        return results;
+    }
+
+    private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
+        // TODO: Update the code to use current implementations
+        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
+        ArrayList<String> results = new ArrayList<>();
+
+        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
+            List<Document> documents = index.lookUpPostingInFile(entry.getKey());
+
+            for (Document document: documents) {
+                results.add(document.getInventionTitle());
             }
         }
 

@@ -64,6 +64,7 @@ public class VectorSpaceSearch implements Search {
         ArrayList<Posting> postings = new ArrayList<>();
         double docWeightSum = 0;
         for (String searchWord: queryVector.keySet()) {
+
             List<Posting> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
             // Index does not contain the word
             if (tmpDocList.size() == 0) continue;
