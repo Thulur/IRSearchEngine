@@ -18,6 +18,8 @@ package SearchEngine;
  * Keep in mind to include your implementation decisions also in the pdf file of each assignment
  */
 
+// To activate the fun mode set VM options: -Djava.compiler=NONE
+
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;

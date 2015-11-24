@@ -43,4 +43,26 @@ public class NumberParser {
     public static long parseDecimalLong(String s) {
         return -1;
     }
+
+    public static int parseDecimalInt(Byte[] bytes) {
+        int result = 0;
+
+        for (int i = 0; i < bytes.length; ++i) {
+            result *= 10;
+            result += bytes[i] - '0';
+        }
+
+        return result;
+    }
+
+    public static long parseDecimalLong(Byte[] bytes) {
+        long result = 0;
+
+        for (int i = 0; i < bytes.length; ++i) {
+            result *= 10;
+            result += bytes[i] - '0';
+        }
+
+        return result;
+    }
 }

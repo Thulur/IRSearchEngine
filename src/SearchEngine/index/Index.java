@@ -23,6 +23,8 @@ public class Index {
     }
 
     public void loadFromFile(String file) throws IOException {
+        long start = System.currentTimeMillis();
+        long time;
         String line;
 
         BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.FILE_IDS_FILE));
@@ -45,9 +47,14 @@ public class Index {
 
             values.put(splitEntry[0], Long.parseLong(splitEntry[1]));
         }
+        time = System.currentTimeMillis();
+        System.out.println("Indexloading: " + (time - start) + "ms");
 
+        start = System.currentTimeMillis();
         indexFile.close();
         docIndex.load();
+        time = System.currentTimeMillis();
+        System.out.println("Docindexloading: " + (time - start) + "ms");
     }
 
     public void mergePartialIndices(List<String> paritalFileIds, int numPatents) {
@@ -169,12 +176,7 @@ public class Index {
 
         for (String fileId: paritalFileIds) {
             CustomFileReader docIndexReader = new CustomFileReader(FilePaths.PARTIAL_PATH + "docindex" + getIpgId(fileId) + ".txt");
-            String line;
-
-            while ((line = docIndexReader.readLine()) != null) {
-                docIndexWriter.write(line + "\n");
-            }
-
+            docIndexWriter.write(docIndexReader.readLine());
             docIndexReader.close();
         }
 
