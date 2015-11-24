@@ -163,12 +163,12 @@ public class XMLParser extends DefaultHandler {
 
 			if (document.getInventionTitle() != null && document.getInventionTitle() != "") {
 				document.setInventionTitle(document.getInventionTitle() + new String(ch, start, length));
-				document.setInventionTitleLength(filePos + length - document.getInventionTitlePos());
 			} else {
 				document.setInventionTitle(new String(ch, start, length));
 				document.setInventionTitlePos(filePos);
-				document.setInventionTitleLength(length);
 			}
+
+			document.setInventionTitleLength(document.getInventionTitleLength() + length);
 		}
 
 		if (this.abstractEntered && abstractParagraphEntered) {
@@ -182,12 +182,12 @@ public class XMLParser extends DefaultHandler {
 
 			if (document.getPatentAbstract() != null && document.getPatentAbstract() != "") {
 				document.setPatentAbstract(document.getPatentAbstract() + new String(ch, start,length));
-				document.setPatentAbstractLength(filePos + length - document.getPatentAbstractPos());
 			} else {
 				document.setPatentAbstract(new String(ch, start, length));
 				document.setPatentAbstractPos(filePos);
-				document.setPatentAbstractLength(length);
 			}
+
+			document.setPatentAbstractLength(document.getPatentAbstractLength() + length);
 		}
 	}
 
