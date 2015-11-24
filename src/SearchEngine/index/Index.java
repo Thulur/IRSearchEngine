@@ -330,7 +330,7 @@ public class Index {
 
             // A hexadecimal value greater or equal 8 is found => the 8th bit of a byte is set
             if (buffer[i] >= '8') {
-                curNum = convertToDecimal(NumberParser.parseHexadecimalLong(new String(curNumBuffer, 0, curNumBufferLength)));
+                curNum = vByteDecode(NumberParser.parseHexadecimalLong(curNumBuffer, 0, curNumBufferLength));
 
                 if (numCount == Posting.POSTING_WEIGHT_POS) {
                     posting.setWeight(Math.toIntExact(curNum) / 1000d);
@@ -375,7 +375,7 @@ public class Index {
         return postings;
     }
 
-    private long convertToDecimal(long vByteValue) {
+    private long vByteDecode(long vByteValue) {
         long result = 0;
         int i = 0;
 
