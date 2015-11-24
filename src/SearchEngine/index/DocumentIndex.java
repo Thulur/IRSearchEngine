@@ -8,7 +8,6 @@ import SearchEngine.utils.NumberParser;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,33 +19,17 @@ public class DocumentIndex {
 
     public void load() throws IOException {
         CustomFileReader docIndex = new CustomFileReader(FilePaths.DOCINDEX_FILE);
-        DocumentIndexEntry docIndexEntry = new DocumentIndexEntry();
-        List<Byte[]> line = docIndex.readLineOfSpaceSeparatedValues();
+        DocumentIndexEntry docIndexEntry;
+        List<Byte[]> line;
 
-        int valueCount = 0;
-        Iterator<Byte[]> iterator = line.iterator();
-        while (iterator.hasNext()) {
-            switch (valueCount % 5) {
-                case 0:
-                    docIndexEntry = new DocumentIndexEntry();
-                    docIndexEntry.docId = NumberParser.parseDecimalInt(iterator.next());
-                    break;
-                case 1:
-                    docIndexEntry.titlePos = NumberParser.parseDecimalLong(iterator.next());
-                    break;
-                case 2:
-                    docIndexEntry.abstractPos = NumberParser.parseDecimalLong(iterator.next());
-                    break;
-                case 3:
-                    docIndexEntry.titleLength = NumberParser.parseDecimalLong(iterator.next());
-                    break;
-                case 4:
-                    docIndexEntry.abstractLength = NumberParser.parseDecimalLong(iterator.next());
-                    values.put(docIndexEntry.docId, docIndexEntry);
-                    break;
-            }
-
-            ++valueCount;
+        while ((line = docIndex.readLineOfSpaceSeparatedValues()) != null) {
+            docIndexEntry = new DocumentIndexEntry();
+            docIndexEntry.docId = NumberParser.parseDecimalInt(line.get(0));
+            docIndexEntry.titlePos = NumberParser.parseDecimalLong(line.get(1));
+            docIndexEntry.abstractPos = NumberParser.parseDecimalLong(line.get(2));
+            docIndexEntry.titleLength = NumberParser.parseDecimalLong(line.get(3));
+            docIndexEntry.abstractLength = NumberParser.parseDecimalLong(line.get(4));
+            values.put(docIndexEntry.docId, docIndexEntry);
         }
     }
 

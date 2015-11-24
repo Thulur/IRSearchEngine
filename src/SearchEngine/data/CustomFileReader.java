@@ -47,9 +47,12 @@ public class CustomFileReader {
             ++bufferPos;
             updateBuffer();
         }
+        ++bufferPos;
 
-        tmpBuffer = new Byte[lineBuffer.size()];
-        result.add(lineBuffer.toArray(tmpBuffer));
+        if (lineBuffer.size() > 0) {
+            tmpBuffer = new Byte[lineBuffer.size()];
+            result.add(lineBuffer.toArray(tmpBuffer));
+        }
 
         if (result.size() == 0) {
             preloadThread.interrupt();
