@@ -1,5 +1,6 @@
 package SearchEngine.utils;
 
+import SearchEngine.data.FilePaths;
 import SearchEngine.index.Index;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -67,11 +68,10 @@ public class SpellingCorrector {
         try {
             languageModel = new HashMap<>();
 
-            String curString = new String();
-            Matcher whiteSpace;
+            StringBuilder curString = new StringBuilder();
             Matcher wordChar;
 
-            BufferedReader reader = new BufferedReader(new FileReader("data/big.txt"));
+            BufferedReader reader = new BufferedReader(new FileReader("data/ipgxml/testData.xml"));
             char[] buffer = new char[BUFFER_SIZE];
 
             while (reader.read(buffer) != -1) {
@@ -79,16 +79,16 @@ public class SpellingCorrector {
                     wordChar = Pattern.compile("\\w").matcher(curChar+"");
 
                     if (wordChar.find() && curChar != '_') {
-                        curString += curChar;
+                        curString.append(curChar);
                     } else {
                         if (!curString.equals("")) {
-                            curString = curString.toLowerCase();
-                            if (languageModel.get(curString) == null) {
-                                languageModel.put(curString, 1);
+                            String word = curString.toString().toLowerCase();
+                            if (languageModel.get(word) == null) {
+                                languageModel.put(word, 1);
                             } else {
-                                languageModel.put(curString, languageModel.get(curString) + 1);
+                                languageModel.put(word, languageModel.get(word) + 1);
                             }
-                            curString = "";
+                            curString.setLength(0);
                         }
                     }
                 }

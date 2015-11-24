@@ -76,23 +76,17 @@ public class SearchEngineTest {
 //        System.out.println("\ndigital (with prf = 2):");
 //        myEngine.search("digital", 10, 2).forEach(System.out::println);
 
-//        System.out.println("commom");
-//        myEngine.search("commom", 10, 0).forEach(System.out::println);
-//
-//        System.out.println("common");
-//        myEngine.search("common", 1, 0).forEach(System.out::println);
-//
-//        System.out.println("kontrol");
-//        myEngine.search("kontrol", 0, 0).forEach(System.out::println);
-//
-//        System.out.println("incluce");
-//        myEngine.search("incluce", 0, 0).forEach(System.out::println);
-//
-//        System.out.println("streem");
-//        myEngine.search("streem", 0, 0).forEach(System.out::println);
+        System.out.println("commom");
+        myEngine.search("commom", 10, 0).forEach(System.out::println);
 
-        System.out.println("commam");
-        myEngine.search("commam", 10, 0).forEach(System.out::println);
+        System.out.println("kontrol");
+        myEngine.search("kontrol", 10, 0).forEach(System.out::println);
+
+        System.out.println("incluce");
+        myEngine.search("incluce", 10, 0).forEach(System.out::println);
+
+        System.out.println("streem");
+        myEngine.search("streem", 10, 0).forEach(System.out::println);
 
         time = System.nanoTime() - start;
 
