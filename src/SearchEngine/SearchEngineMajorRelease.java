@@ -122,17 +122,16 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         ArrayList<String> results = searchWithCompression(query, topK, prf);
 
         if (results.size() == 0) {
-            String correctedQuery = SpellingCorrector.getInstance().correctSpelling(query);
-            results = searchWithCompression(correctedQuery, topK, prf);
+            StringBuilder correctedQuery = new StringBuilder();
+            for (String queryWord: query.split(" ")) {
+                correctedQuery.append(SpellingCorrector.getInstance().correctSpelling(queryWord));
+                correctedQuery.append(" ");
+            }
+
+            results = searchWithCompression(correctedQuery.toString(), topK, prf);
         }
 
         return results;
-
-//        if (Configuration.COMPRESSED) {
-//            return searchWithCompression(query, topK, prf);
-//        } else {
-//            return searchWithoutCompression(query, topK, prf);
-//        }
     }
 
     private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
