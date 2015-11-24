@@ -19,7 +19,7 @@ public class SearchEngineTest {
 
         long start = System.currentTimeMillis();
 
-        //myEngine.index("");
+        myEngine.index("");
 
         long time = System.currentTimeMillis() - start;
 
@@ -30,7 +30,7 @@ public class SearchEngineTest {
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        //myEngine.compressIndex("");
+        myEngine.compressIndex("");
         System.out.println("Compression time:\t" + (System.currentTimeMillis() - start) + "\tms\n");
         myEngine.loadCompressedIndex("");
 
@@ -88,6 +88,9 @@ public class SearchEngineTest {
 
         //System.out.println("\nnetwork access (with prf = 2):");
         //myEngine.search("network access", 10, 2).forEach(System.out::println);*/
+        
+        System.out.println("\ncommom:");
+        myEngine.search("commom", 10, 0).forEach(System.out::println);
 
         time = System.currentTimeMillis() - start;
 
