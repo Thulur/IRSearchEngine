@@ -18,7 +18,7 @@ package SearchEngine;
  * Keep in mind to include your implementation decisions also in the pdf file of each assignment
  */
 
-// To activate the fun mode set VM options: -Djava.compiler=NONE
+// To activate the FUN MODE set VM options: -Djava.compiler=NONE
 
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
@@ -28,10 +28,12 @@ import SearchEngine.index.Index;
 import SearchEngine.index.ParsedEventListener;
 import SearchEngine.search.SearchFactory;
 import SearchEngine.utils.SpellingCorrector;
-import SearchEngine.utils.WordParser;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private Index index = new Index();
@@ -120,6 +122,11 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        if (Configuration.ENABLE_SPELLING_CORRECTION) {
+            SpellingCorrector.setup();
+        }
+
         searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
         return true;
@@ -127,10 +134,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     ArrayList<String> search(String query, int topK, int prf) {
-        if (Configuration.ENABLE_SPELLING_CORRECTION) {
-            SpellingCorrector.setup();
-        }
-
         ArrayList<String> results = searchWithCompression(query, topK, prf);
 
         if (results.size() == 0 && Configuration.ENABLE_SPELLING_CORRECTION) {
@@ -154,22 +157,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
                 results.add("0" + documents.get(i).getDocId() + " " + documents.get(i).getInventionTitle());
-            }
-        }
-
-        return results;
-    }
-
-    private ArrayList<String> searchWithoutCompression(String query, int topK, int prf) {
-        // TODO: Update the code to use current implementations
-        Map<String, List<Long>> searchWords = WordParser.getInstance().stem(query, true);
-        ArrayList<String> results = new ArrayList<>();
-
-        for (Map.Entry<String, List<Long>> entry : searchWords.entrySet()) {
-            List<Document> documents = index.lookUpPostingInFile(entry.getKey());
-
-            for (Document document: documents) {
-                results.add(document.getInventionTitle());
             }
         }
 
