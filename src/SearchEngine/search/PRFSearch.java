@@ -4,6 +4,7 @@ import SearchEngine.data.Document;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -24,7 +25,7 @@ public class PRFSearch implements Search {
     }
 
     @Override
-    public ArrayList<Document> execute() {
+    public ArrayList<Document> execute() throws IOException {
         SearchFactory searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
 
@@ -34,7 +35,7 @@ public class PRFSearch implements Search {
         Map<String, List<Long>> words = new HashMap<>();
         for (int i = 0; i < prf && i < firstSearchResults.size(); ++i) {
             Document curDoc = firstSearchResults.get(i);
-            curDoc.loadPatentData();
+            curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
             for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.getInventionTitle() + " " + curDoc.getPatentAbstract(), true).entrySet()) {
                 if (words.containsKey(entry.getKey())) {
                     words.get(entry.getKey()).addAll(entry.getValue());
@@ -64,7 +65,7 @@ public class PRFSearch implements Search {
         Document curDoc;
         for (int i = 0; i < topK && i < secondSearchResults.size(); ++i) {
             curDoc = secondSearchResults.get(i);
-            curDoc.loadPatentData();
+            curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
             result.add(curDoc);
         }
 

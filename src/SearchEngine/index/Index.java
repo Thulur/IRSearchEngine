@@ -17,13 +17,13 @@ public class Index {
     Map<Integer, String> fileIds = new HashMap<>();
     DocumentIndex docIndex = new DocumentIndex();
     int numDocuments = -1;
+    Map<Integer, RandomAccessFile> cacheFiles = new HashMap<>();
 
     public Index() {
 
     }
 
     public void loadFromFile(String file) throws IOException {
-        long time;
         String line;
 
         BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.FILE_IDS_FILE));
@@ -183,27 +183,14 @@ public class Index {
         docIndexWriter.close();
     }
 
-    public Document buildDocument(Posting posting) {
-        return docIndex.buildDocument(posting);
+    public Document buildDocument(Posting posting) throws IOException {
+        return docIndex.buildDocument(posting, getCacheFile(posting.getFileId()));
     }
 
     private String getIpgId(String filename) {
         if (filename.indexOf("ipg") < 0) return "";
 
         return filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
-    }
-
-    private String readStringFromFile(RandomAccessFile file, long pos) {
-        String result = "";
-
-        try {
-            file.seek(pos);
-            result = file.readUTF();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return result;
     }
 
     public void compressIndex() {
@@ -387,48 +374,7 @@ public class Index {
         return result;
     }
 
-    public List<Document> lookUpPostingInFile(String word) {
-        List<Document> results = new LinkedList<>();
-
-        if (!values.containsKey(word)) {
-            return results;
-        }
-
-        long postingListSeek = values.get(word);
-
-        try {
-            RandomAccessFile postingReader = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "r");
-
-            postingReader.seek(postingListSeek);
-            String posting = postingReader.readLine();
-            postingReader.close();
-
-            RandomAccessFile xmlReader = new RandomAccessFile(FilePaths.RAW_PARTIAL_PATH + "testData.xml", "r");
-
-            String[] metaDataCollection = posting.split("[;]");
-
-            for (String metaData: metaDataCollection) {
-                String[] metaDataValues = metaData.split("[,]");
-                int patentDocId = Integer.parseInt(metaDataValues[1]);
-                long inventionTitlePos = Long.parseLong(metaDataValues[2]);
-                long abstractPos = Long.parseLong(metaDataValues[3]);
-
-                String patentAbstract = readStringFromFile(xmlReader, abstractPos);
-                String title = readStringFromFile(xmlReader, inventionTitlePos);
-
-                Document document = new Document(patentDocId, patentAbstract, title);
-
-                results.add(document);
-            }
-            xmlReader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return results;
-    }
-
-    public List<Posting> lookUpPostingInFileWithCompression(String word) {
+    public List<Posting> lookUpPostingInFile(String word) {
         List<Posting> results = new LinkedList<>();
 
         ArrayList<Long> matches = new ArrayList<>();
@@ -476,7 +422,13 @@ public class Index {
         return numDocuments;
     }
 
-    public String getCacheFile(int fileId) {
-        return fileIds.get(fileId);
+    public RandomAccessFile getCacheFile(int fileId) throws FileNotFoundException {
+        if (cacheFiles.containsKey(fileId)) {
+            return cacheFiles.get(fileId);
+        } else {
+            RandomAccessFile file = new RandomAccessFile(FilePaths.CACHE_PATH + fileIds.get(fileId), "r");
+            cacheFiles.put(fileId, file);
+            return file;
+        }
     }
 }

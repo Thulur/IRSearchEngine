@@ -5,6 +5,7 @@ import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -35,7 +36,7 @@ public class BooleanSearch implements Search {
         results = new ArrayList<>();
     }
 
-    public ArrayList<Document> execute() {
+    public ArrayList<Document> execute() throws IOException {
         defineSubqueries();
         processQuery();
         executeBooleanOperation();
@@ -55,14 +56,14 @@ public class BooleanSearch implements Search {
             if (booleanTokens.contains(searchToken)) {
                 booleanOperator = searchToken;
             } else if (searchToken.contains("*")) {
-                searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(searchToken.toLowerCase()));
+                searchResults.put(searchToken, index.lookUpPostingInFile(searchToken.toLowerCase()));
             } else {
-                searchResults.put(searchToken, index.lookUpPostingInFileWithCompression(wordParser.stemSingleWord(searchToken)));
+                searchResults.put(searchToken, index.lookUpPostingInFile(wordParser.stemSingleWord(searchToken)));
             }
         }
     }
 
-    private void executeBooleanOperation() {
+    private void executeBooleanOperation() throws IOException {
         Iterator<List<Posting>> searchIterator = searchResults.values().iterator();
         Set<Integer> firstSet = new HashSet<>();
         Set<Integer> secondSet = new HashSet<>();

@@ -134,7 +134,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     ArrayList<String> search(String query, int topK, int prf) {
-        ArrayList<String> results = searchWithCompression(query, topK, prf);
+        ArrayList<String> results = executeSearch(query, topK, prf);
 
         if (results.size() == 0 && Configuration.ENABLE_SPELLING_CORRECTION) {
             StringBuilder correctedQuery = new StringBuilder();
@@ -143,14 +143,19 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
                 correctedQuery.append(" ");
             }
 
-            results = searchWithCompression(correctedQuery.toString(), topK, prf);
+            results = executeSearch(correctedQuery.toString(), topK, prf);
         }
 
         return results;
     }
 
-    private ArrayList<String> searchWithCompression(String query, int topK, int prf) {
-        ArrayList<Document> documents = searchFactory.getSearchFromQuery(query, topK, prf).execute();
+    private ArrayList<String> executeSearch(String query, int topK, int prf) {
+        ArrayList<Document> documents = null;
+        try {
+            documents = searchFactory.getSearchFromQuery(query, topK, prf).execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         ArrayList<String> results = new ArrayList<>();
 
         // topK should be used in the Search class not here

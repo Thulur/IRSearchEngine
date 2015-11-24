@@ -1,6 +1,5 @@
 package SearchEngine.data;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -9,13 +8,13 @@ import java.io.RandomAccessFile;
  */
 public class Document {
     private int docId;
+    private int fileId;
     private String inventionTitle = "";
     private long inventionTitlePos;
     private long inventionTitleLength;
     private String patentAbstract = "";
     private long patentAbstractPos;
     private long patentAbstractLength;
-    private String cacheFile;
 
     public Document() {
 
@@ -23,12 +22,11 @@ public class Document {
 
     public Document(int docId, String cacheFile) {
         this.docId = docId;
-        this.cacheFile = cacheFile;
     }
 
     public Document(Posting posting) {
         this.docId = posting.getDocId();
-        this.cacheFile = posting.getCacheFile();
+        this.fileId = posting.getFileId();
     }
 
     public Document(int docId, String inventionTitle, String patentAbstract) {
@@ -37,34 +35,23 @@ public class Document {
         this.patentAbstract = patentAbstract;
     }
 
-    public void loadPatentData() {
-        try {
-            RandomAccessFile cacheReader = new RandomAccessFile(cacheFile, "r");
-
-            inventionTitle = readLineFromFile(cacheReader, inventionTitlePos, inventionTitleLength);
-            patentAbstract = readLineFromFile(cacheReader, patentAbstractPos, patentAbstractLength);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+    public void loadPatentData(RandomAccessFile cacheReader) throws IOException {
+        inventionTitle = readLineFromFile(cacheReader, inventionTitlePos, inventionTitleLength);
+        patentAbstract = readLineFromFile(cacheReader, patentAbstractPos, patentAbstractLength);
     }
 
     public String getDocIndexEntry() {
         return docId + " " + inventionTitlePos + " " + patentAbstractPos + " " + inventionTitleLength + " " + patentAbstractLength;
     }
 
-    private String readLineFromFile(RandomAccessFile file, long pos, long length) {
+    private String readLineFromFile(RandomAccessFile file, long pos, long length) throws IOException {
         int tmpLength = Math.toIntExact(length);
         byte[] readData = new byte[tmpLength];
 
-        try {
-            file.seek(pos);
-            file.read(readData);
-            return new String(readData, 0, tmpLength);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        file.seek(pos);
+        file.read(readData);
 
-        return "";
+        return new String(readData, 0, tmpLength);
     }
 
     public String getInventionTitle() {
@@ -123,11 +110,7 @@ public class Document {
         this.patentAbstractLength = patentAbstractLength;
     }
 
-    public String getCacheFile() {
-        return cacheFile;
-    }
-
-    public void setCacheFile(String cacheFile) {
-        this.cacheFile = cacheFile;
+    public int getFileId() {
+        return fileId;
     }
 }

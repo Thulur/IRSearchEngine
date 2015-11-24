@@ -3,6 +3,7 @@ package SearchEngine.search;
 import SearchEngine.data.Document;
 import SearchEngine.index.Index;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -11,5 +12,5 @@ import java.util.ArrayList;
 public interface Search {
     void setupSearch(String searchTerm, Index index, int topK, int prf);
 
-    ArrayList<Document> execute();
+    ArrayList<Document> execute() throws IOException;
 }

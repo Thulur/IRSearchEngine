@@ -7,6 +7,7 @@ import SearchEngine.data.Posting;
 import SearchEngine.utils.NumberParser;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class DocumentIndex {
         }
     }
 
-    public Document buildDocument(Posting posting) {
+    public Document buildDocument(Posting posting, RandomAccessFile file) throws IOException {
         Document doc = new Document(posting);
         DocumentIndexEntry docIndexEntry = values.get(posting.getDocId());
 
@@ -41,7 +42,7 @@ public class DocumentIndex {
         doc.setPatentAbstractPos(docIndexEntry.abstractPos);
         doc.setInventionTitleLength(docIndexEntry.titleLength);
         doc.setPatentAbstractLength(docIndexEntry.abstractLength);
-        doc.loadPatentData();
+        doc.loadPatentData(file);
 
         return doc;
     }

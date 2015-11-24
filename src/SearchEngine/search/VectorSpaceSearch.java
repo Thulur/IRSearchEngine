@@ -6,6 +6,7 @@ import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -26,7 +27,7 @@ public class VectorSpaceSearch implements Search {
     }
 
     @Override
-    public ArrayList<Document> execute() {
+    public ArrayList<Document> execute() throws IOException {
         ArrayList<Document> documents;
         ArrayList<Document> result = new ArrayList<>();
         if (searchTerm.startsWith("\"") && searchTerm.endsWith("\"")) {
@@ -44,7 +45,7 @@ public class VectorSpaceSearch implements Search {
         return result;
     }
 
-    private ArrayList<Document> processSimpleQuery() {
+    private ArrayList<Document> processSimpleQuery() throws IOException {
         List<String> wildcardTokens = new LinkedList<>();
 
         List<String> searchWords = new LinkedList<>();
@@ -63,7 +64,7 @@ public class VectorSpaceSearch implements Search {
         ArrayList<Posting> postings = new ArrayList<>();
         double docWeightSum = 0;
         for (String searchWord: queryVector.keySet()) {
-            List<Posting> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
+            List<Posting> tmpDocList = index.lookUpPostingInFile(searchWord);
             // Index does not contain the word
             if (tmpDocList.size() == 0) continue;
 
@@ -91,7 +92,7 @@ public class VectorSpaceSearch implements Search {
         return result;
     }
 
-    private ArrayList<Document> processPhraseQuery() {
+    private ArrayList<Document> processPhraseQuery() throws IOException {
         Map<Integer, List<Posting>> docs = new HashMap<>();
         String removedQuotationMarks = searchTerm.substring(1, searchTerm.length() - 1);
         Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES).keySet();
@@ -103,11 +104,11 @@ public class VectorSpaceSearch implements Search {
         Iterator<String> tokenIterator = tokens.iterator();
         // Initialize HashSet with first documents
         String searchWord = tokenIterator.next();
-        List<Posting> tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
-        for (Posting doc: tmpDocList) {
+        List<Posting> tmpDocList = index.lookUpPostingInFile(searchWord);
+        for (Posting posting: tmpDocList) {
             LinkedList<Posting> tmpList = new LinkedList<>();
-            tmpList.add(doc);
-            docs.put(doc.getDocId(), tmpList);
+            tmpList.add(posting);
+            docs.put(posting.getDocId(), tmpList);
 
             Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
             queryVector.put(searchWord, docVector);
@@ -116,7 +117,7 @@ public class VectorSpaceSearch implements Search {
 
         while (tokenIterator.hasNext()) {
             searchWord = tokenIterator.next();
-            tmpDocList = index.lookUpPostingInFileWithCompression(searchWord);
+            tmpDocList = index.lookUpPostingInFile(searchWord);
 
             for (Posting doc: tmpDocList) {
                 if (docs.containsKey(doc.getDocId())) {
