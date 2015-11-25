@@ -36,8 +36,10 @@ public class Document {
     }
 
     public void loadPatentData(RandomAccessFile cacheReader) throws IOException {
-        inventionTitle = readLineFromFile(cacheReader, inventionTitlePos, inventionTitleLength);
-        patentAbstract = readLineFromFile(cacheReader, patentAbstractPos, patentAbstractLength);
+        String tmpInventionTitle = readLineFromFile(cacheReader, inventionTitlePos, inventionTitleLength);
+        String tmpPatentAbstract = readLineFromFile(cacheReader, patentAbstractPos, patentAbstractLength);
+        inventionTitle = tmpInventionTitle.substring(tmpInventionTitle.indexOf(">") + 1, tmpInventionTitle.lastIndexOf("<"));
+        patentAbstract = tmpPatentAbstract.substring(tmpPatentAbstract.indexOf(">") + 1, tmpPatentAbstract.lastIndexOf("<"));
     }
 
     public String getDocIndexEntry() {
