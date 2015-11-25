@@ -38,7 +38,6 @@ public class XMLParser {
 					startDocument();
 					break;
 				case XMLStreamConstants.END_DOCUMENT:
-					endDocument();
 					parser.close();
 					break;
 				case XMLStreamConstants.NAMESPACE:
@@ -57,6 +56,8 @@ public class XMLParser {
 			}
 			parser.next();
 		}
+
+		endDocument();
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -82,7 +83,9 @@ public class XMLParser {
 			this.document = new Document();
 			break;
 		case "abstract":
-			document.setPatentAbstractPos(parser.getLocation().getCharacterOffset() - 20);
+			if (document != null) {
+				document.setPatentAbstractPos(parser.getLocation().getCharacterOffset() - 10);
+			}
 			this.abstractEntered = true;
 			break;
 		case "p":
@@ -95,7 +98,9 @@ public class XMLParser {
 			// reset everything if appl-type!="utility"
 			break;
 		case "invention-title":
-			document.setInventionTitlePos(parser.getLocation().getCharacterOffset() - 20);
+			if (document != null) {
+				document.setInventionTitlePos(parser.getLocation().getCharacterOffset() - 10);
+			}
 			this.inventionTitleEntered = true;
 			break;
 		case "doc-number":
