@@ -19,11 +19,13 @@ public class BooleanSearch implements Search {
     private Index index;
     private WordParser wordParser;
     private ArrayList<Document> results;
+    private int topK;
 
     @Override
     public void setupSearch(String searchTerm, Index index, int topK, int prf) {
         this.searchTerm = searchTerm;
         this.index = index;
+        this.topK = topK;
 
         wordParser = WordParser.getInstance();
 
@@ -87,9 +89,11 @@ public class BooleanSearch implements Search {
         }
         Iterator<Integer> docIdIterator = firstSet.iterator();
         int curDocId;
-        while (docIdIterator.hasNext()) {
+        int i = 0;
+        while (docIdIterator.hasNext() && i < topK) {
             curDocId = docIdIterator.next();
             results.add(index.buildDocument(postings.get(curDocId)));
+            ++i;
         }
     }
 }
