@@ -19,7 +19,7 @@ public class SearchEngineTest {
 
         long start = System.currentTimeMillis();
 
-        myEngine.index("");
+        //myEngine.index("");
 
         long time = System.currentTimeMillis() - start;
 
@@ -30,7 +30,7 @@ public class SearchEngineTest {
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        myEngine.compressIndex("");
+        //myEngine.compressIndex("");
         System.out.println("Compression time:\t" + (System.currentTimeMillis() - start) + "\tms\n");
         myEngine.loadCompressedIndex("");
 
@@ -46,8 +46,8 @@ public class SearchEngineTest {
         //myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
         //System.out.println("\nmethods NOT inventions:");
         //myEngine.search("methods NOT inventions", 0, 0).forEach(System.out::println);
-        System.out.println("\ndata OR method:");
-        myEngine.search("data OR method", 10, 0).forEach(System.out::println);
+        //System.out.println("\ndata OR method:");
+        //myEngine.search("data OR method", 10, 0).forEach(System.out::println);
 
         //System.out.println("\nprov* NOT free:");
         //myEngine.search("prov* NOT free", 10, 0).forEach(System.out::println);
@@ -68,8 +68,8 @@ public class SearchEngineTest {
         //System.out.println("\ncomputers:");
         //myEngine.search("computers", 10, 0).forEach(System.out::println);
 
-        System.out.println("\n\"mobile devices\":");
-        myEngine.search("\"mobile devices\"", 10, 0).forEach(System.out::println);
+        //System.out.println("\n\"mobile devices\":");
+        //myEngine.search("\"mobile devices\"", 10, 0).forEach(System.out::println);
 
         System.out.println("\ndata:");
         myEngine.search("data", 10, 0).forEach(System.out::println);
