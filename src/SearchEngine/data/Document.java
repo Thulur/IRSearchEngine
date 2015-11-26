@@ -1,5 +1,7 @@
 package SearchEngine.data;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -36,8 +38,8 @@ public class Document {
     }
 
     public void loadPatentData(RandomAccessFile cacheReader) throws IOException {
-        inventionTitle = readTillTag(cacheReader, inventionTitlePos, inventionTitleLength, "</invent");
-        patentAbstract = readTillTag(cacheReader, patentAbstractPos, patentAbstractLength, "</abstract");
+        inventionTitle = removeTags(readTillTag(cacheReader, inventionTitlePos, inventionTitleLength, "</invent"));
+        patentAbstract = removeTags(readTillTag(cacheReader, patentAbstractPos, patentAbstractLength, "</abstract"));
     }
 
     public String getDocIndexEntry() {
@@ -63,7 +65,7 @@ public class Document {
             ++bufferPos;
         }
 
-        return new String(readData, 0, bufferPos - tag.length());
+        return new String(readData, 0, bufferPos - tag.length(), "UTF-8");
     }
 
     private String readLineFromFile(RandomAccessFile file, long pos, long length) throws IOException {
@@ -74,6 +76,14 @@ public class Document {
         file.read(readData);
 
         return new String(readData, 0, tmpLength);
+    }
+
+    private String removeTags(String s) {
+        String tagsRemoved = s.replaceAll("<.[^(><.)]*>", "");
+        String htmlUnescaped = StringEscapeUtils.unescapeHtml4(tagsRemoved);
+        String removedNewlines = htmlUnescaped.replaceAll("[\\t\\n\\r]", " ");
+        String removedSpaces = removedNewlines.replaceAll("[ ]+", " ");
+        return removedSpaces;
     }
 
     public String getInventionTitle() {
