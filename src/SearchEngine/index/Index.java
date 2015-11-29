@@ -1,7 +1,7 @@
 package SearchEngine.index;
 
 import SearchEngine.data.*;
-import SearchEngine.utils.IndexEncoder;
+import SearchEngine.utils.VByte;
 import SearchEngine.utils.NumberParser;
 
 import java.io.*;
@@ -244,14 +244,14 @@ public class Index {
                     if (numCount == Posting.POSTING_DOC_ID_POS) {
                         patentIdDelta = curNum - lastPatentId;
                         lastPatentId = curNum;
-                        compressed.append(IndexEncoder.convertToVByte(patentIdDelta));
+                        compressed.append(VByte.encode(patentIdDelta));
                     } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
-                        compressed.append(IndexEncoder.convertToVByte(curNum));
+                        compressed.append(VByte.encode(curNum));
                         numOcc = curNum;
                     } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
                         occurrenceDelta = curNum - lastOccurrence;
                         lastOccurrence = curNum;
-                        compressed.append(IndexEncoder.convertToVByte(occurrenceDelta));
+                        compressed.append(VByte.encode(occurrenceDelta));
 
                             if (numCount == numOcc + Posting.POSTING_NUM_OCC_POS) {
                             numCount = -1;
@@ -262,7 +262,7 @@ public class Index {
                             }
                         }
                     } else {
-                        compressed.append(IndexEncoder.convertToVByte(curNum));
+                        compressed.append(VByte.encode(curNum));
                     }
 
                     i = separatorPos + 1;
@@ -316,7 +316,7 @@ public class Index {
 
             // A hexadecimal value greater or equal 8 is found => the 8th bit of a byte is set
             if (buffer[i] >= '8') {
-                curNum = vByteDecode(NumberParser.parseHexadecimalLong(curNumBuffer, 0, curNumBufferLength));
+                curNum = VByte.decode(NumberParser.parseHexadecimalLong(curNumBuffer, 0, curNumBufferLength));
 
                 if (numCount == Posting.POSTING_WEIGHT_POS) {
                     posting.setWeight(Math.toIntExact(curNum) / 1000d);
@@ -359,19 +359,6 @@ public class Index {
         }
 
         return postings;
-    }
-
-    private long vByteDecode(long vByteValue) {
-        long result = 0;
-        int i = 0;
-
-        while (vByteValue > 0) {
-            result += ((vByteValue & 127) << (7 * i));
-            vByteValue >>= 8;
-            ++i;
-        }
-
-        return result;
     }
 
     public List<Posting> lookUpPostingInFile(String word) {
