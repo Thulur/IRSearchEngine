@@ -19,7 +19,7 @@ public class SearchEngineTest {
 
         long start = System.currentTimeMillis();
 
-        //myEngine.index("");
+        myEngine.index("");
 
         long time = System.currentTimeMillis() - start;
 
@@ -30,7 +30,7 @@ public class SearchEngineTest {
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        //myEngine.compressIndex("");
+        myEngine.compressIndex("");
         System.out.println("Compression time:\t" + (System.currentTimeMillis() - start) + "\tms\n");
         myEngine.loadCompressedIndex("");
 

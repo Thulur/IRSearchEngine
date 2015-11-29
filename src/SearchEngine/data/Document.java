@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Created by sebastian on 22.10.2015.
@@ -144,5 +146,36 @@ public class Document {
 
     public int getFileId() {
         return fileId;
+    }
+
+    public String generateSnippet(String query) {
+        StringBuilder snippet = new StringBuilder();
+
+        ArrayList<Integer> indices = new ArrayList<>();
+
+        for (String queryTerm: query.split(" ")) {
+            int index = patentAbstract.indexOf(queryTerm);
+            if (index >= 0) indices.add(index);
+        }
+
+        Collections.sort(indices);
+
+        if (indices.size() > 1) {
+            snippet.append("...");
+            snippet.append(patentAbstract.substring(indices.get(0), indices.get(indices.size()-1)));
+            snippet.append("...");
+        } else if (indices.size() == 1){
+            int start = (indices.get(0) > 100) ? indices.get(0) - 100 : 0;
+            int end = ((start + 200) < (patentAbstract.length() - 1)) ? start + 200 : patentAbstract.length() - 1;
+            snippet.append("...");
+            snippet.append(patentAbstract.substring(start, end));
+            snippet.append("...");
+        } else {
+            int end = (200 < (patentAbstract.length() - 1)) ? 200 : patentAbstract.length() - 1;
+            snippet.append(patentAbstract.substring(0, end));
+            snippet.append("...");
+        }
+
+        return snippet.toString();
     }
 }
