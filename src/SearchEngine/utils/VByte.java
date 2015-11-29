@@ -3,8 +3,8 @@ package SearchEngine.utils;
 /**
  * Created by sebastian on 06.11.2015.
  */
-public class IndexEncoder {
-    public static String convertToVByte(long input) {
+public class VByte {
+    public static String encode(long input) {
         long result = 0;
         int i = 0;
 
@@ -22,5 +22,18 @@ public class IndexEncoder {
         }
 
         return outputString;
+    }
+
+    public static long decode(long vByteValue) {
+        long result = 0;
+        int i = 0;
+
+        while (vByteValue > 0) {
+            result += ((vByteValue & 127) << (7 * i));
+            vByteValue >>= 8;
+            ++i;
+        }
+
+        return result;
     }
 }
