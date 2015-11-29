@@ -162,7 +162,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
                 results.add("0" + documents.get(i).getDocId() + " " + documents.get(i).getInventionTitle() +
-                "\n" + documents.get(i).generateSnippet(query) + "\n");
+                        "\n" + documents.get(i).generateSnippet2(query) + "\n");
             }
         }
 

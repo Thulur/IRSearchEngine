@@ -1,11 +1,14 @@
 package SearchEngine.data;
 
+import SearchEngine.utils.WordParser;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.regex.Matcher;
 
 /**
  * Created by sebastian on 22.10.2015.
@@ -158,20 +161,75 @@ public class Document {
             if (index >= 0) indices.add(index);
         }
 
-        Collections.sort(indices);
-
         if (indices.size() > 1) {
+            Collections.sort(indices);
+
             snippet.append("...");
             snippet.append(patentAbstract.substring(indices.get(0), indices.get(indices.size()-1)));
             snippet.append("...");
         } else if (indices.size() == 1){
             int start = (indices.get(0) > 100) ? indices.get(0) - 100 : 0;
             int end = ((start + 200) < (patentAbstract.length() - 1)) ? start + 200 : patentAbstract.length() - 1;
+
             snippet.append("...");
             snippet.append(patentAbstract.substring(start, end));
             snippet.append("...");
         } else {
             int end = (200 < (patentAbstract.length() - 1)) ? 200 : patentAbstract.length() - 1;
+            snippet.append(patentAbstract.substring(0, end));
+            snippet.append("...");
+        }
+
+        return snippet.toString();
+    }
+
+    public String generateSnippet2 (String query) {
+        StringBuilder snippet = new StringBuilder();
+        ArrayList<String> booleanTokens = new ArrayList<>();
+        booleanTokens.add("OR");
+        booleanTokens.add("AND");
+        booleanTokens.add("NOT");
+
+        ArrayList<Integer> indices = new ArrayList<>();
+
+        for (String queryTerm: query.split(" ")) {
+            if (booleanTokens.contains(queryTerm)) continue;
+
+            String stemmedTerm = WordParser.getInstance().stemSingleWord(queryTerm);
+            int index = patentAbstract.toLowerCase().indexOf(stemmedTerm);
+            if (index >= 0) indices.add(index);
+        }
+
+        if (indices.size() >= 1) {
+            Collections.sort(indices);
+            int start = indices.get(0), end = indices.get(indices.size()-1);
+
+            for (int i = start; i >= 0; --i) {
+                if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
+                        || (i >= 2 && patentAbstract.charAt(i-2) == ';')) {
+                    start = i;
+                    i = 0;
+                }
+            }
+
+            for (int i = end; i < patentAbstract.length()-1 && end - start < 200; ++i) {
+                if (patentAbstract.charAt(i) == ' ') {
+                    end = i + 1;
+                }
+            }
+
+            snippet.append(patentAbstract.substring(start, end));
+            snippet.append("...");
+        } else {
+            int end = (200 < (patentAbstract.length() - 1)) ? 200 : patentAbstract.length() - 1;
+
+            for (int i = end; i < patentAbstract.length() -1; ++i) {
+                if (patentAbstract.charAt(i) == ' ') {
+                    end = i + 1;
+                    i = patentAbstract.length();
+                }
+            }
+
             snippet.append(patentAbstract.substring(0, end));
             snippet.append("...");
         }
