@@ -217,6 +217,15 @@ public class Document {
                 }
             }
 
+            if ((end - start) < 200) {
+                for (int i = start; i >= 0 && end - start < 200; --i) {
+                    if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
+                            || (i >= 2 && patentAbstract.charAt(i-2) == ';')) {
+                        start = i;
+                    }
+                }
+            }
+
             snippet.append(patentAbstract.substring(start, end));
             snippet.append("...");
         } else {
