@@ -93,11 +93,14 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
         // Join all indices at the end
         index.mergePartialIndices(files, numPatents);
-        SpellingCorrector.setup();
-        try {
-            SpellingCorrector.save();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        if (Configuration.ENABLE_SPELLING_CORRECTION) {
+            SpellingCorrector.setup();
+            try {
+                SpellingCorrector.save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -173,8 +176,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         // topK should be used in the Search class not here
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
-                results.add("0" + documents.get(i).getDocId() + " " + documents.get(i).getInventionTitle() +
-                        "\n" + documents.get(i).generateSnippet2(query) + "\n");
+                results.add(documents.get(i).generateSnippet(query) + "\n");
             }
         }
 

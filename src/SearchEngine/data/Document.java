@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by sebastian on 22.10.2015.
@@ -150,39 +151,9 @@ public class Document {
     }
 
     public String generateSnippet(String query) {
-        StringBuilder snippet = new StringBuilder();
-
-        ArrayList<Integer> indices = new ArrayList<>();
-
-        for (String queryTerm: query.split(" ")) {
-            int index = patentAbstract.indexOf(queryTerm);
-            if (index >= 0) indices.add(index);
-        }
-
-        if (indices.size() > 1) {
-            Collections.sort(indices);
-
-            snippet.append("...");
-            snippet.append(patentAbstract.substring(indices.get(0), indices.get(indices.size()-1)));
-            snippet.append("...");
-        } else if (indices.size() == 1){
-            int start = (indices.get(0) > 100) ? indices.get(0) - 100 : 0;
-            int end = ((start + 200) < (patentAbstract.length() - 1)) ? start + 200 : patentAbstract.length() - 1;
-
-            snippet.append("...");
-            snippet.append(patentAbstract.substring(start, end));
-            snippet.append("...");
-        } else {
-            int end = (200 < (patentAbstract.length() - 1)) ? 200 : patentAbstract.length() - 1;
-            snippet.append(patentAbstract.substring(0, end));
-            snippet.append("...");
-        }
-
-        return snippet.toString();
-    }
-
-    public String generateSnippet2 (String query) {
         // For coloring and highlighting take a look at https://en.wikipedia.org/wiki/ANSI_escape_code
+        // http://askubuntu.com/questions/528928/how-to-do-underline-bold-italic-strikethrough-color-background-and-size-i
+        int displayedChars = 160;
         StringBuilder snippet = new StringBuilder();
         ArrayList<String> booleanTokens = new ArrayList<>();
         booleanTokens.add("OR");
@@ -199,12 +170,12 @@ public class Document {
             if (index >= 0) indices.add(index);
         }
 
+        snippet.append("\t\t");
+
         if (indices.size() >= 1) {
             Collections.sort(indices);
             int start = ((indices.get(0) - 50) < 0) ? 0 : indices.get(0) - 50;
             int end = ((indices.get(indices.size()-1) + 50) > patentAbstractLength) ? (int) patentAbstractLength : indices.get(indices.size()-1) + 50;
-
-//            int start = indices.get(0), end = indices.get(indices.size()-1);
 
             for (int i = start; i >= 0; --i) {
                 if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
@@ -214,14 +185,14 @@ public class Document {
                 }
             }
 
-            for (int i = end; i < patentAbstract.length()-1 && end - start < 200; ++i) {
+            for (int i = end; i < patentAbstract.length()-1 && end - start < displayedChars; ++i) {
                 if (patentAbstract.charAt(i) == ' ') {
                     end = i + 1;
                 }
             }
 
-            if ((end - start) < 200) {
-                for (int i = start; i >= 0 && end - start < 200; --i) {
+            if ((end - start) < displayedChars) {
+                for (int i = start; i >= 0 && end - start < displayedChars; --i) {
                     if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
                             || (i >= 2 && patentAbstract.charAt(i-2) == ';')) {
                         start = i;
@@ -232,7 +203,7 @@ public class Document {
             snippet.append(patentAbstract.substring(start, end));
             snippet.append("...");
         } else {
-            int end = (200 < (patentAbstract.length() - 1)) ? 200 : patentAbstract.length() - 1;
+            int end = (displayedChars < (patentAbstract.length() - 1)) ? displayedChars : patentAbstract.length() - 1;
 
             for (int i = end; i < patentAbstract.length() -1; ++i) {
                 if (patentAbstract.charAt(i) == ' ') {
@@ -245,6 +216,43 @@ public class Document {
             snippet.append("...");
         }
 
+        for (int i = 1; i < snippet.length() / 80; ++i) {
+            int newlinePos = snippet.toString().indexOf(' ', i * 80);
+            snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
+        }
+
+        snippet = new StringBuilder(colorWords(snippet, query.split(" "), booleanTokens, "\033[34;0m", "\033[30;0m"));
+        snippet.replace(0, 0, colorWords(new StringBuilder("0" + docId + " " + inventionTitle + "\n"), query.split(" "), booleanTokens, "\033[34;1m", "\033[33;1m"));
+
         return snippet.toString();
+    }
+
+    private String colorWords(StringBuilder input, String[] terms, List<String> ignored, String highlight, String standard) {
+        for (String queryTerm: terms) {
+            if (ignored.contains(queryTerm)) continue;
+            int pos = -1;
+            String stemmedTerm = WordParser.getInstance().stemSingleWord(queryTerm);
+            input.replace(0, 0, standard);
+            String tmpSnippet = input.toString().toLowerCase();
+
+            while ((pos = tmpSnippet.indexOf(stemmedTerm, pos + 1)) != -1) {
+                if (pos == 0 || tmpSnippet.charAt(pos - 1) == ' ') {
+                    input.replace(pos, pos, highlight);
+                    int nextSpace = input.indexOf(" ", pos);
+
+                    if (nextSpace != -1) {
+                        input.replace(nextSpace, nextSpace, standard);
+                        tmpSnippet = input.toString().toLowerCase();
+                        pos = nextSpace;
+                    } else {
+                        input.append(standard);
+                    }
+                }
+            }
+            // Reset all formatting options
+            input.append("\033[0m");
+        }
+
+        return input.toString();
     }
 }
