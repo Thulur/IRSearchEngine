@@ -1,11 +1,13 @@
 package SearchEngine.data;
 
+import SearchEngine.data.output.OutputFormat;
 import SearchEngine.utils.WordParser;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -150,11 +152,14 @@ public class Document {
         return fileId;
     }
 
-    public String generateSnippet(String query, boolean formatedSnippet) {
+    public String generateSnippet(String query) {
+        return generateSnippet(query, null);
+    }
+
+    public String generateSnippet(String query, OutputFormat outputFormat) {
         // For coloring and highlighting take a look at https://en.wikipedia.org/wiki/ANSI_escape_code
         // http://askubuntu.com/questions/528928/how-to-do-underline-bold-italic-strikethrough-color-background-and-size-i
         int displayedChars = 160;
-        int charsPerLine = 80;
         StringBuilder snippet = new StringBuilder();
         ArrayList<String> booleanTokens = new ArrayList<>();
         booleanTokens.add("OR");
@@ -174,7 +179,7 @@ public class Document {
         if (indices.size() >= 1) {
             Collections.sort(indices);
             int start = ((indices.get(0) - 50) < 0) ? 0 : indices.get(0) - 50;
-            int end = ((indices.get(indices.size()-1) + 50) > patentAbstractLength) ? (int) patentAbstractLength : indices.get(indices.size()-1) + 50;
+            int end = ((indices.get(indices.size() - 1) + 50) > patentAbstract.length()) ? patentAbstract.length() : indices.get(indices.size() - 1) + 50;
 
             for (int i = start; i >= 0; --i) {
                 if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
@@ -215,18 +220,8 @@ public class Document {
             snippet.append("...");
         }
 
-        if (formatedSnippet) {
-            double possibleNumLines = Math.ceil(1d * snippet.length() / charsPerLine);
-            for (int i = 1; i < possibleNumLines; ++i) {
-                int newlinePos = snippet.indexOf(" ", i * charsPerLine);
-
-                if (newlinePos != -1) {
-                    snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
-                }
-            }
-
-            snippet = new StringBuilder(colorWords(snippet, query.split(" "), booleanTokens, "\033[34;0m", "\033[30;0m"));
-            snippet.replace(0, 0, colorWords(new StringBuilder("0" + docId + " " + inventionTitle + "\n\t\t"), query.split(" "), booleanTokens, "\033[34;1m", "\033[33;1m"));
+        if (outputFormat != null) {
+            formatSnippet(snippet, query.split(" "), booleanTokens, outputFormat);
         } else {
             snippet.replace(0, 0, "0" + docId + " " + inventionTitle + " ");
         }
@@ -234,37 +229,58 @@ public class Document {
         return snippet.toString();
     }
 
-    private String colorWords(StringBuilder input, String[] terms, List<String> ignored, String highlight, String standard) {
-        for (String queryTerm: terms) {
-            if (ignored.contains(queryTerm)) continue;
-            int pos = -1;
-            String stemmedTerm = WordParser.getInstance().stemSingleWord(queryTerm);
-            input.replace(0, 0, standard);
-            String tmpSnippet = input.toString().toLowerCase();
+    private void formatSnippet(StringBuilder snippet, String[] terms, List<String> ignored, OutputFormat outputFormat) {
+        int charsPerLine = 80;
+        double possibleNumLines = Math.ceil(1d * snippet.length() / charsPerLine);
 
-            while ((pos = tmpSnippet.indexOf(stemmedTerm, pos + 1)) != -1) {
+        for (int i = 1; i < possibleNumLines; ++i) {
+            int newlinePos = snippet.indexOf(" ", i * charsPerLine);
+
+            if (newlinePos != -1) {
+                snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
+            }
+        }
+
+        List<String> tmpTerms = Arrays.asList(terms);
+        tmpTerms.removeAll(ignored);
+
+        StringBuilder titleString = new StringBuilder("0" + docId + " " + inventionTitle + "\n\t\t");
+        colorWords(snippet, tmpTerms, outputFormat.getTextHighlight(), outputFormat.getTextStandard(), outputFormat.getEnd());
+        colorWords(titleString, tmpTerms, outputFormat.getTitleHighlight(), outputFormat.getTitleStandard(), outputFormat.getEnd());
+
+        snippet.replace(0, 0, titleString.toString());
+    }
+
+    private void colorWords(StringBuilder input, List<String> terms, String highlight, String standard, String end) {
+        int pos = -1;
+        input.replace(0, 0, standard);
+        String tmpSnippet = input.toString().toLowerCase();
+
+        for (String queryTerm: terms) {
+            String term = WordParser.getInstance().stemSingleWord(queryTerm);
+            while ((pos = tmpSnippet.indexOf(term, pos + 1)) != -1) {
                 // Take into account that we already replace some whitespaces with \n\t\t
                 if (pos == 0 || tmpSnippet.charAt(pos - 1) == ' ' || tmpSnippet.charAt(pos - 1) == '\t') {
                     input.replace(pos, pos, highlight);
-                    int nextSpace = input.indexOf(" ", pos);
+                    input.replace(pos, pos, end);
+                    int nextSpace = input.indexOf(" ", pos + highlight.length());
 
                     if (input.indexOf("\t", pos) != -1 && input.indexOf("\t", pos) < nextSpace) {
-                        nextSpace = input.indexOf("\t", pos);
+                        nextSpace = input.indexOf("\t", pos + highlight.length());
                     }
 
                     if (nextSpace != -1) {
                         input.replace(nextSpace, nextSpace, standard);
+                        input.replace(nextSpace, nextSpace, end);
                         tmpSnippet = input.toString().toLowerCase();
                         pos = nextSpace;
                     } else {
-                        input.append(standard);
+                        input.append(end);
                     }
                 }
             }
-            // Reset all formatting options
-            input.append("\033[0m");
         }
-
-        return input.toString();
+        // Reset all formatting options
+        input.append(end);
     }
 }

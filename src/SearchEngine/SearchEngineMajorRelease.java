@@ -23,6 +23,9 @@ package SearchEngine;
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
+import SearchEngine.data.output.AnsiEscapeFormat;
+import SearchEngine.data.output.HTMLFormat;
+import SearchEngine.data.output.OutputFormat;
 import SearchEngine.index.FileIndexer;
 import SearchEngine.index.Index;
 import SearchEngine.index.ParsedEventListener;
@@ -44,6 +47,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private FileIndexer[] fileIndexers;
     private SearchFactory searchFactory;
     private int numPatents = 0;
+    private OutputFormat outputFormat;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -106,15 +110,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     boolean loadIndex(String directory) {
-        try {
-            index.loadFromFile(FilePaths.INDEX_PATH);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        searchFactory = new SearchFactory();
-        searchFactory.setIndex(index);
-
-        return true;
+        return loadCompressedIndex(directory);
     }
     
     @Override
@@ -140,6 +136,12 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
+        }
+
+        if (Configuration.EXPORT_FORMAT) {
+            outputFormat = new HTMLFormat();
+        } else {
+            outputFormat = new AnsiEscapeFormat();
         }
 
         searchFactory = new SearchFactory();
@@ -176,7 +178,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         // topK should be used in the Search class not here
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
-                results.add(documents.get(i).generateSnippet(query, true) + "\n");
+                results.add(documents.get(i).generateSnippet(query, outputFormat) + "\n");
             }
         }
 
