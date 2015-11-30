@@ -154,6 +154,7 @@ public class Document {
         // For coloring and highlighting take a look at https://en.wikipedia.org/wiki/ANSI_escape_code
         // http://askubuntu.com/questions/528928/how-to-do-underline-bold-italic-strikethrough-color-background-and-size-i
         int displayedChars = 160;
+        int charsPerLine = 80;
         StringBuilder snippet = new StringBuilder();
         ArrayList<String> booleanTokens = new ArrayList<>();
         booleanTokens.add("OR");
@@ -169,8 +170,6 @@ public class Document {
             int index = patentAbstract.toLowerCase().indexOf(stemmedTerm);
             if (index >= 0) indices.add(index);
         }
-
-        snippet.append("\t\t");
 
         if (indices.size() >= 1) {
             Collections.sort(indices);
@@ -217,15 +216,19 @@ public class Document {
         }
 
         if (formatedSnippet) {
-            for (int i = 1; i < snippet.length() / 80; ++i) {
-                int newlinePos = snippet.indexOf(" ", i * 80);
-                snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
+            double possibleNumLines = Math.ceil(1d * snippet.length() / charsPerLine);
+            for (int i = 1; i < possibleNumLines; ++i) {
+                int newlinePos = snippet.indexOf(" ", i * charsPerLine);
+
+                if (newlinePos != -1) {
+                    snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
+                }
             }
 
             snippet = new StringBuilder(colorWords(snippet, query.split(" "), booleanTokens, "\033[34;0m", "\033[30;0m"));
-            snippet.replace(0, 0, colorWords(new StringBuilder("0" + docId + " " + inventionTitle + "\n"), query.split(" "), booleanTokens, "\033[34;1m", "\033[33;1m"));
+            snippet.replace(0, 0, colorWords(new StringBuilder("0" + docId + " " + inventionTitle + "\n\t\t"), query.split(" "), booleanTokens, "\033[34;1m", "\033[33;1m"));
         } else {
-            snippet.replace(0, 0, "0" + docId + " " + inventionTitle + "\n");
+            snippet.replace(0, 0, "0" + docId + " " + inventionTitle + " ");
         }
 
         return snippet.toString();
