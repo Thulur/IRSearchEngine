@@ -201,7 +201,10 @@ public class Document {
 
         if (indices.size() >= 1) {
             Collections.sort(indices);
-            int start = indices.get(0), end = indices.get(indices.size()-1);
+            int start = ((indices.get(0) - 50) < 0) ? 0 : indices.get(0) - 50;
+            int end = ((indices.get(indices.size()-1) + 50) > patentAbstractLength) ? (int) patentAbstractLength : indices.get(indices.size()-1) + 50;
+
+//            int start = indices.get(0), end = indices.get(indices.size()-1);
 
             for (int i = start; i >= 0; --i) {
                 if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
