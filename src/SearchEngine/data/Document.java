@@ -150,7 +150,7 @@ public class Document {
         return fileId;
     }
 
-    public String generateSnippet(String query) {
+    public String generateSnippet(String query, boolean formatedSnippet) {
         // For coloring and highlighting take a look at https://en.wikipedia.org/wiki/ANSI_escape_code
         // http://askubuntu.com/questions/528928/how-to-do-underline-bold-italic-strikethrough-color-background-and-size-i
         int displayedChars = 160;
@@ -216,13 +216,17 @@ public class Document {
             snippet.append("...");
         }
 
-        for (int i = 1; i < snippet.length() / 80; ++i) {
-            int newlinePos = snippet.toString().indexOf(' ', i * 80);
-            snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
-        }
+        if (formatedSnippet) {
+            for (int i = 1; i < snippet.length() / 80; ++i) {
+                int newlinePos = snippet.indexOf(" ", i * 80);
+                snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
+            }
 
-        snippet = new StringBuilder(colorWords(snippet, query.split(" "), booleanTokens, "\033[34;0m", "\033[30;0m"));
-        snippet.replace(0, 0, colorWords(new StringBuilder("0" + docId + " " + inventionTitle + "\n"), query.split(" "), booleanTokens, "\033[34;1m", "\033[33;1m"));
+            snippet = new StringBuilder(colorWords(snippet, query.split(" "), booleanTokens, "\033[34;0m", "\033[30;0m"));
+            snippet.replace(0, 0, colorWords(new StringBuilder("0" + docId + " " + inventionTitle + "\n"), query.split(" "), booleanTokens, "\033[34;1m", "\033[33;1m"));
+        } else {
+            snippet.replace(0, 0, "0" + docId + " " + inventionTitle + "\n");
+        }
 
         return snippet.toString();
     }
@@ -236,9 +240,14 @@ public class Document {
             String tmpSnippet = input.toString().toLowerCase();
 
             while ((pos = tmpSnippet.indexOf(stemmedTerm, pos + 1)) != -1) {
-                if (pos == 0 || tmpSnippet.charAt(pos - 1) == ' ') {
+                // Take into account that we already replace some whitespaces with \n\t\t
+                if (pos == 0 || tmpSnippet.charAt(pos - 1) == ' ' || tmpSnippet.charAt(pos - 1) == '\t') {
                     input.replace(pos, pos, highlight);
                     int nextSpace = input.indexOf(" ", pos);
+
+                    if (input.indexOf("\t", pos) != -1 && input.indexOf("\t", pos) < nextSpace) {
+                        nextSpace = input.indexOf("\t", pos);
+                    }
 
                     if (nextSpace != -1) {
                         input.replace(nextSpace, nextSpace, standard);

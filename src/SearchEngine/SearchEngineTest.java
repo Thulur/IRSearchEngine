@@ -39,8 +39,8 @@ public class SearchEngineTest {
         //System.out.println("\n" + args[0] + ":");
         //myEngine.search(args[0], 10, 0).forEach(System.out::println);
 
-        System.out.println("\nselection:");
-        myEngine.search("selection", 10, 0).forEach(System.out::println);
+        //System.out.println("\nselection:");
+        //myEngine.search("selection", 10, 0).forEach(System.out::println);
 
         //System.out.println("\ncomprises AND consists:");
         //myEngine.search("comprises AND consists", 0, 0).forEach(System.out::println);
