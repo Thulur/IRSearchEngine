@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.regex.Matcher;
 
 /**
  * Created by sebastian on 22.10.2015.
@@ -184,6 +182,7 @@ public class Document {
     }
 
     public String generateSnippet2 (String query) {
+        // For coloring and highlighting take a look at https://en.wikipedia.org/wiki/ANSI_escape_code
         StringBuilder snippet = new StringBuilder();
         ArrayList<String> booleanTokens = new ArrayList<>();
         booleanTokens.add("OR");
