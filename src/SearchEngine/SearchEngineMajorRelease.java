@@ -93,6 +93,12 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
         // Join all indices at the end
         index.mergePartialIndices(files, numPatents);
+        SpellingCorrector.setup();
+        try {
+            SpellingCorrector.save();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -124,7 +130,13 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
 
         if (Configuration.ENABLE_SPELLING_CORRECTION) {
-            SpellingCorrector.setup();
+            try {
+                SpellingCorrector.load();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
 
         searchFactory = new SearchFactory();

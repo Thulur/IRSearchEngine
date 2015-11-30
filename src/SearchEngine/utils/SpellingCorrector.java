@@ -1,13 +1,10 @@
 package SearchEngine.utils;
 
-import SearchEngine.data.FilePaths;
-import SearchEngine.index.Index;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,10 +12,11 @@ import java.util.regex.Pattern;
 /**
  * Created by Dennis on 22.11.2015.
  */
-public class SpellingCorrector {
-    private static SpellingCorrector instance;
+public class SpellingCorrector implements Serializable {
+    // Do not serialize the instance itself
+    private static transient SpellingCorrector instance;
     private HashMap<String, Integer> languageModel;
-    private int BUFFER_SIZE = 16384;
+    private int BUFFER_SIZE = 2 << 14;
 
     public static SpellingCorrector getInstance() {
         if (SpellingCorrector.instance == null) {
@@ -62,6 +60,22 @@ public class SpellingCorrector {
         System.out.println(result);
         return candidates.size() > 0 ? result : word;
 
+    }
+
+    public static void load() throws IOException, ClassNotFoundException {
+        FileInputStream fileIn = new FileInputStream("data/languagemodel.dat");
+        ObjectInputStream in = new ObjectInputStream(fileIn);
+        instance = (SpellingCorrector) in.readObject();
+        in.close();
+        fileIn.close();
+    }
+
+    public static void save() throws IOException {
+        FileOutputStream fileOut = new FileOutputStream("data/languagemodel.dat");
+        ObjectOutputStream out = new ObjectOutputStream(fileOut);
+        out.writeObject(instance);
+        out.close();
+        fileOut.close();
     }
 
     private void buildLanguageModel() {
