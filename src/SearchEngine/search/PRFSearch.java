@@ -36,7 +36,7 @@ public class PRFSearch implements Search {
         for (int i = 0; i < prf && i < firstSearchResults.size(); ++i) {
             Document curDoc = firstSearchResults.get(i);
             curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
-            for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.getInventionTitle() + " " + curDoc.getPatentAbstract(), true).entrySet()) {
+            for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.generateSnippet2(searchTerm), true).entrySet()) {
                 if (words.containsKey(entry.getKey())) {
                     words.get(entry.getKey()).addAll(entry.getValue());
                 } else {
