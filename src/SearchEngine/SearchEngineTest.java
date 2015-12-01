@@ -105,22 +105,22 @@ public class SearchEngineTest {
         //myEngine.search("streem", 10, 0).forEach(System.out::println);
 
         System.out.println("\naccess control:");
-        myEngine.search("access control", 10, 2).forEach(System.out::println);
+        myEngine.search("access control", 10, 0).forEach(System.out::println);
 
         System.out.println("computers:\n");
-        myEngine.search("computers", 10, 2).forEach(System.out::println);
+        myEngine.search("computers", 10, 0).forEach(System.out::println);
 
         System.out.println("\ndata processing:");
-        myEngine.search("data processing", 10, 2).forEach(System.out::println);
+        myEngine.search("data processing", 10, 0).forEach(System.out::println);
 
         System.out.println("\nweb servers:");
-        myEngine.search("web servers", 10, 2).forEach(System.out::println);
+        myEngine.search("web servers", 10, 0).forEach(System.out::println);
 
         System.out.println("\nvulnerability information:");
-        myEngine.search("vulnerability information", 10, 2).forEach(System.out::println);
+        myEngine.search("vulnerability information", 10, 0).forEach(System.out::println);
 
         System.out.println("\ncomputer-readable media:");
-        myEngine.search("computer-readable media", 10, 2).forEach(System.out::println);
+        myEngine.search("computer-readable media", 10, 0).forEach(System.out::println);
 
         time = System.currentTimeMillis() - start;
 

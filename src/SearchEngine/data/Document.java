@@ -156,22 +156,12 @@ public class Document {
     public String generateSnippet(String query, OutputFormat outputFormat) {
         // For coloring and highlighting take a look at https://en.wikipedia.org/wiki/ANSI_escape_code
         // http://askubuntu.com/questions/528928/how-to-do-underline-bold-italic-strikethrough-color-background-and-size-i
-        int displayedChars = 160;
+        int displayedChars = 200;
         StringBuilder snippet = new StringBuilder();
         ArrayList<String> booleanTokens = new ArrayList<>();
         booleanTokens.add("OR");
         booleanTokens.add("AND");
         booleanTokens.add("NOT");
-
-        ArrayList<Integer> indices = new ArrayList<>();
-
-        for (String queryTerm: query.split(" ")) {
-            if (booleanTokens.contains(queryTerm)) continue;
-
-            String stemmedTerm = WordParser.getInstance().stemSingleWord(queryTerm);
-            int index = patentAbstract.toLowerCase().indexOf(stemmedTerm);
-            if (index >= 0) indices.add(index);
-        }
 
         // Occurrence average
 
@@ -187,7 +177,9 @@ public class Document {
                 indicesMap.put(queryTerm, new ArrayList<>());
             }
 
-            for (int i = -1; (i = patentAbstract.toLowerCase().indexOf(queryTerm, i + 1)) != -1; ) {
+            String stemmedTerm = WordParser.getInstance().stemSingleWord(queryTerm);
+
+            for (int i = -1; (i = patentAbstract.toLowerCase().indexOf(stemmedTerm, i + 1)) != -1; ) {
                 indicesMap.get(queryTerm).add(i);
                 sum += i;
             }
@@ -204,7 +196,7 @@ public class Document {
 
         for (String queryTerm: indicesMap.keySet()) {
             if (nearestIndices.get(queryTerm) == null) {
-                nearestIndices.put(queryTerm, 0);
+                if (indicesMap.get(queryTerm).size() > 0) nearestIndices.put(queryTerm, indicesMap.get(queryTerm).get(0));
             }
 
             for (int index: indicesMap.get(queryTerm)) {
@@ -214,7 +206,7 @@ public class Document {
             }
         }
 
-        indices = new ArrayList<>(nearestIndices.values());
+        List<Integer> indices = new ArrayList<>(nearestIndices.values());
 
         int CONTEXT_RANGE = 50;
 
@@ -232,10 +224,14 @@ public class Document {
                 }
             }
 
-            for (int i = end; i < patentAbstract.length()-1 && end - start < displayedChars; ++i) {
-                if (patentAbstract.charAt(i) == ' ') {
-                    end = i + 1;
+            if (end - start < displayedChars) {
+                for (int i = end; i < patentAbstract.length()-1 && end - start < displayedChars; ++i) {
+                    if (patentAbstract.charAt(i) == ' ') {
+                        end = i + 1;
+                    }
                 }
+            } else {
+                end = (patentAbstract.indexOf(" ", end) != -1) ? patentAbstract.indexOf(" ", end) : patentAbstract.length() - 1;
             }
 
             if ((end - start) < displayedChars) {
