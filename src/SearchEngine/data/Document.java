@@ -6,10 +6,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by sebastian on 22.10.2015.
@@ -176,10 +173,56 @@ public class Document {
             if (index >= 0) indices.add(index);
         }
 
+        // Occurrence average
+
+        Map<String, List<Integer>> indicesMap = new HashMap<>();
+
+        String[] queryTerms = query.split(" ");
+
+        int sum = 0;
+        int average = 0;
+
+        for (String queryTerm: queryTerms) {
+            if (indicesMap.get(queryTerm) == null) {
+                indicesMap.put(queryTerm, new ArrayList<>());
+            }
+
+            for (int i = -1; (i = patentAbstract.toLowerCase().indexOf(queryTerm, i + 1)) != -1; ) {
+                indicesMap.get(queryTerm).add(i);
+                sum += i;
+            }
+
+            if (indicesMap.get(queryTerm).size() != 0) {
+                average += sum/indicesMap.get(queryTerm).size();
+            }
+            sum = 0;
+        }
+
+        average = average/queryTerms.length;
+
+        Map<String, Integer> nearestIndices = new HashMap<>();
+
+        for (String queryTerm: indicesMap.keySet()) {
+            if (nearestIndices.get(queryTerm) == null) {
+                nearestIndices.put(queryTerm, 0);
+            }
+
+            for (int index: indicesMap.get(queryTerm)) {
+                if (Math.abs(average - index) < Math.abs(average - nearestIndices.get(queryTerm))) {
+                    nearestIndices.put(queryTerm, index);
+                }
+            }
+        }
+
+        indices = new ArrayList<>(nearestIndices.values());
+
+        int CONTEXT_RANGE = 50;
+
         if (indices.size() >= 1) {
             Collections.sort(indices);
-            int start = ((indices.get(0) - 50) < 0) ? 0 : indices.get(0) - 50;
-            int end = ((indices.get(indices.size() - 1) + 50) > patentAbstract.length()) ? patentAbstract.length() : indices.get(indices.size() - 1) + 50;
+            int start = ((indices.get(0) - CONTEXT_RANGE) < 0) ? 0 : indices.get(0) - CONTEXT_RANGE;
+            int end = ((indices.get(indices.size() - 1) + CONTEXT_RANGE) > patentAbstract.length()) ? patentAbstract.length() : indices.get(indices.size() - 1) + CONTEXT_RANGE;
+
 
             for (int i = start; i >= 0; --i) {
                 if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
