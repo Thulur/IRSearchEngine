@@ -133,33 +133,9 @@ public class Index {
                 curTokens.remove(curWord);
             }
             tmpPostingList.close();
-
-            CustomFileReader tmpPostingListReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH + ".tmp");
-            String line;
-            StringBuilder processedLine = new StringBuilder();
-            loadFromFile(FilePaths.INDEX_PATH + ".tmp");
-            Iterator<String> indexEntryIterator = values.keySet().iterator();
-            while ((line = tmpPostingListReader.readLine()) != null && indexEntryIterator.hasNext()) {
-                for (String entry: line.split("[;]")) {
-                    String[] entryValues = entry.split("[,]");
-                    Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
-                            Math.sqrt(docWeights.get(entryValues[Posting.POSTING_DOC_ID_POS]));
-                    processedLine.append(Math.round(1000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
-                }
-
-                processedLine.append("\n");
-                String temp = indexEntryIterator.next();
-                indexFile.write((temp + " " + postingList.getFilePointer() + "\n").getBytes("UTF-8"));
-                postingList.writeBytes(processedLine.toString());
-                processedLine.setLength(0);
-            }
-
             tmpIndexFile.close();
-            tmpPostingListReader.close();
-            File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
-            deleteTmpIndexFile.delete();
-            File deleteTmpPostinglistFile = new File(FilePaths.POSTINGLIST_PATH + ".tmp");
-            deleteTmpPostinglistFile.delete();
+
+            normalizeTermDocWeight(indexFile, postingList, docWeights);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -181,6 +157,34 @@ public class Index {
 
         docIndexWriter.flush();
         docIndexWriter.close();
+    }
+
+    private void normalizeTermDocWeight(RandomAccessFile indexFile, RandomAccessFile postingList, Map<String, Double> docWeights) throws IOException {
+        CustomFileReader tmpPostingListReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH + ".tmp");
+        CustomFileReader tmpIndexReader = new CustomFileReader(FilePaths.INDEX_PATH + ".tmp");
+        String postingLine;
+        String indexLine;
+        StringBuilder processedLine = new StringBuilder();
+        while ((postingLine = tmpPostingListReader.readLine()) != null && (indexLine = tmpIndexReader.readLine()) != null) {
+            for (String entry: postingLine.split("[;]")) {
+                String[] entryValues = entry.split("[,]");
+                Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
+                        Math.sqrt(docWeights.get(entryValues[Posting.POSTING_DOC_ID_POS]));
+                processedLine.append(Math.round(1000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
+            }
+
+            processedLine.append("\n");
+            String temp = indexLine.split("[ ]")[0];
+            indexFile.write((temp + " " + postingList.getFilePointer() + "\n").getBytes("UTF-8"));
+            postingList.writeBytes(processedLine.toString());
+            processedLine.setLength(0);
+        }
+
+        tmpPostingListReader.close();
+        File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
+        deleteTmpIndexFile.delete();
+        File deleteTmpPostinglistFile = new File(FilePaths.POSTINGLIST_PATH + ".tmp");
+        deleteTmpPostinglistFile.delete();
     }
 
     public Document buildDocument(Posting posting) throws IOException {

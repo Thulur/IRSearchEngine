@@ -1,5 +1,6 @@
 package SearchEngine.search;
 
+import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
@@ -29,36 +30,19 @@ public class PRFSearch implements Search {
         SearchFactory searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
 
+        // Execute search with original query
         Search firstSearch = searchFactory.getSearchFromQuery(searchTerm, topK, 0);
         ArrayList<Document> firstSearchResults = firstSearch.execute();
+        Map<String, List<Long>> words = getWordOccurrencesFromResults(firstSearchResults);
 
-        Map<String, List<Long>> words = new HashMap<>();
-        for (int i = 0; i < prf && i < firstSearchResults.size(); ++i) {
-            Document curDoc = firstSearchResults.get(i);
-            curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
-            for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.generateSnippet(searchTerm), true).entrySet()) {
-                if (words.containsKey(entry.getKey())) {
-                    words.get(entry.getKey()).addAll(entry.getValue());
-                } else {
-                    words.put(entry.getKey(), entry.getValue());
-                }
-            }
-        }
-
+        // Sort words by their number of occurrences
         List<HashMap.Entry<String, List<Long>>> tmpList = new ArrayList<>(words.entrySet());
-        Collections.sort(tmpList, (obj1, obj2) -> ((Comparable) ((obj1)).getValue().size()).compareTo(((obj2)).getValue().size()));
-        Collections.reverse(tmpList);
+        Collections.sort(tmpList, (obj1, obj2) -> ((Comparable) ((obj2)).getValue().size()).compareTo(((obj1)).getValue().size()));
 
-        StringBuilder modifiedSearchTerm = new StringBuilder(searchTerm);
-        Iterator<HashMap.Entry<String, List<Long>>> iterator = tmpList.iterator();
-        HashMap.Entry<String, List<Long>> curEntry;
-        for (int i = 0; i < 3 && iterator.hasNext(); ++i) {
-            curEntry = iterator.next();
-            modifiedSearchTerm.append(" ");
-            modifiedSearchTerm.append(curEntry.getKey());
-        }
+        String modifiedSearchTerm = getModifiedQuery(searchTerm, tmpList.iterator());
 
-        Search secondSearch = searchFactory.getSearchFromQuery(modifiedSearchTerm.toString(), topK, 0);
+        // Execute search with modified query
+        Search secondSearch = searchFactory.getSearchFromQuery(modifiedSearchTerm, topK, 0);
         ArrayList<Document> secondSearchResults = secondSearch.execute();
 
         ArrayList<Document> result = new ArrayList<>();
@@ -70,5 +54,37 @@ public class PRFSearch implements Search {
         }
 
         return result;
+    }
+
+    private Map<String, List<Long>> getWordOccurrencesFromResults(ArrayList<Document> results) throws IOException {
+        Map<String, List<Long>> words = new HashMap<>();
+
+        for (int i = 0; i < prf && i < results.size(); ++i) {
+            Document curDoc = results.get(i);
+            curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
+
+            for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.generateSnippet(searchTerm), true).entrySet()) {
+                if (words.containsKey(entry.getKey())) {
+                    words.get(entry.getKey()).addAll(entry.getValue());
+                } else {
+                    words.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        return words;
+    }
+
+    private String getModifiedQuery(String searchTerm, Iterator<Map.Entry<String, List<Long>>> iterator) {
+        StringBuilder modifiedSearchTerm = new StringBuilder(searchTerm);
+        HashMap.Entry<String, List<Long>> curEntry;
+
+        for (int i = 0; i < Configuration.PRF_WORD_COUNT && iterator.hasNext(); ++i) {
+            curEntry = iterator.next();
+            modifiedSearchTerm.append(" ");
+            modifiedSearchTerm.append(curEntry.getKey());
+        }
+
+        return modifiedSearchTerm.toString();
     }
 }
