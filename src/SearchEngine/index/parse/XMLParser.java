@@ -1,4 +1,4 @@
-package SearchEngine.index;
+package SearchEngine.index.parse;
 
 import SearchEngine.data.Document;
 import org.xml.sax.Attributes;

@@ -4,6 +4,8 @@ import SearchEngine.data.CustomFileWriter;
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
 import SearchEngine.data.Posting;
+import SearchEngine.index.parse.ParsedEventListener;
+import SearchEngine.index.parse.XMLParser;
 import SearchEngine.utils.WordParser;
 
 import java.io.File;

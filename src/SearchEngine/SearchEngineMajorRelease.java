@@ -28,7 +28,7 @@ import SearchEngine.data.output.HTMLFormat;
 import SearchEngine.data.output.OutputFormat;
 import SearchEngine.index.FileIndexer;
 import SearchEngine.index.Index;
-import SearchEngine.index.ParsedEventListener;
+import SearchEngine.index.parse.ParsedEventListener;
 import SearchEngine.search.SearchFactory;
 import SearchEngine.utils.SpellingCorrector;
 
