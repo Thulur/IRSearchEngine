@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class XMLParser extends DefaultHandler {
+public class XmlParser extends DefaultHandler {
 	boolean patentGrantEntered = false;
 	boolean abstractEntered = false;
 	boolean publicationReferenceEntered = false;
@@ -24,7 +24,7 @@ public class XMLParser extends DefaultHandler {
 	FileInputStream fileInput;
 	String tmpPatentId = "";
 
-	public XMLParser() {
+	public XmlParser() {
 		super();
 	}
 

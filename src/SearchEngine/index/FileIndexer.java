@@ -5,7 +5,7 @@ import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
 import SearchEngine.data.Posting;
 import SearchEngine.index.parse.ParsedEventListener;
-import SearchEngine.index.parse.XMLParser;
+import SearchEngine.index.parse.XmlParser;
 import SearchEngine.utils.WordParser;
 
 import java.io.File;
@@ -20,7 +20,7 @@ import java.util.TreeMap;
  * Created by sebastian on 03.11.2015.
  */
 public class FileIndexer implements Runnable, ParsedEventListener {
-    private XMLParser xmlApp = new XMLParser();
+    private XmlParser xmlApp = new XmlParser();
     private HashMap<String, Long> values = new HashMap<>();
     private CustomFileWriter tmpPostingList;
     private CustomFileWriter dictionaryFile;
