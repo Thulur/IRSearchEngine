@@ -1,6 +1,8 @@
 package SearchEngine.index.parse;
 
 import SearchEngine.data.Document;
+import SearchEngine.index.parse.elements.CommonElement;
+import SearchEngine.index.parse.elements.XmlElement;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -13,16 +15,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class XmlParser extends DefaultHandler {
-	boolean patentGrantEntered = false;
-	boolean abstractEntered = false;
-	boolean publicationReferenceEntered = false;
-	boolean inventionTitleEntered = false;
-	boolean docNumberEntered = false;
-	boolean abstractParagraphEntered = false;
-	Document document;
-	List<ParsedEventListener> parsedEventListeners;
-	FileInputStream fileInput;
-	String tmpPatentId = "";
+	private boolean patentGrantEntered = false;
+	private boolean publicationReferenceEntered = false;
+	private boolean docNumberEntered = false;
+	private Document document;
+	private List<ParsedEventListener> parsedEventListeners;
+	private FileInputStream fileInput;
+	private String tmpPatentId = "";
+	private XmlElement curElement = null;
 
 	public XmlParser() {
 		super();
@@ -67,10 +67,8 @@ public class XmlParser extends DefaultHandler {
 			this.document = new Document();
 			break;
 		case "abstract":
-			this.abstractEntered = true;
-			break;
-		case "p":
-			this.abstractParagraphEntered = true;
+			curElement = new CommonElement();
+			curElement.setElementName(name);
 			break;
 		case "publication-reference":
 			this.publicationReferenceEntered = true;
@@ -79,7 +77,8 @@ public class XmlParser extends DefaultHandler {
 			// reset everything if appl-type!="utility"
 			break;
 		case "invention-title":
-			this.inventionTitleEntered = true;
+			curElement = new CommonElement();
+			curElement.setElementName(name);
 			break;
 		case "doc-number":
 			this.docNumberEntered = true;
@@ -92,10 +91,7 @@ public class XmlParser extends DefaultHandler {
 		switch (name) {
 		case "us-patent-grant":
 			patentGrantEntered = false;
-			abstractEntered = false;
-			abstractParagraphEntered = false;
 			publicationReferenceEntered = false;
-			inventionTitleEntered = false;
 			docNumberEntered = false;
 
 			if (parsedEventListeners != null && document != null){
@@ -107,18 +103,20 @@ public class XmlParser extends DefaultHandler {
 			this.document = null;
 			break;
 		case "abstract":
-			abstractEntered = false;
-			abstractParagraphEntered = false;
-			break;
-		case "p":
-			abstractParagraphEntered = false;
+			document.setPatentAbstract(curElement.getElementContent());
+			document.setPatentAbstractLength(curElement.getElementLength());
+			document.setPatentAbstractPos(curElement.getElementPos());
+			curElement = null;
 			break;
 		case "publication-reference":
 			publicationReferenceEntered = false;
 			docNumberEntered = false;
 			break;
 		case "invention-title":
-			inventionTitleEntered = false;
+			document.setInventionTitle(curElement.getElementContent());
+			document.setInventionTitleLength(curElement.getElementLength());
+			document.setInventionTitlePos(curElement.getElementPos());
+			curElement = null;
 			break;
 		case "doc-number":
 			if (publicationReferenceEntered) {
@@ -128,11 +126,9 @@ public class XmlParser extends DefaultHandler {
 					document.setDocId(patentId);
 				} catch (NumberFormatException e) {
 					// The current patent type is not a utility, utility patents have got integer ids
+					curElement = null;
 					patentGrantEntered = false;
-					abstractEntered = false;
-					abstractParagraphEntered = false;
 					publicationReferenceEntered = false;
-					inventionTitleEntered = false;
 					docNumberEntered = false;
 					document = null;
 				}
@@ -152,7 +148,7 @@ public class XmlParser extends DefaultHandler {
 			tmpPatentId += new String(ch, start,length);
 		}
 
-		if (this.inventionTitleEntered) {
+		if (curElement != null) {
 			long filePos = 0;
 
 			try {
@@ -161,33 +157,14 @@ public class XmlParser extends DefaultHandler {
 				e.printStackTrace();
 			}
 
-			if (document.getInventionTitle() != null && document.getInventionTitle() != "") {
-				document.setInventionTitle(document.getInventionTitle() + new String(ch, start, length));
+			if (curElement.getElementContent() != null && curElement.getElementContent() != "") {
+				curElement.setElementContent(curElement.getElementContent() + new String(ch, start, length));
 			} else {
-				document.setInventionTitle(new String(ch, start, length));
-				document.setInventionTitlePos(filePos);
+				curElement.setElementContent(new String(ch, start, length));
+				curElement.setElementPos(filePos);
 			}
 
-			document.setInventionTitleLength(document.getInventionTitleLength() + length);
-		}
-
-		if (this.abstractEntered && abstractParagraphEntered) {
-			long filePos = 0;
-
-			try {
-				filePos = fileInput.getChannel().position() - ch.length + start;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			if (document.getPatentAbstract() != null && document.getPatentAbstract() != "") {
-				document.setPatentAbstract(document.getPatentAbstract() + new String(ch, start,length));
-			} else {
-				document.setPatentAbstract(new String(ch, start, length));
-				document.setPatentAbstractPos(filePos);
-			}
-
-			document.setPatentAbstractLength(document.getPatentAbstractLength() + length);
+			curElement.setElementLength(curElement.getElementLength() + length);
 		}
 	}
 

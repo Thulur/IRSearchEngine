@@ -4,33 +4,48 @@ package SearchEngine.index.parse.elements;
  * Created by sebastian on 04.12.2015.
  */
 public class CommonElement implements XmlElement {
+    private String elementName;
+    private long elementPos;
+    private long elementLength;
+    private String elementContent;
+
     @Override
     public String getElementName() {
-        return null;
+        return elementName;
     }
 
     @Override
     public void setElementName(String elementName) {
+        this.elementName = elementName;
+    }
 
+    @Override
+    public long getElementPos() {
+        return elementPos;
+    }
+
+    @Override
+    public void setElementPos(long elementPos) {
+        this.elementPos = elementPos;
     }
 
     @Override
     public long getElementLength() {
-        return 0;
+        return elementLength;
     }
 
     @Override
     public void setElementLength(long elementLength) {
-
+        this.elementLength = elementLength;
     }
 
     @Override
     public String getElementContent() {
-        return null;
+        return elementContent;
     }
 
     @Override
     public void setElementContent(String elementContent) {
-
+        this.elementContent = elementContent;
     }
 }

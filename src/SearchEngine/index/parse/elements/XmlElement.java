@@ -7,6 +7,9 @@ public interface XmlElement {
     String getElementName();
     void setElementName(String elementName);
 
+    long getElementPos();
+    void setElementPos(long elementPos);
+
     long getElementLength();
     void setElementLength(long elementLength);
 

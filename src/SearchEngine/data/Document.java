@@ -217,8 +217,8 @@ public class Document {
 
 
             for (int i = start; i >= 0; --i) {
-                if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
-                        || (i >= 2 && patentAbstract.charAt(i-2) == ';')) {
+                if (i >= 2 && ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
+                        || (patentAbstract.charAt(i-2) == ';'))) {
                     start = i;
                     i = 0;
                 }
@@ -236,8 +236,8 @@ public class Document {
 
             if ((end - start) < displayedChars) {
                 for (int i = start; i >= 0 && end - start < displayedChars; --i) {
-                    if ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
-                            || (i >= 2 && patentAbstract.charAt(i-2) == ';')) {
+                    if (i >= 2 && ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
+                            || (patentAbstract.charAt(i-2) == ';'))) {
                         start = i;
                     }
                 }
