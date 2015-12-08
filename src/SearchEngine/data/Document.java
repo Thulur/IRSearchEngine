@@ -3,6 +3,7 @@ package SearchEngine.data;
 import SearchEngine.data.output.OutputFormat;
 import SearchEngine.utils.WordParser;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -181,6 +182,7 @@ public class Document {
         booleanTokens.add("OR");
         booleanTokens.add("AND");
         booleanTokens.add("NOT");
+        Map<String, Integer> sentenceRanking = new HashMap<>();
 
         // Occurrence average
 
@@ -193,95 +195,44 @@ public class Document {
             isPhraseQuery = true;
         }
 
-        int sum = 0;
-        int average = 0;
-
-        for (String queryTerm: queryTerms) {
-            if (indicesMap.get(queryTerm) == null) {
-                indicesMap.put(queryTerm, new ArrayList<>());
-            }
-
-            String stemmedTerm = WordParser.getInstance().stemSingleWord(queryTerm);
-
-            for (int i = -1; (i = patentAbstract.toLowerCase().indexOf(stemmedTerm, i + 1)) != -1; ) {
-                indicesMap.get(queryTerm).add(i);
-                sum += i;
-            }
-
-            if (indicesMap.get(queryTerm).size() != 0) {
-                average += sum/indicesMap.get(queryTerm).size();
-            }
-            sum = 0;
+        for (String sentence: patentAbstract.split("[;.]")) {
+            sentenceRanking.put(sentence, 0);
         }
 
-        average = average/queryTerms.length;
+        for (Map.Entry<String, Integer> ranking: sentenceRanking.entrySet()) {
+            for (String queryTerm: queryTerms) {
+                if (booleanTokens.contains(queryTerm)) continue;
 
-        Map<String, Integer> nearestIndices = new HashMap<>();
-
-        for (String queryTerm: indicesMap.keySet()) {
-            if (nearestIndices.get(queryTerm) == null) {
-                if (indicesMap.get(queryTerm).size() > 0) nearestIndices.put(queryTerm, indicesMap.get(queryTerm).get(0));
-            }
-
-            for (int index: indicesMap.get(queryTerm)) {
-                if (Math.abs(average - index) < Math.abs(average - nearestIndices.get(queryTerm))) {
-                    nearestIndices.put(queryTerm, index);
-                }
+                int termCount = StringUtils.countMatches(ranking.getKey().toLowerCase(), WordParser.getInstance().stemSingleWord(queryTerm.toLowerCase()));
+                sentenceRanking.put(ranking.getKey(), ranking.getValue() + termCount);
             }
         }
 
-        List<Integer> indices = new ArrayList<>(nearestIndices.values());
+        List<HashMap.Entry<String, Integer>> tmpList = new ArrayList<>(sentenceRanking.entrySet());
+        Collections.sort(tmpList, (obj1, obj2) -> ((Comparable) ((obj2)).getValue()).compareTo(((obj1)).getValue()));
 
-        int CONTEXT_RANGE = 50;
+        if (tmpList.get(0).getValue() != 0) {
+            snippet.append(tmpList.get(0).getKey());
 
-        if (indices.size() >= 1) {
-            Collections.sort(indices);
-            int start = ((indices.get(0) - CONTEXT_RANGE) < 0) ? 0 : indices.get(0) - CONTEXT_RANGE;
-            int end = ((indices.get(indices.size() - 1) + CONTEXT_RANGE) > patentAbstract.length()) ? patentAbstract.length() : indices.get(indices.size() - 1) + CONTEXT_RANGE;
+            int i = 1;
+            while (snippet.length() < displayedChars && i < tmpList.size()) {
+                snippet.append(tmpList.get(i).getKey());
 
-
-            for (int i = start; i >= 0; --i) {
-                if (i >= 2 && ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
-                        || (patentAbstract.charAt(i-2) == ';'))) {
-                    start = i;
-                    i = 0;
+                if (snippet.length() > displayedChars) {
+                    snippet.setLength(displayedChars);
+                    snippet.append("...");
                 }
-            }
 
-            if (end - start < displayedChars) {
-                for (int i = end; i < patentAbstract.length()-1 && end - start < displayedChars; ++i) {
-                    if (patentAbstract.charAt(i) == ' ') {
-                        end = i + 1;
-                    }
-                }
-            } else {
-                end = (patentAbstract.indexOf(" ", end) != -1) ? patentAbstract.indexOf(" ", end) : patentAbstract.length() - 1;
+                ++i;
             }
-
-            if ((end - start) < displayedChars) {
-                for (int i = start; i >= 0 && end - start < displayedChars; --i) {
-                    if (i >= 2 && ((Character.isUpperCase(patentAbstract.charAt(i)) && (i == 0 || patentAbstract.charAt(i-2) == '.'))
-                            || (patentAbstract.charAt(i-2) == ';'))) {
-                        start = i;
-                    }
-                }
-            }
-
-            snippet.append(patentAbstract.substring(start, end));
+        } else  if (patentAbstract.length() < displayedChars) {
+            snippet.append(patentAbstract);
             snippet.append("...");
         } else {
-            int end = (displayedChars < (patentAbstract.length() - 1)) ? displayedChars : patentAbstract.length() - 1;
-
-            for (int i = end; i < patentAbstract.length() -1; ++i) {
-                if (patentAbstract.charAt(i) == ' ') {
-                    end = i + 1;
-                    i = patentAbstract.length();
-                }
-            }
-
-            snippet.append(patentAbstract.substring(0, end));
+            snippet.append(patentAbstract.substring(0, displayedChars));
             snippet.append("...");
         }
+
 
         if (outputFormat != null) {
             formatSnippet(snippet, queryTerms, booleanTokens, outputFormat, isPhraseQuery);
@@ -293,6 +244,28 @@ public class Document {
     }
 
     private void formatSnippet(StringBuilder snippet, String[] terms, List<String> ignored, OutputFormat outputFormat, boolean isPhraseQuery) {
+        List<String> tmpTerms = Arrays.asList(terms);
+        tmpTerms.removeAll(ignored);
+
+        StringBuilder titleString = new StringBuilder("0" + docId + " " + inventionTitle + "\n\t\t");
+        if (isPhraseQuery) {
+            colorPhrase(snippet, tmpTerms, outputFormat.getTextHighlight(),
+                    outputFormat.getTextStandard(), outputFormat.getEnd());
+            colorPhrase(titleString, tmpTerms, outputFormat.getTitleHighlight(),
+                    outputFormat.getTitleStandard(), outputFormat.getEnd());
+            formatLines(snippet);
+        } else {
+            formatLines(snippet);
+            colorWords(snippet, tmpTerms, outputFormat.getTextHighlight(),
+                    outputFormat.getTextStandard(), outputFormat.getEnd());
+            colorWords(titleString, tmpTerms, outputFormat.getTitleHighlight(),
+                    outputFormat.getTitleStandard(), outputFormat.getEnd());
+        }
+
+        snippet.replace(0, 0, titleString.toString());
+    }
+
+    private void formatLines(StringBuilder snippet) {
         int charsPerLine = 80;
         double possibleNumLines = Math.ceil(1d * snippet.length() / charsPerLine);
 
@@ -303,25 +276,6 @@ public class Document {
                 snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
             }
         }
-
-        List<String> tmpTerms = Arrays.asList(terms);
-        tmpTerms.removeAll(ignored);
-
-        StringBuilder titleString = new StringBuilder("0" + docId + " " + inventionTitle + "\n\t\t");
-        if (isPhraseQuery) {
-            colorPhrase(snippet, tmpTerms, outputFormat.getTextHighlight(),
-                    outputFormat.getTextStandard(), outputFormat.getEnd());
-            colorPhrase(titleString, tmpTerms, outputFormat.getTitleHighlight(),
-                    outputFormat.getTitleStandard(), outputFormat.getEnd());
-        } else {
-            colorWords(snippet, tmpTerms, outputFormat.getTextHighlight(),
-                    outputFormat.getTextStandard(), outputFormat.getEnd());
-            colorWords(titleString, tmpTerms, outputFormat.getTitleHighlight(),
-                    outputFormat.getTitleStandard(), outputFormat.getEnd());
-        }
-
-
-        snippet.replace(0, 0, titleString.toString());
     }
 
     private void colorWords(StringBuilder input, List<String> terms, String highlight, String standard, String end) {
