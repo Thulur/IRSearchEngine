@@ -3,6 +3,7 @@ package SearchEngine.index;
 import SearchEngine.data.*;
 import SearchEngine.utils.VByte;
 import SearchEngine.utils.NumberParser;
+import SearchEngine.utils.WordParser;
 
 import java.io.*;
 import java.util.*;
@@ -26,15 +27,7 @@ public class Index {
     public void loadFromFile(String file) throws IOException {
         String line;
 
-        BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.FILE_IDS_FILE));
-        while ((line = docIdsFile.readLine()) != null) {
-            String[] splitEntry = line.split("[ ]");
-
-            // Skip empty lines at the end of the file
-            if (splitEntry.length < 2) continue;
-
-            fileIds.put(Integer.parseInt(splitEntry[0]), splitEntry[1]);
-        }
+        loadFileIds();
 
         CustomFileReader indexFile = new CustomFileReader(file);
         values = new TreeMap<>();
@@ -49,6 +42,22 @@ public class Index {
 
         indexFile.close();
         docIndex.load();
+    }
+
+    private void loadFileIds() throws IOException {
+        String line;
+        BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.FILE_IDS_FILE));
+
+        fileIds.clear();
+
+        while ((line = docIdsFile.readLine()) != null) {
+            String[] splitEntry = line.split("[ ]");
+
+            // Skip empty lines at the end of the file
+            if (splitEntry.length < 2) continue;
+
+            fileIds.put(Integer.parseInt(splitEntry[0]), splitEntry[1]);
+        }
     }
 
     public void mergePartialIndices(List<String> paritalFileIds, int numPatents) {
@@ -83,6 +92,9 @@ public class Index {
             indexDataFile.writeBytes(String.valueOf(numDocuments));
             indexDataFile.close();
 
+            docIndex.load();
+            loadFileIds();
+
             // The iterator use is intended here because the collection changes every iteration
             while (curTokens.keySet().iterator().hasNext()) {
                 String curWord = curTokens.keySet().iterator().next();
@@ -116,7 +128,20 @@ public class Index {
 
                 for (String entry: line.toString().split("[;]")) {
                     String[] values = entry.split(",");
+
+                    Posting posting = new Posting().fromStringWithoutWeight(entry);
+                    Document doc = buildDocument(posting);
+                    String[] wordsTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), true).split("[ ]");
+                    String[] wordsAbstract = WordParser.getInstance().stemToString(doc.getPatentAbstract(), true).split("[ ]");
+                    double maxFactor = 0;
+                    if (posting.getOccurrences().get(0) < wordsTitle.length) {
+                        maxFactor = Configuration.TITLE_EXTRA_WEIGHT_FACTOR;
+                    } else if (posting.getOccurrences().get(0) < wordsTitle.length + wordsAbstract.length) {
+                        maxFactor = Configuration.ABSTRACT_EXTRA_WEIGHT_FACTOR;
+                    }
+
                     Double docVector = (1 + Math.log10(Double.parseDouble(values[Posting.POSTING_NUM_OCC_POS - 1]))) * Math.log10(numPatents / entryCount);
+                    docVector += maxFactor * docVector;
                     double docVectorSum;
 
                     if (docWeights.containsKey(values[Posting.POSTING_DOC_ID_POS - 1])) {
@@ -136,6 +161,8 @@ public class Index {
             tmpIndexFile.close();
 
             normalizeTermDocWeight(indexFile, postingList, docWeights);
+
+            docIndex = new DocumentIndex();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -23,6 +23,19 @@ public class Posting {
 
     }
 
+    public Posting fromStringWithoutWeight(String postingString) {
+        String[] values = postingString.split(",");
+
+        fileId = Integer.parseInt(values[POSTING_FILE_ID_POS - 1]);
+        docId = Integer.parseInt(values[POSTING_DOC_ID_POS - 1]);
+
+        for (int i = POSTING_NUM_OCC_POS; i < POSTING_NUM_OCC_POS  + Integer.parseInt(values[POSTING_NUM_OCC_POS - 1]); ++i) {
+            occurrences.add(Long.parseLong(values[i]));
+        }
+
+        return this;
+    }
+
     public void addWordOccurrence(long pos) {
         occurrences.add(pos);
     }
@@ -84,5 +97,9 @@ public class Posting {
 
     public void setCacheFile(String cacheFile) {
         this.cacheFile = cacheFile;
+    }
+
+    public List<Long> getOccurrences() {
+        return occurrences;
     }
 }
