@@ -20,6 +20,8 @@ public class Document {
     private String patentAbstract = "";
     private long patentAbstractPos;
     private long patentAbstractLength;
+    private String description;
+    private String claims;
 
     public Document() {
 
@@ -149,6 +151,22 @@ public class Document {
         return fileId;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getClaims() {
+        return claims;
+    }
+
+    public void setClaims(String claims) {
+        this.claims = claims;
+    }
+
     public String generateSnippet(String query) {
         return generateSnippet(query, null);
     }
@@ -157,6 +175,7 @@ public class Document {
         // For coloring and highlighting take a look at https://en.wikipedia.org/wiki/ANSI_escape_code
         // http://askubuntu.com/questions/528928/how-to-do-underline-bold-italic-strikethrough-color-background-and-size-i
         int displayedChars = 200;
+        boolean isPhraseQuery = false;
         StringBuilder snippet = new StringBuilder();
         ArrayList<String> booleanTokens = new ArrayList<>();
         booleanTokens.add("OR");
@@ -168,6 +187,11 @@ public class Document {
         Map<String, List<Integer>> indicesMap = new HashMap<>();
 
         String[] queryTerms = query.split(" ");
+
+        if (query.startsWith("\"") && query.endsWith("\"")) {
+            queryTerms = query.substring(1, query.length() - 1).split(" ");
+            isPhraseQuery = true;
+        }
 
         int sum = 0;
         int average = 0;
@@ -260,7 +284,7 @@ public class Document {
         }
 
         if (outputFormat != null) {
-            formatSnippet(snippet, query.split(" "), booleanTokens, outputFormat);
+            formatSnippet(snippet, queryTerms, booleanTokens, outputFormat, isPhraseQuery);
         } else {
             snippet.replace(0, 0, "0" + docId + " " + inventionTitle + " ");
         }
@@ -268,7 +292,7 @@ public class Document {
         return snippet.toString();
     }
 
-    private void formatSnippet(StringBuilder snippet, String[] terms, List<String> ignored, OutputFormat outputFormat) {
+    private void formatSnippet(StringBuilder snippet, String[] terms, List<String> ignored, OutputFormat outputFormat, boolean isPhraseQuery) {
         int charsPerLine = 80;
         double possibleNumLines = Math.ceil(1d * snippet.length() / charsPerLine);
 
@@ -284,8 +308,18 @@ public class Document {
         tmpTerms.removeAll(ignored);
 
         StringBuilder titleString = new StringBuilder("0" + docId + " " + inventionTitle + "\n\t\t");
-        colorWords(snippet, tmpTerms, outputFormat.getTextHighlight(), outputFormat.getTextStandard(), outputFormat.getEnd());
-        colorWords(titleString, tmpTerms, outputFormat.getTitleHighlight(), outputFormat.getTitleStandard(), outputFormat.getEnd());
+        if (isPhraseQuery) {
+            colorPhrase(snippet, tmpTerms, outputFormat.getTextHighlight(),
+                    outputFormat.getTextStandard(), outputFormat.getEnd());
+            colorPhrase(titleString, tmpTerms, outputFormat.getTitleHighlight(),
+                    outputFormat.getTitleStandard(), outputFormat.getEnd());
+        } else {
+            colorWords(snippet, tmpTerms, outputFormat.getTextHighlight(),
+                    outputFormat.getTextStandard(), outputFormat.getEnd());
+            colorWords(titleString, tmpTerms, outputFormat.getTitleHighlight(),
+                    outputFormat.getTitleStandard(), outputFormat.getEnd());
+        }
+
 
         snippet.replace(0, 0, titleString.toString());
     }
@@ -321,5 +355,41 @@ public class Document {
         }
         // Reset all formatting options
         input.append(end);
+    }
+
+    private void colorPhrase(StringBuilder input, List<String> terms, String textHighlight, String textStandard, String end) {
+        input.insert(0, textStandard);
+        String tmpSnippet = input.toString().toLowerCase();
+        int pos = 0;
+
+        while ((pos = tmpSnippet.indexOf(WordParser.getInstance().stemSingleWord(terms.get(0)), pos)) != -1) {
+            int start = pos;
+            boolean phraseFound = false;
+
+            for (int i = 1; i < terms.size(); ++i) {
+                int wordPos = tmpSnippet.indexOf(WordParser.getInstance().stemSingleWord(terms.get(i)), pos);
+                int spacePos = tmpSnippet.indexOf(" ", pos);
+
+                if (wordPos == spacePos + 1 && i == terms.size() - 1) {
+                    pos = tmpSnippet.indexOf(" ", pos) + 1;
+                    pos = tmpSnippet.indexOf(" ", pos);
+                    phraseFound = true;
+                }
+                else if (wordPos == spacePos + 1) {
+                    pos = tmpSnippet.indexOf(" ", pos) + 1;
+                } else {
+                    // If the first word is found but not the second, do not test the same position again, skip it
+                    ++pos;
+                }
+            }
+
+            if (phraseFound) {
+                input.insert(pos, end);
+                input.insert(start, textHighlight);
+                tmpSnippet = input.toString().toLowerCase();
+            }
+        }
+
+        input.insert(input.length() - 1, end);
     }
 }

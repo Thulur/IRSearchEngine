@@ -168,7 +168,7 @@ public class VectorSpaceSearch implements Search {
                 wordCount = queryVector.get(searchWord);
             }
 
-            queryVector.put(searchWord,wordCount+1);
+            queryVector.put(searchWord.toLowerCase(),wordCount+1);
         }
     }
 

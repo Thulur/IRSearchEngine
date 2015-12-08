@@ -104,23 +104,41 @@ public class SearchEngineTest {
         //System.out.println("\nstreem:");
         //myEngine.search("streem", 10, 0).forEach(System.out::println);
 
-        System.out.println("\naccess control:");
-        myEngine.search("access control", 10, 0).forEach(System.out::println);
+        //System.out.println("\naccess control:");
+        //myEngine.search("access control", 10, 0).forEach(System.out::println);
 
-        System.out.println("computers:\n");
-        myEngine.search("computers", 10, 0).forEach(System.out::println);
+        //System.out.println("computers:\n");
+        //myEngine.search("computers", 10, 0).forEach(System.out::println);
 
-        System.out.println("\ndata processing:");
-        myEngine.search("data processing", 10, 0).forEach(System.out::println);
+        //System.out.println("\ndata processing:");
+        //myEngine.search("data processing", 10, 0).forEach(System.out::println);
 
-        System.out.println("\nweb servers:");
-        myEngine.search("web servers", 10, 0).forEach(System.out::println);
+        //System.out.println("\nweb servers:");
+        //myEngine.search("web servers", 10, 0).forEach(System.out::println);
 
-        System.out.println("\nvulnerability information:");
-        myEngine.search("vulnerability information", 10, 0).forEach(System.out::println);
+        //System.out.println("\nvulnerability information:");
+        //myEngine.search("vulnerability information", 10, 0).forEach(System.out::println);
 
-        System.out.println("\ncomputer-readable media:");
-        myEngine.search("computer-readable media", 10, 0).forEach(System.out::println);
+        //System.out.println("\ncomputer-readable media:");
+        //myEngine.search("computer-readable media", 10, 0).forEach(System.out::println);
+
+        System.out.println("\naccess:");
+        myEngine.search("access", 10, 2).forEach(System.out::println);
+
+        System.out.println("\ncontrol:");
+        myEngine.search("control", 10, 2).forEach(System.out::println);
+
+        System.out.println("\nimage data:");
+        myEngine.search("image data", 10, 2).forEach(System.out::println);
+
+        System.out.println("\nprogram:");
+        myEngine.search("program", 10, 2).forEach(System.out::println);
+
+        System.out.println("\nvulnerability:");
+        myEngine.search("vulnerability", 10, 2).forEach(System.out::println);
+
+        System.out.println("\n\"mobile devices\":");
+        myEngine.search("\"mobile devices\"", 10, 2).forEach(System.out::println);
 
         time = System.currentTimeMillis() - start;
 

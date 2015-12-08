@@ -129,6 +129,17 @@ public class Index {
                 for (String entry: line.toString().split("[;]")) {
                     String[] values = entry.split(",");
 
+                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Posting.POSTING_NUM_OCC_POS - 1]))) * Math.log10(1 + (numPatents / entryCount));
+                    double docVectorSum;
+
+                    if (docWeights.containsKey(values[Posting.POSTING_DOC_ID_POS - 1])) {
+                        docVectorSum = docWeights.get(values[Posting.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
+                    } else {
+                        docVectorSum = docVector * docVector;
+                    }
+
+                    docWeights.put(values[Posting.POSTING_DOC_ID_POS - 1], docVectorSum);
+
                     Posting posting = new Posting().fromStringWithoutWeight(entry);
                     Document doc = buildDocument(posting);
                     String[] wordsTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), true).split("[ ]");
@@ -139,18 +150,8 @@ public class Index {
                     } else if (posting.getOccurrences().get(0) < wordsTitle.length + wordsAbstract.length) {
                         maxFactor = Configuration.ABSTRACT_EXTRA_WEIGHT_FACTOR;
                     }
-
-                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Posting.POSTING_NUM_OCC_POS - 1]))) * Math.log10(numPatents / entryCount);
                     docVector += maxFactor * docVector;
-                    double docVectorSum;
 
-                    if (docWeights.containsKey(values[Posting.POSTING_DOC_ID_POS - 1])) {
-                        docVectorSum = docWeights.get(values[Posting.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
-                    } else {
-                        docVectorSum = docVector * docVector;
-                    }
-
-                    docWeights.put(values[Posting.POSTING_DOC_ID_POS - 1], docVectorSum);
                     vectorLine.append(docVector + "," + entry + ";");
                 }
 
@@ -197,7 +198,7 @@ public class Index {
                 String[] entryValues = entry.split("[,]");
                 Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
                         Math.sqrt(docWeights.get(entryValues[Posting.POSTING_DOC_ID_POS]));
-                processedLine.append(Math.round(1000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
+                processedLine.append(Math.round(100000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
             }
 
             processedLine.append("\n");
@@ -350,7 +351,7 @@ public class Index {
                 curNum = VByte.decode(NumberParser.parseHexadecimalLong(curNumBuffer, 0, curNumBufferLength));
 
                 if (numCount == Posting.POSTING_WEIGHT_POS) {
-                    posting.setWeight(Math.toIntExact(curNum) / 1000d);
+                    posting.setWeight(Math.toIntExact(curNum) / 100000d);
                 }
                 else if (numCount == Posting.POSTING_FILE_ID_POS) {
                     fileId = Math.toIntExact(curNum);

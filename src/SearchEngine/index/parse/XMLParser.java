@@ -83,8 +83,15 @@ public class XmlParser extends DefaultHandler {
 		case "doc-number":
 			this.docNumberEntered = true;
 			break;
-		}	
-		
+		case "description":
+			curElement = new CommonElement();
+			curElement.setElementName(name);
+			break;
+		case "claims":
+			curElement = new CommonElement();
+			curElement.setElementName(name);
+			break;
+		}
 	}
 
 	public void endElement(String uri, String name, String qName) {
@@ -136,6 +143,20 @@ public class XmlParser extends DefaultHandler {
 				tmpPatentId = "";
 			}
 			docNumberEntered = false;
+			break;
+		case "description":
+			String description = curElement.getElementContent();
+			description = description.replaceAll("[\\t\\n\\r]", " ");
+			description = description.replaceAll("[ ]+", " ");
+			document.setDescription(description);
+			curElement = null;
+			break;
+		case "claims":
+			String claims = curElement.getElementContent();
+			claims = claims.replaceAll("[\\t\\n\\r]", " ");
+			claims = claims.replaceAll("[ ]+", " ");
+			document.setClaims(claims);
+			curElement = null;
 			break;
 		}
 	}

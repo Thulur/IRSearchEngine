@@ -100,8 +100,11 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
     public void addToIndex(Document document) throws IOException {
         ++numPatents;
-        String docContent = document.getInventionTitle() + document.getPatentAbstract();
-        Map<String, List<Long>> words = WordParser.getInstance().stem(docContent, true);
+        StringBuilder docContent = new StringBuilder(document.getInventionTitle());
+        docContent.append(" " + document.getPatentAbstract());
+        docContent.append(" " + document.getClaims());
+        docContent.append(" " + document.getDescription());
+        Map<String, List<Long>> words = WordParser.getInstance().stem(docContent.toString(), true);
         docIndex.write(document.getDocIndexEntry() + "\n");
 
         for (Map.Entry<String, List<Long>> entry : words.entrySet()) {
