@@ -341,6 +341,7 @@ public class Document {
                 input.insert(pos, end);
                 input.insert(start, textHighlight);
                 tmpSnippet = input.toString().toLowerCase();
+                pos += end.length() + textHighlight.length();
             }
         }
 
