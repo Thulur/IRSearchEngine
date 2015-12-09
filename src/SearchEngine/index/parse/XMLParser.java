@@ -110,9 +110,12 @@ public class XmlParser extends DefaultHandler {
 			this.document = null;
 			break;
 		case "abstract":
-			document.setPatentAbstract(curElement.getElementContent());
-			document.setPatentAbstractLength(curElement.getElementLength());
-			document.setPatentAbstractPos(curElement.getElementPos());
+			if (document != null) {
+				document.setPatentAbstract(curElement.getElementContent().toString());
+				document.setPatentAbstractLength(curElement.getElementLength());
+				document.setPatentAbstractPos(curElement.getElementPos());
+			}
+
 			curElement = null;
 			break;
 		case "publication-reference":
@@ -120,9 +123,12 @@ public class XmlParser extends DefaultHandler {
 			docNumberEntered = false;
 			break;
 		case "invention-title":
-			document.setInventionTitle(curElement.getElementContent());
-			document.setInventionTitleLength(curElement.getElementLength());
-			document.setInventionTitlePos(curElement.getElementPos());
+			if (document != null) {
+				document.setInventionTitle(curElement.getElementContent().toString());
+				document.setInventionTitleLength(curElement.getElementLength());
+				document.setInventionTitlePos(curElement.getElementPos());
+			}
+
 			curElement = null;
 			break;
 		case "doc-number":
@@ -145,17 +151,23 @@ public class XmlParser extends DefaultHandler {
 			docNumberEntered = false;
 			break;
 		case "description":
-			String description = curElement.getElementContent();
-			description = description.replaceAll("[\\t\\n\\r]", " ");
-			description = description.replaceAll("[ ]+", " ");
-			document.setDescription(description);
+			if (document != null) {
+				String description = curElement.getElementContent().toString();
+				description = description.replaceAll("[\\t\\n\\r]", " ");
+				description = description.replaceAll("[ ]+", " ");
+				document.setDescription(description);
+			}
+
 			curElement = null;
 			break;
 		case "claims":
-			String claims = curElement.getElementContent();
-			claims = claims.replaceAll("[\\t\\n\\r]", " ");
-			claims = claims.replaceAll("[ ]+", " ");
-			document.setClaims(claims);
+			if (document != null) {
+				String claims = curElement.getElementContent().toString();
+				claims = claims.replaceAll("[\\t\\n\\r]", " ");
+				claims = claims.replaceAll("[ ]+", " ");
+				document.setClaims(claims);
+			}
+
 			curElement = null;
 			break;
 		}
@@ -178,10 +190,10 @@ public class XmlParser extends DefaultHandler {
 				e.printStackTrace();
 			}
 
-			if (curElement.getElementContent() != null && curElement.getElementContent() != "") {
-				curElement.setElementContent(curElement.getElementContent() + new String(ch, start, length));
+			if (curElement.getElementContent() != null && curElement.getElementContent().length() > 0) {
+				curElement.setElementContent(curElement.getElementContent().append(new String(ch, start, length)));
 			} else {
-				curElement.setElementContent(new String(ch, start, length));
+				curElement.setElementContent(new StringBuilder(new String(ch, start, length)));
 				curElement.setElementPos(filePos);
 			}
 

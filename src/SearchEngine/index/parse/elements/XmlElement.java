@@ -13,6 +13,6 @@ public interface XmlElement {
     long getElementLength();
     void setElementLength(long elementLength);
 
-    String getElementContent();
-    void setElementContent(String elementContent);
+    StringBuilder getElementContent();
+    void setElementContent(StringBuilder elementContent);
 }

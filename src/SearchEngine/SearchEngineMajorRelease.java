@@ -41,7 +41,7 @@ import java.util.List;
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private Index index = new Index();
     private List<String> files = new LinkedList<>();
-    private int maxThreads = 2;
+    private int maxThreads = 8;
     private int curFileNum = -1;
     private Thread[] fileThreads;
     private FileIndexer[] fileIndexers;

@@ -7,7 +7,7 @@ public class CommonElement implements XmlElement {
     private String elementName;
     private long elementPos;
     private long elementLength;
-    private String elementContent;
+    private StringBuilder elementContent;
 
     @Override
     public String getElementName() {
@@ -40,12 +40,12 @@ public class CommonElement implements XmlElement {
     }
 
     @Override
-    public String getElementContent() {
+    public StringBuilder getElementContent() {
         return elementContent;
     }
 
     @Override
-    public void setElementContent(String elementContent) {
+    public void setElementContent(StringBuilder elementContent) {
         this.elementContent = elementContent;
     }
 }
