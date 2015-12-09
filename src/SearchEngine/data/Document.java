@@ -216,7 +216,7 @@ public class Document {
 
             int i = 1;
             while (snippet.length() < displayedChars && i < tmpList.size()) {
-                snippet.append(". " + tmpList.get(i).getKey());
+                snippet.append(tmpList.get(i).getKey());
 
                 if (snippet.length() > displayedChars) {
                     snippet.setLength(displayedChars);
@@ -244,8 +244,13 @@ public class Document {
     }
 
     private void formatSnippet(StringBuilder snippet, String[] terms, List<String> ignored, OutputFormat outputFormat, boolean isPhraseQuery) {
-        List<String> tmpTerms = Arrays.asList(terms);
-        tmpTerms.removeAll(ignored);
+        List<String> allTerms = Arrays.asList(terms);
+        List<String> tmpTerms = new ArrayList<>();
+        for (String term: allTerms) {
+            if (ignored.contains(term)) continue;
+
+            tmpTerms.add(term);
+        }
 
         StringBuilder titleString = new StringBuilder("0" + docId + " " + inventionTitle);
         if (isPhraseQuery) {
