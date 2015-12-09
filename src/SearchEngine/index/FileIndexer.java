@@ -143,11 +143,19 @@ public class FileIndexer implements Runnable, ParsedEventListener {
 
                 while (prevEntryPos != -1) {
                     tmpPostingListReader.seek(prevEntryPos);
-                    byte[] buffer = new byte[8192];
-                    tmpPostingListReader.read(buffer);
-                    String readString = new String(buffer);
-                    int separatorPos = readString.indexOf(";");
-                    readString = readString.substring(0, separatorPos + 1);
+
+                    int separatorPos = -1;
+                    StringBuilder curPosting = new StringBuilder();
+                    while (separatorPos == -1) {
+                        byte[] buffer = new byte[2<<8];
+                        tmpPostingListReader.read(buffer);
+                        String readPart = new String(buffer);
+                        curPosting.append(readPart);
+                        separatorPos = readPart.indexOf(";");
+                    }
+
+                    separatorPos = curPosting.indexOf(";");
+                    String readString = curPosting.substring(0, separatorPos + 1);
                     String tmpPos = readString.substring(0, readString.indexOf(","));
                     prevEntryPos = Long.parseLong(tmpPos);
                     postingListEntry = readString.substring(readString.indexOf(",") + 1) + postingListEntry;
