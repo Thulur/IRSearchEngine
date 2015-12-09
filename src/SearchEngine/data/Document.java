@@ -216,7 +216,7 @@ public class Document {
 
             int i = 1;
             while (snippet.length() < displayedChars && i < tmpList.size()) {
-                snippet.append(tmpList.get(i).getKey());
+                snippet.append(". " + tmpList.get(i).getKey());
 
                 if (snippet.length() > displayedChars) {
                     snippet.setLength(displayedChars);
@@ -247,7 +247,7 @@ public class Document {
         List<String> tmpTerms = Arrays.asList(terms);
         tmpTerms.removeAll(ignored);
 
-        StringBuilder titleString = new StringBuilder("0" + docId + " " + inventionTitle + "\n\t\t");
+        StringBuilder titleString = new StringBuilder("0" + docId + " " + inventionTitle);
         if (isPhraseQuery) {
             colorPhrase(snippet, tmpTerms, outputFormat.getTextHighlight(),
                     outputFormat.getTextStandard(), outputFormat.getEnd());
@@ -262,7 +262,7 @@ public class Document {
                     outputFormat.getTitleStandard(), outputFormat.getEnd());
         }
 
-        snippet.replace(0, 0, titleString.toString());
+        snippet.replace(0, 0, titleString.toString() + "\n\t\t");
     }
 
     private void formatLines(StringBuilder snippet) {
@@ -315,22 +315,28 @@ public class Document {
         input.insert(0, textStandard);
         String tmpSnippet = input.toString().toLowerCase();
         int pos = 0;
+        boolean notComplete = true;
 
-        while ((pos = tmpSnippet.indexOf(WordParser.getInstance().stemSingleWord(terms.get(0)), pos)) != -1) {
+        while ((pos = tmpSnippet.indexOf(WordParser.getInstance().stemSingleWord(terms.get(0)), pos)) != -1 && notComplete) {
             int start = pos;
             boolean phraseFound = false;
 
-            for (int i = 1; i < terms.size(); ++i) {
+            for (int i = 1; i < terms.size() && notComplete; ++i) {
                 int wordPos = tmpSnippet.indexOf(WordParser.getInstance().stemSingleWord(terms.get(i)), pos);
                 int spacePos = tmpSnippet.indexOf(" ", pos);
 
                 if (wordPos == spacePos + 1 && i == terms.size() - 1) {
-                    pos = tmpSnippet.indexOf(" ", pos) + 1;
                     pos = tmpSnippet.indexOf(" ", pos);
+                    if (pos == -1) notComplete = false;
+                    ++pos;
+                    pos = tmpSnippet.indexOf(" ", pos);
+                    if (pos == -1) notComplete = false;
                     phraseFound = true;
                 }
                 else if (wordPos == spacePos + 1) {
-                    pos = tmpSnippet.indexOf(" ", pos) + 1;
+                    pos = tmpSnippet.indexOf(" ", pos);
+                    if (pos == -1) notComplete = false;
+                    ++pos;
                 } else {
                     // If the first word is found but not the second, do not test the same position again, skip it
                     ++pos;
@@ -338,13 +344,19 @@ public class Document {
             }
 
             if (phraseFound) {
-                input.insert(pos, end);
-                input.insert(start, textHighlight);
+                if (pos == -1) {
+                    input.insert(start, textHighlight);
+                    input.append(end);
+                } else {
+                    input.insert(pos, end);
+                    input.insert(start, textHighlight);
+                    pos += end.length() + textHighlight.length();
+                }
+
                 tmpSnippet = input.toString().toLowerCase();
-                pos += end.length() + textHighlight.length();
             }
         }
 
-        input.insert(input.length() - 1, end);
+        input.append(end);
     }
 }
