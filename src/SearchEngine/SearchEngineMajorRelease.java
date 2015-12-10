@@ -41,9 +41,8 @@ import java.util.List;
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private Index index = new Index();
     private List<String> files = new LinkedList<>();
-    private int maxThreads = 8;
+    private int maxThreads = 3;
     private int curFileNum = -1;
-    private Thread[] fileThreads;
     private FileIndexer[] fileIndexers;
     private SearchFactory searchFactory;
     private int numPatents = 0;
@@ -63,13 +62,11 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             String filesString = reader.readLine();
             files = Arrays.asList(filesString.split("[,]"));
             fileIndexers = new FileIndexer[files.size()];
-            fileThreads = new Thread[files.size()];
 
             fileIdFile = new BufferedWriter(new FileWriter(FilePaths.FILE_IDS_FILE));
 
             for (int i = 0; i < files.size(); ++i) {
                 fileIndexers[i] = new FileIndexer(files.get(i), i, this);
-                fileThreads[i] = new Thread(fileIndexers[i]);
 
                 fileIdFile.write(i + " " + files.get(i) + "\n");
             }
@@ -81,15 +78,19 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
         for (int i = 0; i < maxThreads && i < files.size(); ++i) {
             ++curFileNum;
-            fileThreads[curFileNum].start();
+            fileIndexers[curFileNum].start();
         }
 
         try {
             for (int i = 0; i < files.size(); ++i) {
-                fileThreads[i].join();
+                fileIndexers[i].join();
                 numPatents += fileIndexers[i].getNumPatents();
-                fileThreads[i] = null;
                 fileIndexers[i] = null;
+
+                ++curFileNum;
+                if (curFileNum < files.size()) {
+                    fileIndexers[curFileNum].start();
+                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -193,10 +194,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     public void finishedParsing() {
-        ++curFileNum;
 
-        if (curFileNum < files.size()) {
-            fileThreads[curFileNum].start();
-        }
     }
 }

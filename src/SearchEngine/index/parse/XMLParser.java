@@ -42,6 +42,10 @@ public class XmlParser extends DefaultHandler {
 		InputSource source = new InputSource(fileInput);
 		xr.parse(source);
 		fileInput.close();
+		parsedEventListeners = null;
+		fileInput = null;
+		curElement = null;
+		document = null;
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -53,8 +57,8 @@ public class XmlParser extends DefaultHandler {
 	}
 
 	public void endDocument() {
-		if (parsedEventListeners != null){
-			for (ParsedEventListener eventListener: parsedEventListeners) {
+		if (parsedEventListeners != null) {
+			for (ParsedEventListener eventListener : parsedEventListeners) {
 				eventListener.finishedParsing();
 			}
 		}

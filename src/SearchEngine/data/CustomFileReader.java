@@ -93,6 +93,10 @@ public class CustomFileReader {
 
     public void close() throws IOException {
         file.close();
+        preloadThread = null;
+        preloader = null;
+        buffer = null;
+        file = null;
     }
 
     private void updateBuffer() throws IOException {

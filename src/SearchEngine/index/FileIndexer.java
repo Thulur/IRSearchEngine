@@ -19,7 +19,7 @@ import java.util.TreeMap;
 /**
  * Created by sebastian on 03.11.2015.
  */
-public class FileIndexer implements Runnable, ParsedEventListener {
+public class FileIndexer extends Thread implements ParsedEventListener {
     private XmlParser xmlApp = new XmlParser();
     private HashMap<String, Long> values = new HashMap<>();
     private CustomFileWriter tmpPostingList;
@@ -55,7 +55,9 @@ public class FileIndexer implements Runnable, ParsedEventListener {
     @Override
     public void run() {
         try {
+            System.out.println("Start Parsing");
             xmlApp.parseFiles(FilePaths.RAW_PARTIAL_PATH + filename);
+            System.out.println("Finish Parsing");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -64,7 +66,9 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             // Flush remaining content of all buffering files
             docIndex.flush();
             tmpPostingList.flush();
+            System.out.println("Start Saving");
             save();
+            System.out.println("Finish Saving");
             dictionaryFile.flush();
             postingListFile.flush();
 
@@ -75,6 +79,13 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             postingListFile.close();
             File tmpFile = new File (FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt");
             tmpFile.delete();
+            docIndex = null;
+            dictionaryFile = null;
+            tmpPostingList = null;
+            postingListFile = null;
+            values.clear();
+            values = null;
+            xmlApp = null;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -167,6 +178,7 @@ public class FileIndexer implements Runnable, ParsedEventListener {
             }
 
             tmpPostingListReader.close();
+            sortedMap.clear();
         } catch (IOException e) {
             e.printStackTrace();
         }

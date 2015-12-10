@@ -30,6 +30,7 @@ public class CustomFileWriter {
 
     public void close() throws IOException {
         file.close();
+        file = null;
         buffer = null;
     }
 
