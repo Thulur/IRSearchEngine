@@ -6,7 +6,9 @@ import SearchEngine.data.FilePaths;
 import SearchEngine.data.Posting;
 import SearchEngine.index.parse.ParsedEventListener;
 import SearchEngine.index.parse.XmlParser;
+import SearchEngine.utils.NumberParser;
 import SearchEngine.utils.WordParser;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,11 +114,15 @@ public class FileIndexer extends Thread implements ParsedEventListener {
     public void addToIndex(Document document) throws IOException {
         ++numPatents;
         StringBuilder docContent = new StringBuilder(document.getInventionTitle());
-        docContent.append(" " + document.getPatentAbstract());
-        docContent.append(" " + document.getClaims());
-        docContent.append(" " + document.getDescription());
+        docContent.append(" ");
+        docContent.append(document.getPatentAbstract());
+        docContent.append(" ");
+        docContent.append(document.getClaims());
+        docContent.append(" ");
+        docContent.append(document.getDescription());
         Map<String, List<Long>> words = WordParser.getInstance().stem(docContent.toString(), true);
-        docIndex.write(document.getDocIndexEntry() + "\n");
+        docIndex.write(document.getDocIndexEntry());
+        docIndex.write("\n");
 
         for (Map.Entry<String, List<Long>> entry : words.entrySet()) {
             String word = entry.getKey();
@@ -146,35 +152,36 @@ public class FileIndexer extends Thread implements ParsedEventListener {
         try {
             Map<String, Long> sortedMap = new TreeMap<>(values);
             RandomAccessFile tmpPostingListReader = new RandomAccessFile(FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt", "r");
+            byte separator = ';';
+            byte comma = ',';
 
             for (Map.Entry<String, Long> entry : sortedMap.entrySet()) {
                 String key = entry.getKey();
                 long prevEntryPos = entry.getValue();
-                String postingListEntry = new String();
+                StringBuilder postingListEntry = new StringBuilder();
 
                 while (prevEntryPos != -1) {
+                    int separatorPos = -1;
+                    byte[] readBytes = new byte[0];
                     tmpPostingListReader.seek(prevEntryPos);
 
-                    int separatorPos = -1;
-                    StringBuilder curPosting = new StringBuilder();
                     while (separatorPos == -1) {
                         byte[] buffer = new byte[2<<8];
                         tmpPostingListReader.read(buffer);
-                        String readPart = new String(buffer);
-                        curPosting.append(readPart);
-                        separatorPos = readPart.indexOf(";");
+
+                        readBytes = ArrayUtils.addAll(readBytes, buffer);
+                        separatorPos = ArrayUtils.indexOf(readBytes, separator);
                     }
 
-                    separatorPos = curPosting.indexOf(";");
-                    String readString = curPosting.substring(0, separatorPos + 1);
-                    String tmpPos = readString.substring(0, readString.indexOf(","));
-                    prevEntryPos = Long.parseLong(tmpPos);
-                    postingListEntry = readString.substring(readString.indexOf(",") + 1) + postingListEntry;
+                    int commaPos = ArrayUtils.indexOf(readBytes, comma);
+                    prevEntryPos = NumberParser.parseDecimalLong(readBytes, 0, commaPos);
+                    postingListEntry.insert(0, new String(readBytes, commaPos + 1, separatorPos - commaPos));
                 }
 
                 Long filePos = postingListFile.position();
+                postingListEntry.append("\n");
                 dictionaryFile.write(key + " " + filePos.toString() + "\n");
-                postingListFile.write(postingListEntry + "\n");
+                postingListFile.write(postingListEntry.toString());
             }
 
             tmpPostingListReader.close();

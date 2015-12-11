@@ -89,6 +89,20 @@ public class NumberParser {
         return result;
     }
 
+    public static long parseDecimalLong(byte[] bytes, int start, int length) {
+        long result = 0;
+
+        for (int i = start; i < length; ++i) {
+            result *= 10;
+
+            if (bytes[i] - '0' < 0 || bytes[i] - '0' > 9) return -1;
+
+            result += bytes[i] - '0';
+        }
+
+        return result;
+    }
+
     public static long parseHexadecimalLong(byte[] bytes) {
         return parseHexadecimalLong(bytes, 0, bytes.length);
     }
