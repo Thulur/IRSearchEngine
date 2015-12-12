@@ -195,7 +195,7 @@ public class XmlParser extends DefaultHandler {
 			}
 
 			if (curElement.getElementContent() != null && curElement.getElementContent().length() > 0) {
-				curElement.setElementContent(curElement.getElementContent().append(new String(ch, start, length)));
+				curElement.setElementContent(curElement.getElementContent().append(ch, start, length));
 			} else {
 				curElement.setElementContent(new StringBuilder(new String(ch, start, length)));
 				curElement.setElementPos(filePos);

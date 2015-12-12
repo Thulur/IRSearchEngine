@@ -15,10 +15,8 @@ import java.util.regex.Pattern;
  */
 public class Index {
     TreeMap<String, Long> values = new TreeMap<>();
-    Map<Integer, String> fileIds = new HashMap<>();
     DocumentIndex docIndex = new DocumentIndex();
     int numDocuments = -1;
-    Map<Integer, RandomAccessFile> cacheFiles = new HashMap<>();
 
     public Index() {
 
@@ -27,7 +25,7 @@ public class Index {
     public void loadFromFile(String file) throws IOException {
         String line;
 
-        loadFileIds();
+        docIndex.loadFileIds();
 
         CustomFileReader indexFile = new CustomFileReader(file);
         values = new TreeMap<>();
@@ -42,22 +40,6 @@ public class Index {
 
         indexFile.close();
         docIndex.load();
-    }
-
-    private void loadFileIds() throws IOException {
-        String line;
-        BufferedReader docIdsFile = new BufferedReader(new FileReader(FilePaths.FILE_IDS_FILE));
-
-        fileIds.clear();
-
-        while ((line = docIdsFile.readLine()) != null) {
-            String[] splitEntry = line.split("[ ]");
-
-            // Skip empty lines at the end of the file
-            if (splitEntry.length < 2) continue;
-
-            fileIds.put(Integer.parseInt(splitEntry[0]), splitEntry[1]);
-        }
     }
 
     public void mergePartialIndices(List<String> paritalFileIds, int numPatents) {
@@ -91,9 +73,9 @@ public class Index {
             // Write number of patents to file
             indexDataFile.writeBytes(String.valueOf(numDocuments));
             indexDataFile.close();
-
+            
+            docIndex.loadFileIds();
             docIndex.load();
-            loadFileIds();
 
             // The iterator use is intended here because the collection changes every iteration
             while (curTokens.keySet().iterator().hasNext()) {
@@ -216,7 +198,11 @@ public class Index {
     }
 
     public Document buildDocument(Posting posting) throws IOException {
-        return docIndex.buildDocument(posting, getCacheFile(posting.getFileId()));
+        return docIndex.buildDocument(posting);
+    }
+
+    public RandomAccessFile getCacheFile(int fileId) throws FileNotFoundException {
+        return docIndex.getCacheFile(fileId);
     }
 
     private String getIpgId(String filename) {
@@ -321,7 +307,6 @@ public class Index {
         long occurrence = 0;
         long numOcc = 0;
         long curNum;
-        int fileId;
         Posting posting = new Posting();
         RandomAccessFile postingReader = null;
         int buffersize = 16384;
@@ -352,11 +337,6 @@ public class Index {
 
                 if (numCount == Posting.POSTING_WEIGHT_POS) {
                     posting.setWeight(Math.toIntExact(curNum) / 100000d);
-                }
-                else if (numCount == Posting.POSTING_FILE_ID_POS) {
-                    fileId = Math.toIntExact(curNum);
-                    posting.setCacheFile(FilePaths.CACHE_PATH + fileIds.get(fileId));
-                    posting.setFileId(fileId);
                 }
                 else if (numCount == Posting.POSTING_DOC_ID_POS) {
                     patentId += curNum;
@@ -439,15 +419,5 @@ public class Index {
         }
 
         return numDocuments;
-    }
-
-    public RandomAccessFile getCacheFile(int fileId) throws FileNotFoundException {
-        if (cacheFiles.containsKey(fileId)) {
-            return cacheFiles.get(fileId);
-        } else {
-            RandomAccessFile file = new RandomAccessFile(FilePaths.CACHE_PATH + fileIds.get(fileId), "r");
-            cacheFiles.put(fileId, file);
-            return file;
-        }
     }
 }

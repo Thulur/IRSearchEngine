@@ -9,10 +9,8 @@ import java.util.List;
  */
 public class Posting {
     public static int POSTING_WEIGHT_POS = 0;
-    public static int POSTING_FILE_ID_POS = 1;
-    public static int POSTING_DOC_ID_POS = 2;
-    public static int POSTING_NUM_OCC_POS = 3;
-    private int fileId;
+    public static int POSTING_DOC_ID_POS = 1;
+    public static int POSTING_NUM_OCC_POS = 2;
     private int docId;
     private String cacheFile;
     private Double weight;
@@ -26,7 +24,6 @@ public class Posting {
     public Posting fromStringWithoutWeight(String postingString) {
         String[] values = postingString.split(",");
 
-        fileId = Integer.parseInt(values[POSTING_FILE_ID_POS - 1]);
         docId = Integer.parseInt(values[POSTING_DOC_ID_POS - 1]);
 
         for (int i = POSTING_NUM_OCC_POS; i < POSTING_NUM_OCC_POS  + Integer.parseInt(values[POSTING_NUM_OCC_POS - 1]); ++i) {
@@ -48,7 +45,7 @@ public class Posting {
     public String toString() {
         StringBuilder metaDataStringBuilder = new StringBuilder();
 
-        metaDataStringBuilder.append(fileId + "," + docId + "," + occurrences.size());
+        metaDataStringBuilder.append(docId + "," + occurrences.size());
 
         for (long occurrence: occurrences) {
             metaDataStringBuilder.append("," + occurrence);
@@ -65,14 +62,6 @@ public class Posting {
 
     public void setDocId(int docId) {
         this.docId = docId;
-    }
-
-    public int getFileId() {
-        return fileId;
-    }
-
-    public void setFileId(int fileId) {
-        this.fileId = fileId;
     }
 
     public String getToken() {

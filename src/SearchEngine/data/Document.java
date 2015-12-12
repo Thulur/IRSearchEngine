@@ -34,7 +34,6 @@ public class Document {
 
     public Document(Posting posting) {
         this.docId = posting.getDocId();
-        this.fileId = posting.getFileId();
     }
 
     public Document(int docId, String inventionTitle, String patentAbstract) {
@@ -49,7 +48,7 @@ public class Document {
     }
 
     public String getDocIndexEntry() {
-        return docId + " " + inventionTitlePos + " " + patentAbstractPos + " " + inventionTitleLength + " " + patentAbstractLength;
+        return fileId + " " + docId + " " + inventionTitlePos + " " + patentAbstractPos + " " + inventionTitleLength + " " + patentAbstractLength;
     }
 
     private String readTillTag(RandomAccessFile file, long pos, long length, int realLengthFactor, String tag) throws IOException {
@@ -150,6 +149,10 @@ public class Document {
 
     public int getFileId() {
         return fileId;
+    }
+
+    public void setFileId(int fileId) {
+        this.fileId = fileId;
     }
 
     public String getDescription() {

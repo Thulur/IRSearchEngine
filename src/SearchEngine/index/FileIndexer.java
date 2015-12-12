@@ -121,6 +121,7 @@ public class FileIndexer extends Thread implements ParsedEventListener {
         docContent.append(" ");
         docContent.append(document.getDescription());
         Map<String, List<Long>> words = WordParser.getInstance().stem(docContent.toString(), true);
+        document.setFileId(docId);
         docIndex.write(document.getDocIndexEntry());
         docIndex.write("\n");
 
@@ -128,7 +129,6 @@ public class FileIndexer extends Thread implements ParsedEventListener {
             String word = entry.getKey();
             List<Long> occurrences = entry.getValue();
             Posting posting = new Posting();
-            posting.setFileId(docId);
             posting.setDocId(document.getDocId());
             occurrences.forEach(posting::addWordOccurrence);
             posting.sortOccurrences();
@@ -166,7 +166,7 @@ public class FileIndexer extends Thread implements ParsedEventListener {
                     tmpPostingListReader.seek(prevEntryPos);
 
                     while (separatorPos == -1) {
-                        byte[] buffer = new byte[2<<8];
+                        byte[] buffer = new byte[2<<6];
                         tmpPostingListReader.read(buffer);
 
                         readBytes = ArrayUtils.addAll(readBytes, buffer);
