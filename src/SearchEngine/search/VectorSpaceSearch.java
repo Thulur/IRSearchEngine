@@ -199,12 +199,32 @@ public class VectorSpaceSearch implements Search {
         Collections.reverse(tmpList);
         ArrayList<Posting> result = new ArrayList<>();
 
+        ArrayList<Double> rankingsForDcg = new ArrayList<>();
+
+        for (HashMap.Entry<Integer,Double> ranking: tmpList) {
+            rankingsForDcg.add(ranking.getValue());
+        }
+
+        ArrayList<Double> actualDcg = computeActualDcg(rankingsForDcg);
+
         for (int i = 0; i < topK && i < tmpList.size(); ++i) {
             int docId = tmpList.get(i).getKey();
             result.add(postingTable.get(docId));
         }
 
         return result;
+    }
+
+    ArrayList<Double> computeActualDcg(ArrayList<Double> rankings) {
+        ArrayList<Double> actualDcg = new ArrayList<>();
+
+        actualDcg.add(1.0);
+
+        for (int i = 1; i < rankings.size(); ++i) {
+            actualDcg.add(actualDcg.get((i-1)) + (rankings.get(i)/(Math.log((i+1))/Math.log(2.0))));
+        }
+
+        return actualDcg;
     }
 
 }
