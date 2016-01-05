@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class XmlParser2 extends DefaultHandler {
+public class XmlParser extends DefaultHandler {
 	private boolean patentGrantEntered = false;
 	private boolean publicationReferenceEntered = false;
 	private boolean docNumberEntered = false;
@@ -24,7 +24,7 @@ public class XmlParser2 extends DefaultHandler {
 	private String tmpPatentId = "";
 	private XmlElement curElement = null;
 
-	public XmlParser2() {
+	public XmlParser() {
 		super();
 	}
 
