@@ -1,11 +1,15 @@
 package SearchEngine.index;
 
 import SearchEngine.data.*;
-import SearchEngine.utils.VByte;
 import SearchEngine.utils.NumberParser;
+import SearchEngine.utils.VByte;
 import SearchEngine.utils.WordParser;
+import org.apache.commons.lang3.StringUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,9 +65,8 @@ public class Index {
 
         try {
             RandomAccessFile indexDataFile = new RandomAccessFile(FilePaths.INDEX_DATA_FILE, "rw");
-            RandomAccessFile tmpIndexFile = new RandomAccessFile(FilePaths.INDEX_PATH + ".tmp", "rw");
+            CustomFileWriter tmpIndexFile = new CustomFileWriter(FilePaths.INDEX_PATH + ".tmp");
             RandomAccessFile tmpPostingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH + ".tmp", "rw");
-            RandomAccessFile indexFile = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");
             RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
             Map<String, Double> docWeights = new HashMap<>();
 
@@ -73,7 +76,7 @@ public class Index {
             // Write number of patents to file
             indexDataFile.writeBytes(String.valueOf(numDocuments));
             indexDataFile.close();
-            
+
             docIndex.loadFileIds();
             docIndex.load();
 
@@ -81,7 +84,8 @@ public class Index {
             while (curTokens.keySet().iterator().hasNext()) {
                 String curWord = curTokens.keySet().iterator().next();
                 Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
-                tmpIndexFile.write((curWord + " " + tmpPostingList.getChannel().position() + "\n").getBytes("UTF-8"));
+                tmpIndexFile.write(curWord.concat(" "));
+                tmpIndexFile.write(String.valueOf(tmpPostingList.getChannel().position()).concat("\n"));
 
                 for (FileMergeHead file: curTokens.get(curWord)) {
                     sortedPostings.put(file.getFirstPatentId(), file);
@@ -124,12 +128,12 @@ public class Index {
 
                     Posting posting = new Posting().fromStringWithoutWeight(entry);
                     Document doc = buildDocument(posting);
-                    String[] wordsTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), true).split("[ ]");
-                    String[] wordsAbstract = WordParser.getInstance().stemToString(doc.getPatentAbstract(), true).split("[ ]");
+                    int wordsTitle = StringUtils.countMatches(WordParser.getInstance().stemToString(doc.getInventionTitle(), true), " ") + 1;
+                    int wordsAbstract = StringUtils.countMatches(WordParser.getInstance().stemToString(doc.getPatentAbstract(), true), " ") + 1;
                     double maxFactor = 0;
-                    if (posting.getOccurrences().get(0) < wordsTitle.length) {
+                    if (posting.getOccurrences().get(0) < wordsTitle) {
                         maxFactor = Configuration.TITLE_EXTRA_WEIGHT_FACTOR;
-                    } else if (posting.getOccurrences().get(0) < wordsTitle.length + wordsAbstract.length) {
+                    } else if (posting.getOccurrences().get(0) < wordsTitle + wordsAbstract) {
                         maxFactor = Configuration.ABSTRACT_EXTRA_WEIGHT_FACTOR;
                     }
                     docVector += maxFactor * docVector;
@@ -143,7 +147,7 @@ public class Index {
             tmpPostingList.close();
             tmpIndexFile.close();
 
-            normalizeTermDocWeight(indexFile, postingList, docWeights);
+            normalizeTermDocWeight(postingList, docWeights);
 
             docIndex = new DocumentIndex();
         } catch (IOException e) {
@@ -165,13 +169,13 @@ public class Index {
             docIndexReader.close();
         }
 
-        docIndexWriter.flush();
         docIndexWriter.close();
     }
 
-    private void normalizeTermDocWeight(RandomAccessFile indexFile, RandomAccessFile postingList, Map<String, Double> docWeights) throws IOException {
+    private void normalizeTermDocWeight(RandomAccessFile postingList, Map<String, Double> docWeights) throws IOException {
         CustomFileReader tmpPostingListReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH + ".tmp");
         CustomFileReader tmpIndexReader = new CustomFileReader(FilePaths.INDEX_PATH + ".tmp");
+        CustomFileWriter indexFile = new CustomFileWriter(FilePaths.INDEX_PATH);
         String postingLine;
         String indexLine;
         StringBuilder processedLine = new StringBuilder();
@@ -185,11 +189,15 @@ public class Index {
 
             processedLine.append("\n");
             String temp = indexLine.split("[ ]")[0];
-            indexFile.write((temp + " " + postingList.getFilePointer() + "\n").getBytes("UTF-8"));
+            indexFile.write(temp);
+            indexFile.write(" ");
+            indexFile.write(String.valueOf(postingList.getFilePointer()));
+            indexFile.write("\n");
             postingList.writeBytes(processedLine.toString());
             processedLine.setLength(0);
         }
 
+        indexFile.close();
         tmpPostingListReader.close();
         File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
         deleteTmpIndexFile.delete();

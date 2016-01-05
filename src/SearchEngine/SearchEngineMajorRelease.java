@@ -33,17 +33,14 @@ import SearchEngine.search.SearchFactory;
 import SearchEngine.utils.SpellingCorrector;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private Index index = new Index();
     private List<String> files = new LinkedList<>();
-    private int maxThreads = 3;
-    private int curFileNum = -1;
-    private FileIndexer[] fileIndexers;
+    private int maxThreads = 2;
+    private int curFileNum = 0;
     private SearchFactory searchFactory;
     private int numPatents = 0;
     private OutputFormat outputFormat;
@@ -54,20 +51,18 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     @Override
-    void index(String directory){
+    void index(String directory) {
         BufferedWriter fileIdFile;
+        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader("data/xmlfiles.txt"));
             String filesString = reader.readLine();
             files = Arrays.asList(filesString.split("[,]"));
-            fileIndexers = new FileIndexer[files.size()];
 
             fileIdFile = new BufferedWriter(new FileWriter(FilePaths.FILE_IDS_FILE));
 
             for (int i = 0; i < files.size(); ++i) {
-                fileIndexers[i] = new FileIndexer(files.get(i), i, this);
-
                 fileIdFile.write(i + " " + files.get(i) + "\n");
             }
 
@@ -76,25 +71,25 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             e.printStackTrace();
         }
 
-        for (int i = 0; i < maxThreads && i < files.size(); ++i) {
+        Set<Future<Integer>> result = new HashSet<>();
+        while (!executor.isShutdown() && curFileNum < files.size()) {
+            Callable<Integer> fileIndexer = new FileIndexer(files.get(curFileNum), curFileNum, this);
+            result.add(executor.submit(fileIndexer));
+
             ++curFileNum;
-            fileIndexers[curFileNum].start();
         }
 
         try {
-            for (int i = 0; i < files.size(); ++i) {
-                fileIndexers[i].join();
-                numPatents += fileIndexers[i].getNumPatents();
-                fileIndexers[i] = null;
-
-                ++curFileNum;
-                if (curFileNum < files.size()) {
-                    fileIndexers[curFileNum].start();
-                }
+            for (Future<Integer> future : result) {
+                numPatents += future.get();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
+
+        executor.shutdown();
 
         // Join all indices at the end
         index.mergePartialIndices(files, numPatents);

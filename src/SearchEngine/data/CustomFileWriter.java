@@ -24,11 +24,12 @@ public class CustomFileWriter {
         }
     }
 
-    public void flush() throws IOException {
+    private void flush() throws IOException {
         writeResetBuffer(buffer, file);
     }
 
     public void close() throws IOException {
+        flush();
         file.close();
         file = null;
         buffer = null;

@@ -17,11 +17,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
 
 /**
  * Created by sebastian on 03.11.2015.
  */
-public class FileIndexer extends Thread implements ParsedEventListener {
+public class FileIndexer implements Callable<Integer>, ParsedEventListener {
     private XmlParser xmlApp = new XmlParser();
     private HashMap<String, Long> values = new HashMap<>();
     private CustomFileWriter tmpPostingList;
@@ -55,7 +56,7 @@ public class FileIndexer extends Thread implements ParsedEventListener {
     }
 
     @Override
-    public void run() {
+    public Integer call() {
         try {
             System.out.println("Start Parsing");
             xmlApp.parseFiles(FilePaths.RAW_PARTIAL_PATH + filename);
@@ -66,18 +67,14 @@ public class FileIndexer extends Thread implements ParsedEventListener {
 
         try {
             // Flush remaining content of all buffering files
-            docIndex.flush();
-            tmpPostingList.flush();
+            docIndex.close();
+            tmpPostingList.close();
             System.out.println("Start Saving");
             save();
             System.out.println("Finish Saving");
-            dictionaryFile.flush();
-            postingListFile.flush();
 
             // Close all used files
-            docIndex.close();
             dictionaryFile.close();
-            tmpPostingList.close();
             postingListFile.close();
             File tmpFile = new File (FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt");
             tmpFile.delete();
@@ -91,6 +88,8 @@ public class FileIndexer extends Thread implements ParsedEventListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return numPatents;
     }
 
     @Override
@@ -114,16 +113,12 @@ public class FileIndexer extends Thread implements ParsedEventListener {
     public void addToIndex(Document document) throws IOException {
         ++numPatents;
         StringBuilder docContent = new StringBuilder(document.getInventionTitle());
-        docContent.append(" ");
-        docContent.append(document.getPatentAbstract());
-        docContent.append(" ");
-        docContent.append(document.getClaims());
-        docContent.append(" ");
-        docContent.append(document.getDescription());
+        docContent.append(" ".concat(document.getPatentAbstract()));
+        //docContent.append(" ".concat(document.getClaims()));
+        //docContent.append(" ".concat(document.getDescription()));
         Map<String, List<Long>> words = WordParser.getInstance().stem(docContent.toString(), true);
         document.setFileId(docId);
-        docIndex.write(document.getDocIndexEntry());
-        docIndex.write("\n");
+        docIndex.write(document.getDocIndexEntry().concat("\n"));
 
         for (Map.Entry<String, List<Long>> entry : words.entrySet()) {
             String word = entry.getKey();
@@ -135,10 +130,10 @@ public class FileIndexer extends Thread implements ParsedEventListener {
 
             if (values.get(word) == null) {
                 values.put(word, tmpPostingList.position());
-                tmpPostingList.write("-1," + posting.toString());
+                tmpPostingList.write("-1,".concat(posting.toString()));
             } else {
                 long tmpPos = tmpPostingList.position();
-                tmpPostingList.write(values.get(word).toString() + "," + posting.toString());
+                tmpPostingList.write(values.get(word).toString().concat(",").concat(posting.toString()));
                 values.put(word, tmpPos);
             }
         }

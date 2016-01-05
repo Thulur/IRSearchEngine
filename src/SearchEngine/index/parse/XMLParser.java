@@ -78,7 +78,14 @@ public class XmlParser extends DefaultHandler {
 			this.publicationReferenceEntered = true;
 			break;
 		case "application-reference":
-			// reset everything if appl-type!="utility"
+			// Only parse utility patents
+			if (!atts.getValue("appl-type").equals("utility")) {
+				curElement = null;
+				patentGrantEntered = false;
+				publicationReferenceEntered = false;
+				docNumberEntered = false;
+				document = null;
+			}
 			break;
 		case "invention-title":
 			curElement = new CommonElement();

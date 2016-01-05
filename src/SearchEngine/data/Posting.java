@@ -45,10 +45,13 @@ public class Posting {
     public String toString() {
         StringBuilder metaDataStringBuilder = new StringBuilder();
 
-        metaDataStringBuilder.append(docId + "," + occurrences.size());
+        metaDataStringBuilder.append(docId);
+        metaDataStringBuilder.append(",");
+        metaDataStringBuilder.append(occurrences.size());
 
         for (long occurrence: occurrences) {
-            metaDataStringBuilder.append("," + occurrence);
+            metaDataStringBuilder.append(",");
+            metaDataStringBuilder.append(occurrence);
         }
 
         metaDataStringBuilder.append(";");

@@ -94,6 +94,11 @@ public class WordParser {
             result.append(word + " ");
         }
 
+        // Cut of the last white space
+        if (result.length() > 0) {
+            result.setLength(result.length() - 1);
+        }
+
         return result.toString();
     }
 
