@@ -186,6 +186,11 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         return results;
     }
 
+    @Override
+    Double computeNdcg(ArrayList<String> goldRanking, ArrayList<String> ranking, int p) {
+        return null;
+    }
+
     //Observer methods
     @Override
     public void documentParsed(Document document) {
