@@ -47,6 +47,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private SearchFactory searchFactory;
     private int numPatents = 0;
     private OutputFormat outputFormat;
+    private ArrayList<Double> ndcg;
 
     public SearchEngineMajorRelease() { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
         // This should stay as is! Don't add anything here!
@@ -174,17 +175,68 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        ArrayList<String> tmpResults = new ArrayList<>();
+
+        for (Document document: documents) {
+            tmpResults.add(document.getInventionTitle());
+        }
+
+        WebFile webFile = new WebFile();
+
+        ArrayList<String> goldRanking = webFile.getGoogleRanking(query);
+        computeNdcgList(goldRanking, tmpResults);
+
         ArrayList<String> results = new ArrayList<>();
 
         // topK should be used in the Search class not here
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
-                results.add(documents.get(i).generateSnippet(query, outputFormat) + "\n");
+                results.add(documents.get(i).generateSnippet(query, outputFormat) + "\nNDCG Value: " + ndcg.get(i) + "\n");
             }
         }
 
         return results;
     }
+
+    @Override
+    Double computeNdcg(ArrayList<String> goldRanking, ArrayList<String> ranking, int p) {
+        return ndcg.get(p);
+    }
+
+    private void computeNdcgList(ArrayList<String> goldRanking, ArrayList<String> results) {
+        ArrayList<Double> actualDcg = new ArrayList<>();
+        ArrayList<Double> idealDcg = new ArrayList<>();
+
+        for (int i = 0; i < results.size(); ++i) {
+            if (i == 0) {
+                idealDcg.add((1 + Math.floor(10 * Math.pow(0.5, i))));
+            } else {
+                idealDcg.add(idealDcg.get(i-1) + (1 + Math.floor(10 * Math.pow(0.5, i))));
+            }
+
+
+            double summand = 0.0;
+            if (goldRanking.contains(results.get(i))) {
+                System.out.println("Containment found");
+                summand = 1 + Math.floor(10 * Math.pow(0.5, i * 0.1));
+            }
+            if (i == 0) {
+                actualDcg.add(summand);
+            } else {
+                actualDcg.add(actualDcg.get(i-1) + summand);
+            }
+
+        }
+
+        ndcg = new ArrayList<>();
+
+        for (int i = 0; i < actualDcg.size(); ++i) {
+            ndcg.add(actualDcg.get(i) / idealDcg.get(i));
+        }
+    }
+
+
 
     //Observer methods
     @Override
