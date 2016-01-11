@@ -63,7 +63,7 @@ public class Index {
 
         try {
             RandomAccessFile indexDataFile = new RandomAccessFile(FilePaths.INDEX_DATA_FILE, "rw");
-            RandomAccessFile tmpIndexFile = new RandomAccessFile(FilePaths.INDEX_PATH + ".tmp", "rw");
+            CustomFileWriter tmpIndexFile = new CustomFileWriter(FilePaths.INDEX_PATH + ".tmp");
             RandomAccessFile tmpPostingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH + ".tmp", "rw");
             RandomAccessFile indexFile = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");
             RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
@@ -83,9 +83,14 @@ public class Index {
             while (curTokens.keySet().iterator().hasNext()) {
                 String curWord = curTokens.keySet().iterator().next();
                 Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
-                tmpIndexFile.write((curWord + " " + tmpPostingList.getChannel().position() + "\n").getBytes("UTF-8"));
+                tmpIndexFile.write(curWord + " " + tmpPostingList.getChannel().position() + "\n");
+                int lastFirstPatent = 0;
 
                 for (FileMergeHead file: curTokens.get(curWord)) {
+                    if (lastFirstPatent > file.getFirstPatentId()) {
+                        int test = 0;
+                    }
+                    lastFirstPatent = file.getFirstPatentId();
                     sortedPostings.put(file.getFirstPatentId(), file);
 
                     if (file.nextIndexLine()) {
@@ -125,19 +130,19 @@ public class Index {
                     docWeights.put(values[Posting.POSTING_DOC_ID_POS - 1], docVectorSum);
 
                     Posting posting = new Posting().fromStringWithoutWeight(entry);
-                    Document doc = buildDocument(posting);
                     double maxFactor = 0;
-                    if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(doc.getDocId())) {
+                    if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(posting.getDocId())) {
                         maxFactor = Configuration.TITLE_EXTRA_WEIGHT_FACTOR;
-                    } else if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(doc.getDocId()) + docIndex.numWordsAbstractInEntry(doc.getDocId())) {
+                    } else if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(posting.getDocId()) + docIndex.numWordsAbstractInEntry(posting.getDocId())) {
                         maxFactor = Configuration.ABSTRACT_EXTRA_WEIGHT_FACTOR;
                     }
                     docVector += maxFactor * docVector;
 
-                    vectorLine.append(docVector + "," + entry + ";");
+                    vectorLine.append(docVector);
+                    vectorLine.append(",".concat(entry).concat(";"));
                 }
 
-                tmpPostingList.writeBytes(vectorLine.toString() + "\n");
+                tmpPostingList.writeBytes(vectorLine.toString().concat("\n"));
                 curTokens.remove(curWord);
             }
             tmpPostingList.close();

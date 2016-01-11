@@ -17,11 +17,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
 
 /**
  * Created by sebastian on 03.11.2015.
  */
-public class FileIndexer extends Thread implements ParsedEventListener {
+public class FileIndexer implements Callable<Integer>, ParsedEventListener {
     private XmlParser xmlApp = new XmlParser();
     private HashMap<String, Long> values = new HashMap<>();
     private CustomFileWriter tmpPostingList;
@@ -55,7 +56,7 @@ public class FileIndexer extends Thread implements ParsedEventListener {
     }
 
     @Override
-    public void run() {
+    public Integer call() {
         try {
             System.out.println("Start Parsing");
             xmlApp.parseFiles(FilePaths.RAW_PARTIAL_PATH + filename);
@@ -86,6 +87,8 @@ public class FileIndexer extends Thread implements ParsedEventListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return numPatents;
     }
 
     @Override
@@ -139,10 +142,6 @@ public class FileIndexer extends Thread implements ParsedEventListener {
                 values.put(word, tmpPos);
             }
         }
-    }
-
-    public int getNumPatents() {
-        return numPatents;
     }
 
     private void save() {

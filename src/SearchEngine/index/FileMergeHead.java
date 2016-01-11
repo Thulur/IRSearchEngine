@@ -79,8 +79,7 @@ public class FileMergeHead {
         loadPostinglistLine();
 
         int firstComma = lastReadPostingLine.indexOf(",");
-        int secondComma = lastReadPostingLine.indexOf(",", firstComma + 1);
-        int patentId = Integer.parseInt(lastReadPostingLine.substring(firstComma + 1, secondComma));
+        int patentId = Integer.parseInt(lastReadPostingLine.substring(0, firstComma));
 
         return patentId;
     }

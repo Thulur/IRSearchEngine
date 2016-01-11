@@ -122,23 +122,12 @@ public class SearchEngineTest {
         //System.out.println("\ncomputer-readable media:");
         //myEngine.search("computer-readable media", 10, 0).forEach(System.out::println);
 
-        System.out.println("\nadd-on module:");
-        myEngine.search("add-on module", 5, 0).forEach(System.out::println);
-
-        System.out.println("\ndigital signature:");
-        myEngine.search("digital signature", 5, 0).forEach(System.out::println);
-
-        System.out.println("\ndata processing:");
-        myEngine.search("data processing", 5, 0).forEach(System.out::println);
-
-        System.out.println("\n\"a scanning\":");
-        myEngine.search("\"a scanning\"", 5, 0).forEach(System.out::println);
 //
-//        System.out.println("\nvulnerability:");
-//        myEngine.search("vulnerability", 10, 2).forEach(System.out::println);
+        System.out.println("\nvulnerability:");
+        myEngine.search("vulnerability", 10, 2).forEach(System.out::println);
 //
-//        System.out.println("\n\"mobile devices\":");
-//        myEngine.search("\"mobile devices\"", 10, 2).forEach(System.out::println);
+        System.out.println("\n\"mobile devices\":");
+        myEngine.search("\"mobile devices\"", 10, 2).forEach(System.out::println);
 
         time = System.currentTimeMillis() - start;
 
