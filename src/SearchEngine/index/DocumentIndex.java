@@ -36,6 +36,25 @@ public class DocumentIndex {
         }
     }
 
+    public void loadTmp() throws IOException {
+        CustomFileReader docIndex = new CustomFileReader(FilePaths.DOCINDEX_FILE + ".tmp");
+        DocumentIndexEntry docIndexEntry;
+        List<Byte[]> line;
+
+        while ((line = docIndex.readLineOfSpaceSeparatedValues()) != null) {
+            docIndexEntry = new DocumentIndexEntry();
+            docIndexEntry.fileId = NumberParser.parseDecimalInt(line.get(0));
+            docIndexEntry.docId = NumberParser.parseDecimalInt(line.get(1));
+            docIndexEntry.titlePos = NumberParser.parseDecimalLong(line.get(2));
+            docIndexEntry.abstractPos = NumberParser.parseDecimalLong(line.get(3));
+            docIndexEntry.titleLength = NumberParser.parseDecimalLong(line.get(4));
+            docIndexEntry.abstractLength = NumberParser.parseDecimalLong(line.get(5));
+            docIndexEntry.numWordsTitle = NumberParser.parseDecimalInt(line.get(6));
+            docIndexEntry.numWordsAbstract = NumberParser.parseDecimalInt(line.get(7));
+            values.put(docIndexEntry.docId, docIndexEntry);
+        }
+    }
+
     public Document buildDocument(Posting posting) throws IOException {
         Document doc = new Document(posting);
         DocumentIndexEntry docIndexEntry = values.get(posting.getDocId());
@@ -76,6 +95,14 @@ public class DocumentIndex {
         }
     }
 
+    public int numWordsTitleInEntry(int docId) {
+        return values.get(docId).numWordsTitle;
+    }
+
+    public int numWordsAbstractInEntry(int docId) {
+        return values.get(docId).numWordsAbstract;
+    }
+
     private class DocumentIndexEntry {
         public int fileId;
         public int docId;
@@ -83,5 +110,7 @@ public class DocumentIndex {
         public long abstractPos;
         public long titleLength;
         public long abstractLength;
+        public int numWordsTitle;
+        public int numWordsAbstract;
     }
 }

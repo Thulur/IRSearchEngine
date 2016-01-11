@@ -1,11 +1,13 @@
 package SearchEngine.index;
 
 import SearchEngine.data.*;
-import SearchEngine.utils.VByte;
 import SearchEngine.utils.NumberParser;
-import SearchEngine.utils.WordParser;
+import SearchEngine.utils.VByte;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -75,7 +77,7 @@ public class Index {
             indexDataFile.close();
             
             docIndex.loadFileIds();
-            docIndex.load();
+            docIndex.loadTmp();
 
             // The iterator use is intended here because the collection changes every iteration
             while (curTokens.keySet().iterator().hasNext()) {
@@ -124,12 +126,10 @@ public class Index {
 
                     Posting posting = new Posting().fromStringWithoutWeight(entry);
                     Document doc = buildDocument(posting);
-                    String[] wordsTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), true).split("[ ]");
-                    String[] wordsAbstract = WordParser.getInstance().stemToString(doc.getPatentAbstract(), true).split("[ ]");
                     double maxFactor = 0;
-                    if (posting.getOccurrences().get(0) < wordsTitle.length) {
+                    if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(doc.getDocId())) {
                         maxFactor = Configuration.TITLE_EXTRA_WEIGHT_FACTOR;
-                    } else if (posting.getOccurrences().get(0) < wordsTitle.length + wordsAbstract.length) {
+                    } else if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(doc.getDocId()) + docIndex.numWordsAbstractInEntry(doc.getDocId())) {
                         maxFactor = Configuration.ABSTRACT_EXTRA_WEIGHT_FACTOR;
                     }
                     docVector += maxFactor * docVector;
@@ -145,14 +145,35 @@ public class Index {
 
             normalizeTermDocWeight(indexFile, postingList, docWeights);
 
-            docIndex = new DocumentIndex();
+            cleanupDocIndex();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void createDocIndex(List<String> paritalFileIds) throws IOException {
+    private void cleanupDocIndex() throws IOException {
+        File deleteDocIndexFile = new File(FilePaths.DOCINDEX_FILE);
+        File newDocIndexFile = new File(FilePaths.DOCINDEX_FILE.concat(".tmp"));
+        deleteDocIndexFile.renameTo(newDocIndexFile);
+        CustomFileReader docIndexReader = new CustomFileReader(FilePaths.DOCINDEX_FILE.concat(".tmp"));
         CustomFileWriter docIndexWriter = new CustomFileWriter(FilePaths.DOCINDEX_FILE);
+        String line;
+
+        while ((line = docIndexReader.readLine()) != null) {
+            StringBuilder cutLine = new StringBuilder(line);
+            cutLine.setLength(cutLine.lastIndexOf(" "));
+            cutLine.setLength(cutLine.lastIndexOf(" "));
+            docIndexWriter.write(cutLine.toString().concat("\n"));
+        }
+
+        docIndexReader.close();
+        docIndexWriter.close();
+
+        docIndex = new DocumentIndex();
+    }
+
+    private void createDocIndex(List<String> paritalFileIds) throws IOException {
+        CustomFileWriter docIndexWriter = new CustomFileWriter(FilePaths.DOCINDEX_FILE.concat(".tmp"));
 
         for (String fileId: paritalFileIds) {
             CustomFileReader docIndexReader = new CustomFileReader(FilePaths.PARTIAL_PATH + "docindex" + getIpgId(fileId) + ".txt");
@@ -165,7 +186,6 @@ public class Index {
             docIndexReader.close();
         }
 
-        docIndexWriter.flush();
         docIndexWriter.close();
     }
 
@@ -180,12 +200,12 @@ public class Index {
                 String[] entryValues = entry.split("[,]");
                 Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
                         Math.sqrt(docWeights.get(entryValues[Posting.POSTING_DOC_ID_POS]));
-                processedLine.append(Math.round(100000 * normalizedWeight) + entry.substring(entry.indexOf(",")) + ";");
+                processedLine.append(Math.round(100000 * normalizedWeight) + entry.substring(entry.indexOf(",")).concat(";"));
             }
 
             processedLine.append("\n");
             String temp = indexLine.split("[ ]")[0];
-            indexFile.write((temp + " " + postingList.getFilePointer() + "\n").getBytes("UTF-8"));
+            indexFile.write((temp.concat(" ") + postingList.getFilePointer() + "\n").getBytes("UTF-8"));
             postingList.writeBytes(processedLine.toString());
             processedLine.setLength(0);
         }

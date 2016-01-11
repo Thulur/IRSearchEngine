@@ -65,19 +65,14 @@ public class FileIndexer extends Thread implements ParsedEventListener {
         }
 
         try {
-            // Flush remaining content of all buffering files
-            docIndex.flush();
-            tmpPostingList.flush();
+            docIndex.close();
+            tmpPostingList.close();
             System.out.println("Start Saving");
             save();
             System.out.println("Finish Saving");
-            dictionaryFile.flush();
-            postingListFile.flush();
 
             // Close all used files
-            docIndex.close();
             dictionaryFile.close();
-            tmpPostingList.close();
             postingListFile.close();
             File tmpFile = new File (FilePaths.PARTIAL_PATH + "tmppostinglist" + filenameId + ".txt");
             tmpFile.delete();
@@ -123,6 +118,8 @@ public class FileIndexer extends Thread implements ParsedEventListener {
         Map<String, List<Long>> words = WordParser.getInstance().stem(docContent.toString(), true);
         document.setFileId(docId);
         docIndex.write(document.getDocIndexEntry());
+        docIndex.write(" ".concat(String.valueOf(WordParser.getInstance().stemToString(document.getInventionTitle(), true).split("[ ]").length)));
+        docIndex.write(" ".concat(String.valueOf(WordParser.getInstance().stemToString(document.getPatentAbstract(), true).split("[ ]").length)));
         docIndex.write("\n");
 
         for (Map.Entry<String, List<Long>> entry : words.entrySet()) {
