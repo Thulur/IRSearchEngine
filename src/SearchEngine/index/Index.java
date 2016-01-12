@@ -285,6 +285,9 @@ public class Index {
                             lastPatentId = curNum;
                             compressed.append(VByte.encode(patentIdDelta));
                         } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
+                            if (VByte.encode(curNum).equals("80")) {
+                                int test = 0;
+                            }
                             compressed.append(VByte.encode(curNum));
                             numOcc = curNum;
                         } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
@@ -293,7 +296,7 @@ public class Index {
                             compressed.append(VByte.encode(occurrenceDelta));
 
                             if (numCount == numOcc + Posting.POSTING_NUM_OCC_POS) {
-                                numCount = -1;
+                                numCount = 0;
                                 lastOccurrence = 0;
 
                                 if (lastEntry) {
