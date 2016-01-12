@@ -39,7 +39,7 @@ import java.util.concurrent.*;
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private Index index = new Index();
     private List<String> files = new LinkedList<>();
-    private int maxThreads = 3;
+    private int maxThreads = 4;
     private int curFileNum = 0;
     private SearchFactory searchFactory;
     private int numPatents = 0;
@@ -54,7 +54,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     void index(String directory){
         BufferedWriter fileIdFile;
-        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader("data/xmlfiles.txt"));
@@ -72,6 +71,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             e.printStackTrace();
         }
 
+        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
         Set<Future<Integer>> result = new HashSet<>();
         while (!executor.isShutdown() && curFileNum < files.size()) {
             Callable<Integer> fileIndexer = new FileIndexer(files.get(curFileNum), curFileNum, this);

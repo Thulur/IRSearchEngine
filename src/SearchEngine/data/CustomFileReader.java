@@ -62,6 +62,35 @@ public class CustomFileReader {
         return result;
     }
 
+    public String readLineTill(char character) throws IOException {
+        ArrayList<Byte> lineBuffer = new ArrayList<>();
+        updateBuffer();
+
+        while (buffer[bufferPos] != '\n' && buffer[bufferPos] != 0 && buffer[bufferPos] != character) {
+            lineBuffer.add(buffer[bufferPos]);
+            ++bufferPos;
+            updateBuffer();
+        }
+
+        ++bufferPos;
+        if (lineBuffer.size() == 0) {
+            preloadThread.interrupt();
+            return null;
+        }
+
+        String result = "";
+        try {
+            Byte[] tmpBuffer = new Byte[lineBuffer.size()];
+            lineBuffer.toArray(tmpBuffer);
+            result = new String(ArrayUtils.toPrimitive(tmpBuffer), "UTF-8");
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
     public String readLine() throws IOException {
         ArrayList<Byte> lineBuffer = new ArrayList<>();
         updateBuffer();

@@ -84,13 +84,8 @@ public class Index {
                 String curWord = curTokens.keySet().iterator().next();
                 Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
                 tmpIndexFile.write(curWord + " " + tmpPostingList.getChannel().position() + "\n");
-                int lastFirstPatent = 0;
 
                 for (FileMergeHead file: curTokens.get(curWord)) {
-                    if (lastFirstPatent > file.getFirstPatentId()) {
-                        int test = 0;
-                    }
-                    lastFirstPatent = file.getFirstPatentId();
                     sortedPostings.put(file.getFirstPatentId(), file);
 
                     if (file.nextIndexLine()) {
@@ -199,20 +194,21 @@ public class Index {
         CustomFileReader tmpIndexReader = new CustomFileReader(FilePaths.INDEX_PATH + ".tmp");
         String postingLine;
         String indexLine;
-        StringBuilder processedLine = new StringBuilder();
-        while ((postingLine = tmpPostingListReader.readLine()) != null && (indexLine = tmpIndexReader.readLine()) != null) {
-            for (String entry: postingLine.split("[;]")) {
-                String[] entryValues = entry.split("[,]");
-                Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
-                        Math.sqrt(docWeights.get(entryValues[Posting.POSTING_DOC_ID_POS]));
-                processedLine.append(Math.round(100000 * normalizedWeight) + entry.substring(entry.indexOf(",")).concat(";"));
-            }
-
-            processedLine.append("\n");
+        StringBuilder processedEntry = new StringBuilder();
+        while ((indexLine = tmpIndexReader.readLine()) != null) {
             String temp = indexLine.split("[ ]")[0];
             indexFile.write((temp.concat(" ") + postingList.getFilePointer() + "\n").getBytes("UTF-8"));
-            postingList.writeBytes(processedLine.toString());
-            processedLine.setLength(0);
+
+            while ((postingLine = tmpPostingListReader.readLineTill(';')) != null) {
+                String[] entryValues = postingLine.split("[,]");
+                Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
+                        Math.sqrt(docWeights.get(entryValues[Posting.POSTING_DOC_ID_POS]));
+                processedEntry.append(Math.round(100000 * normalizedWeight) + postingLine.substring(postingLine.indexOf(",")).concat(";"));
+                postingList.writeBytes(processedEntry.toString());
+                processedEntry.setLength(0);
+            }
+
+            processedEntry.append("\n");
         }
 
         tmpPostingListReader.close();
@@ -240,15 +236,14 @@ public class Index {
         //read entry from file
         try {
             CustomFileReader postingReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH);
-            RandomAccessFile indexWriter = new RandomAccessFile(FilePaths.COMPRESSED_INDEX_PATH, "rw");
+            CustomFileReader indexReader = new CustomFileReader(FilePaths.INDEX_PATH);
+            CustomFileWriter indexWriter = new CustomFileWriter(FilePaths.COMPRESSED_INDEX_PATH);
             RandomAccessFile postingWriter = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "rw");
 
-            loadFromFile(FilePaths.INDEX_PATH);
-
-            String curLine;
+            String curEntry;
+            String key;
             StringBuilder compressed = new StringBuilder();
             int i;
-            int semicolonPos;
             int commaPos;
             int separatorPos;
             long lastPatentId;
@@ -260,63 +255,61 @@ public class Index {
             long curNum;
             long seek;
             boolean lastEntry;
-            for (String key: values.keySet()) {
-                compressed.setLength(0);
-                i = 0;
+            while ((key = indexReader.readLine()) != null) {
                 lastEntry = false;
                 numCount = 0;
                 numOcc = 0;
                 lastPatentId = 0;
-                curLine = postingReader.readLine();
-
-                while (i < curLine.length()) {
-                    commaPos = curLine.indexOf(",", i);
-                    semicolonPos = curLine.indexOf(";", i);
-                    if (commaPos != -1 && commaPos < semicolonPos) {
-                        separatorPos = commaPos;
-                    } else {
-                        separatorPos = semicolonPos;
-
-                        if (commaPos == -1) {
-                            lastEntry = true;
-                        }
-                    }
-
-                    curNum = Long.parseLong(curLine.substring(i, separatorPos));
-
-                    if (numCount == Posting.POSTING_DOC_ID_POS) {
-                        patentIdDelta = curNum - lastPatentId;
-                        lastPatentId = curNum;
-                        compressed.append(VByte.encode(patentIdDelta));
-                    } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
-                        compressed.append(VByte.encode(curNum));
-                        numOcc = curNum;
-                    } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
-                        occurrenceDelta = curNum - lastOccurrence;
-                        lastOccurrence = curNum;
-                        compressed.append(VByte.encode(occurrenceDelta));
-
-                            if (numCount == numOcc + Posting.POSTING_NUM_OCC_POS) {
-                            numCount = -1;
-                            lastOccurrence = 0;
-
-                            if (lastEntry) {
-                                break;
-                            }
-                        }
-                    } else {
-                        compressed.append(VByte.encode(curNum));
-                    }
-
-                    i = separatorPos + 1;
-                    ++numCount;
-                }
+                key = key.split(" ")[0];
 
                 seek = postingWriter.getFilePointer();
+                indexWriter.write(key.concat(" ") + seek + "\n");
 
-                postingWriter.writeBytes(compressed + "\n");
+                while ((curEntry = postingReader.readLineTill(';')) != null) {
+                    i = 0;
+                    compressed.setLength(0);
 
-                indexWriter.write((key + " " + seek + "\n").getBytes("UTF-8"));
+                    while (i < curEntry.length()) {
+                        commaPos = curEntry.indexOf(",", i);
+                        if (commaPos != -1) {
+                            separatorPos = commaPos;
+                        } else {
+                            separatorPos = curEntry.length();
+                            lastEntry = true;
+                        }
+
+                        curNum = Long.parseLong(curEntry.substring(i, separatorPos));
+
+                        if (numCount == Posting.POSTING_DOC_ID_POS) {
+                            patentIdDelta = curNum - lastPatentId;
+                            lastPatentId = curNum;
+                            compressed.append(VByte.encode(patentIdDelta));
+                        } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
+                            compressed.append(VByte.encode(curNum));
+                            numOcc = curNum;
+                        } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
+                            occurrenceDelta = curNum - lastOccurrence;
+                            lastOccurrence = curNum;
+                            compressed.append(VByte.encode(occurrenceDelta));
+
+                            if (numCount == numOcc + Posting.POSTING_NUM_OCC_POS) {
+                                numCount = -1;
+                                lastOccurrence = 0;
+
+                                if (lastEntry) {
+                                    break;
+                                }
+                            }
+                        } else {
+                            compressed.append(VByte.encode(curNum));
+                        }
+
+                        i = separatorPos + 1;
+                        ++numCount;
+                    }
+
+                    postingWriter.writeBytes(compressed + "\n");
+                }
             }
             postingWriter.close();
             indexWriter.close();

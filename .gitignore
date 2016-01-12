@@ -19,6 +19,7 @@ ipg*.xml
 /data/partialindices/tmp*.txt
 /data/partialindices/index*.txt
 /data/partialindices/post*.txt
+/data/partialindices/docindex*.txt
 cache*.txt
 
 # project metadata
