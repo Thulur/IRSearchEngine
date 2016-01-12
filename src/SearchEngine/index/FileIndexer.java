@@ -135,10 +135,10 @@ public class FileIndexer implements Callable<Integer>, ParsedEventListener {
 
             if (values.get(word) == null) {
                 values.put(word, tmpPostingList.position());
-                tmpPostingList.write("-1," + posting.toString());
+                tmpPostingList.write("-1,".concat(posting.toString()));
             } else {
                 long tmpPos = tmpPostingList.position();
-                tmpPostingList.write(values.get(word).toString() + "," + posting.toString());
+                tmpPostingList.write(values.get(word).toString().concat(",").concat(posting.toString()));
                 values.put(word, tmpPos);
             }
         }
@@ -176,7 +176,7 @@ public class FileIndexer implements Callable<Integer>, ParsedEventListener {
 
                 Long filePos = postingListFile.position();
                 postingListEntry.append("\n");
-                dictionaryFile.write(key + " " + filePos.toString() + "\n");
+                dictionaryFile.write(key.concat(" ").concat(filePos.toString()).concat("\n"));
                 postingListFile.write(postingListEntry.toString());
             }
 

@@ -28,6 +28,12 @@ public class CustomFileReader {
         preloader.run();
     }
 
+    public byte[] read() throws IOException {
+        updateBuffer();
+        bufferPos = bufferSize;
+        return buffer;
+    }
+
     public List<Byte[]> readLineOfSpaceSeparatedValues() throws IOException {
         List<Byte[]> result = new LinkedList<>();
         ArrayList<Byte> lineBuffer = new ArrayList<>();
@@ -126,6 +132,14 @@ public class CustomFileReader {
         preloader = null;
         buffer = null;
         file = null;
+    }
+
+    public int getBufferSize() {
+        return bufferSize;
+    }
+
+    public void setBufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
     }
 
     private void updateBuffer() throws IOException {

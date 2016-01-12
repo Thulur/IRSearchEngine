@@ -64,9 +64,9 @@ public class Index {
         try {
             RandomAccessFile indexDataFile = new RandomAccessFile(FilePaths.INDEX_DATA_FILE, "rw");
             CustomFileWriter tmpIndexFile = new CustomFileWriter(FilePaths.INDEX_PATH + ".tmp");
-            RandomAccessFile tmpPostingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH + ".tmp", "rw");
-            RandomAccessFile indexFile = new RandomAccessFile(FilePaths.INDEX_PATH, "rw");
-            RandomAccessFile postingList = new RandomAccessFile(FilePaths.POSTINGLIST_PATH, "rw");
+            CustomFileWriter tmpPostingList = new CustomFileWriter(FilePaths.POSTINGLIST_PATH + ".tmp");
+            CustomFileWriter indexFile = new CustomFileWriter(FilePaths.INDEX_PATH);
+            CustomFileWriter postingList = new CustomFileWriter(FilePaths.POSTINGLIST_PATH);
             Map<String, Double> docWeights = new HashMap<>();
 
             // Create document index
@@ -83,7 +83,7 @@ public class Index {
             while (curTokens.keySet().iterator().hasNext()) {
                 String curWord = curTokens.keySet().iterator().next();
                 Map<Integer, FileMergeHead> sortedPostings = new TreeMap<>();
-                tmpIndexFile.write(curWord + " " + tmpPostingList.getChannel().position() + "\n");
+                tmpIndexFile.write(curWord + " " + tmpPostingList.position() + "\n");
 
                 for (FileMergeHead file: curTokens.get(curWord)) {
                     sortedPostings.put(file.getFirstPatentId(), file);
@@ -137,7 +137,7 @@ public class Index {
                     vectorLine.append(",".concat(entry).concat(";"));
                 }
 
-                tmpPostingList.writeBytes(vectorLine.toString().concat("\n"));
+                tmpPostingList.write(vectorLine.toString().concat("\n"));
                 curTokens.remove(curWord);
             }
             tmpPostingList.close();
@@ -189,7 +189,7 @@ public class Index {
         docIndexWriter.close();
     }
 
-    private void normalizeTermDocWeight(RandomAccessFile indexFile, RandomAccessFile postingList, Map<String, Double> docWeights) throws IOException {
+    private void normalizeTermDocWeight(CustomFileWriter indexFile, CustomFileWriter postingList, Map<String, Double> docWeights) throws IOException {
         CustomFileReader tmpPostingListReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH + ".tmp");
         CustomFileReader tmpIndexReader = new CustomFileReader(FilePaths.INDEX_PATH + ".tmp");
         String postingLine;
@@ -197,14 +197,14 @@ public class Index {
         StringBuilder processedEntry = new StringBuilder();
         while ((indexLine = tmpIndexReader.readLine()) != null) {
             String temp = indexLine.split("[ ]")[0];
-            indexFile.write((temp.concat(" ") + postingList.getFilePointer() + "\n").getBytes("UTF-8"));
+            indexFile.write(temp.concat(" ") + postingList.position() + "\n");
 
             while ((postingLine = tmpPostingListReader.readLineTill(';')) != null) {
                 String[] entryValues = postingLine.split("[,]");
                 Double normalizedWeight = Double.parseDouble(entryValues[Posting.POSTING_WEIGHT_POS]) /
                         Math.sqrt(docWeights.get(entryValues[Posting.POSTING_DOC_ID_POS]));
                 processedEntry.append(Math.round(100000 * normalizedWeight) + postingLine.substring(postingLine.indexOf(",")).concat(";"));
-                postingList.writeBytes(processedEntry.toString());
+                postingList.write(processedEntry.toString());
                 processedEntry.setLength(0);
             }
 
@@ -285,9 +285,6 @@ public class Index {
                             lastPatentId = curNum;
                             compressed.append(VByte.encode(patentIdDelta));
                         } else if (numCount == Posting.POSTING_NUM_OCC_POS) {
-                            if (VByte.encode(curNum).equals("80")) {
-                                int test = 0;
-                            }
                             compressed.append(VByte.encode(curNum));
                             numOcc = curNum;
                         } else if (numCount >= Posting.POSTING_NUM_OCC_POS + 1) {
