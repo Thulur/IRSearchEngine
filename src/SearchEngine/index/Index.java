@@ -238,7 +238,7 @@ public class Index {
             CustomFileReader postingReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH);
             CustomFileReader indexReader = new CustomFileReader(FilePaths.INDEX_PATH);
             CustomFileWriter indexWriter = new CustomFileWriter(FilePaths.COMPRESSED_INDEX_PATH);
-            RandomAccessFile postingWriter = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "rw");
+            CustomFileWriter postingWriter = new CustomFileWriter(FilePaths.COMPRESSED_POSTINGLIST_PATH);
 
             String curEntry;
             String key;
@@ -262,7 +262,7 @@ public class Index {
                 lastPatentId = 0;
                 key = key.split(" ")[0];
 
-                seek = postingWriter.getFilePointer();
+                seek = postingWriter.position();
                 indexWriter.write(key.concat(" ") + seek + "\n");
 
                 while ((curEntry = postingReader.readLineTill(';')) != null) {
@@ -308,8 +308,10 @@ public class Index {
                         ++numCount;
                     }
 
-                    postingWriter.writeBytes(compressed + "\n");
+                    postingWriter.write(compressed.toString());
                 }
+
+                postingWriter.write("\n");
             }
             postingWriter.close();
             indexWriter.close();
