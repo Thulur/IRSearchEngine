@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Created by Sebastian on 24.10.2015.
  */
-public class Posting {
+public class Posting implements Comparable<Posting> {
     public static int POSTING_WEIGHT_POS = 0;
     public static int POSTING_DOC_ID_POS = 1;
     public static int POSTING_NUM_OCC_POS = 2;
@@ -90,5 +90,16 @@ public class Posting {
 
     public List<Long> getOccurrences() {
         return occurrences;
+    }
+
+    @Override
+    public int compareTo(Posting posting) {
+        if (weight < posting.getWeight()) {
+            return -1;
+        } else if (weight > posting.getWeight()) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }

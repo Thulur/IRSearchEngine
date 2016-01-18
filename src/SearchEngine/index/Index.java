@@ -330,27 +330,23 @@ public class Index {
         }
     }
 
-    public List<Posting> decompressLine(long readPos) {
-        List<Posting> postings = new LinkedList<>();
+    public List<Posting> decompressLine(long readPos) throws IOException {
+        TreeSet<Posting> postings = new TreeSet<>();
+        TreeMap<String /* iwas aus dem posting */, Posting> test = new TreeMap<>();
         int numCount = 0;
         long patentId = 0;
         long occurrence = 0;
         long numOcc = 0;
         long curNum;
         Posting posting = new Posting();
-        RandomAccessFile postingReader = null;
-        int buffersize = 16384;
-        byte[] buffer = new byte[buffersize];
+        CustomFileReader postingReader = null;
+        byte[] buffer;
         byte[] curNumBuffer = new byte[18];
         int curNumBufferLength = 0;
 
-        try {
-            postingReader = new RandomAccessFile(FilePaths.COMPRESSED_POSTINGLIST_PATH, "r");
-            postingReader.seek(readPos);
-            postingReader.read(buffer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        postingReader = new CustomFileReader(FilePaths.COMPRESSED_POSTINGLIST_PATH);
+        postingReader.seek(readPos);
+        buffer = postingReader.read();
 
         for (int i = 0; ; i += 2) {
             if (buffer[i] == '\n') {
@@ -380,7 +376,16 @@ public class Index {
                     if (numCount == numOcc + Posting.POSTING_NUM_OCC_POS) {
                         numCount = -1;
                         occurrence = 0;
-                        postings.add(posting);
+
+                        if (postings.size() > 10000) {
+                            if (postings.first().compareTo(posting) < 0) {
+                                postings.add(posting);
+                                postings.pollFirst();
+                            }
+                        } else {
+                            postings.add(posting);
+                        }
+
                         posting = new Posting();
                     }
                 }
@@ -389,18 +394,15 @@ public class Index {
                 curNumBufferLength = 0;
             }
 
-            if (i == buffersize - 2) {
-                try {
-                    postingReader.read(buffer);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            if (i == buffer.length - 2) {
+                buffer = postingReader.read();
+
                 // Set i to -2 because the for loop directly increases it to 0
                 i = -2;
             }
         }
 
-        return postings;
+        return new ArrayList<>(postings);
     }
 
     public List<Posting> lookUpPostingInFile(String word) throws IOException {
