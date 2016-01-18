@@ -18,7 +18,14 @@ public class NumberParser {
     }
 
     public static long parseDecimalLong(String s) {
-        return -1;
+        long result = 0;
+
+        for (int i = 0; i < s.length(); ++i) {
+            result *= 10;
+            result += s.charAt(i) - '0';
+        }
+
+        return result;
     }
 
     public static long parseHexadecimalLong(String s) {

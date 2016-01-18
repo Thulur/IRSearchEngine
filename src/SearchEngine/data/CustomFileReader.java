@@ -150,4 +150,10 @@ public class CustomFileReader {
             bufferPos = 0;
         }
     }
+
+    public void seek(long position) throws IOException {
+        bufferPos = -1;
+        preloader.seek(position);
+        preloader.run();
+    }
 }

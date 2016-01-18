@@ -37,4 +37,9 @@ public class Preloader implements  Runnable {
     public boolean isLoadingNeeded() {
         return loadingNeeded;
     }
+
+    public void seek(long position) throws IOException {
+        file.seek(position);
+        loadingNeeded = true;
+    }
 }

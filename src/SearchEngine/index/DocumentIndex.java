@@ -19,8 +19,8 @@ public class DocumentIndex {
     Map<Integer, RandomAccessFile> cacheFiles = new HashMap<>();
     Map<Integer, String> fileIds = new HashMap<>();
 
-    public void load() throws IOException {
-        CustomFileReader docIndex = new CustomFileReader(FilePaths.DOCINDEX_FILE);
+    public void load(String file) throws IOException {
+        CustomFileReader docIndex = new CustomFileReader(file);
         DocumentIndexEntry docIndexEntry;
         List<Byte[]> line;
 

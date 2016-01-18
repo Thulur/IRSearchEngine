@@ -17,31 +17,33 @@ import java.util.regex.Pattern;
  */
 public class Index {
     TreeMap<String, Long> values = new TreeMap<>();
+    TreeMap<String, Long> skipValues = new TreeMap<>();
     DocumentIndex docIndex = new DocumentIndex();
+    String indexFile;
     int numDocuments = -1;
 
     public Index() {
 
     }
 
-    public void loadFromFile(String file) throws IOException {
+    public void loadFromFile(String indexFile, String docIndexFile) throws IOException {
         String line;
+        CustomFileReader skipIndexFileReader;
 
+        this.indexFile = indexFile;
         docIndex.loadFileIds();
 
-        CustomFileReader indexFile = new CustomFileReader(file);
-        values = new TreeMap<>();
-        while ((line = indexFile.readLine()) != null) {
-            String[] splitEntry = line.split("[ ]");
-
+        skipIndexFileReader = new CustomFileReader(indexFile.concat(".skp"));
+        while ((line = skipIndexFileReader.readLine()) != null) {
             // Skip empty lines at the end of the file
-            if (splitEntry.length < 2) continue;
+            if (line.indexOf(" ") < 0) continue;
 
-            values.put(splitEntry[0], Long.parseLong(splitEntry[1]));
+            skipValues.put(line.substring(0, line.indexOf(" ")), NumberParser.parseDecimalLong(line.substring(line.indexOf(" ") + 1)));
         }
 
-        indexFile.close();
-        docIndex.load();
+        skipIndexFileReader.close();
+
+        docIndex.load(docIndexFile);
     }
 
     public void mergePartialIndices(List<String> paritalFileIds, int numPatents) {
@@ -238,11 +240,13 @@ public class Index {
             CustomFileReader postingReader = new CustomFileReader(FilePaths.POSTINGLIST_PATH);
             CustomFileReader indexReader = new CustomFileReader(FilePaths.INDEX_PATH);
             CustomFileWriter indexWriter = new CustomFileWriter(FilePaths.COMPRESSED_INDEX_PATH);
+            CustomFileWriter indexSkipWriter = new CustomFileWriter(FilePaths.COMPRESSED_INDEX_PATH + ".skp");
             CustomFileWriter postingWriter = new CustomFileWriter(FilePaths.COMPRESSED_POSTINGLIST_PATH);
 
             String curEntry;
             String key;
             StringBuilder compressed = new StringBuilder();
+            int indexEntries = 0;
             int i;
             int commaPos;
             int separatorPos;
@@ -261,6 +265,11 @@ public class Index {
                 numOcc = 0;
                 lastPatentId = 0;
                 key = key.split(" ")[0];
+
+                ++indexEntries;
+                if (indexEntries % 10000 == 0) {
+                    indexSkipWriter.write(key.concat(" ") + indexWriter.position() + "\n");
+                }
 
                 seek = postingWriter.position();
                 indexWriter.write(key.concat(" ") + seek + "\n");
@@ -314,6 +323,7 @@ public class Index {
                 postingWriter.write("\n");
             }
             postingWriter.close();
+            indexSkipWriter.close();
             indexWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -393,7 +403,7 @@ public class Index {
         return postings;
     }
 
-    public List<Posting> lookUpPostingInFile(String word) {
+    public List<Posting> lookUpPostingInFile(String word) throws IOException {
         List<Posting> results = new LinkedList<>();
 
         ArrayList<Long> matches = new ArrayList<>();
@@ -409,6 +419,8 @@ public class Index {
                 if (matcher.find()) matches.add(values.get(key));
             }
         } else {
+            loadIndexAt(word);
+
             if (!values.containsKey(word)) {
                 return results;
             } else {
@@ -425,6 +437,26 @@ public class Index {
         }
 
         return results;
+    }
+
+    private void loadIndexAt(String word) throws IOException {
+        String line;
+        CustomFileReader indexFileReader;
+        long position = skipValues.floorEntry(word).getValue();
+        int readValues = 0;
+
+        indexFileReader = new CustomFileReader(indexFile);
+        indexFileReader.seek(position);
+        values.clear();
+        while ((line = indexFileReader.readLine()) != null && readValues < 10000) {
+            // Skip empty lines at the end of the file
+            if (line.indexOf(" ") < 0) continue;
+
+            values.put(line.substring(0, line.indexOf(" ")), NumberParser.parseDecimalLong(line.substring(line.indexOf(" ") + 1)));
+            ++readValues;
+        }
+
+        indexFileReader.close();
     }
 
     public int getNumDocuments() {

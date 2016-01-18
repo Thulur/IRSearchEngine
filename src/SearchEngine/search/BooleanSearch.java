@@ -53,7 +53,7 @@ public class BooleanSearch implements Search {
     private void defineSubqueries() {
     }
 
-    private void processQuery() {
+    private void processQuery() throws IOException {
         for (String searchToken : searchTerm.split(" ")) {
             if (booleanTokens.contains(searchToken)) {
                 booleanOperator = searchToken;

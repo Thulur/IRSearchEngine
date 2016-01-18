@@ -120,7 +120,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     boolean loadCompressedIndex(String directory) {
         try {
-            index.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH);
+            index.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH, FilePaths.DOCINDEX_FILE);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -143,6 +143,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
         searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
+        System.out.printf("Loading finished");
         return true;
     }
 
