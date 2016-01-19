@@ -60,9 +60,9 @@ public class BooleanSearch implements Search {
             if (booleanTokens.contains(searchToken)) {
                 booleanOperator = searchToken;
             } else if (searchToken.contains("*")) {
-                searchResults.put(searchToken, searchFactory.getSearchFromQuery(searchToken.toLowerCase(), topK, 0).execute());
+                searchResults.put(searchToken, searchFactory.getSearchFromQuery(searchToken.toLowerCase(), topK).execute());
             } else {
-                searchResults.put(searchToken, searchFactory.getSearchFromQuery(wordParser.stemSingleWord(searchToken), topK, 0).execute());
+                searchResults.put(searchToken, searchFactory.getSearchFromQuery(wordParser.stemSingleWord(searchToken), topK).execute());
             }
         }
     }

@@ -183,12 +183,6 @@ public class VectorSpaceSearch implements Search {
         Collections.reverse(tmpList);
         ArrayList<Posting> result = new ArrayList<>();
 
-        ArrayList<Double> rankingsForDcg = new ArrayList<>();
-
-        for (HashMap.Entry<Integer,Double> ranking: tmpList) {
-            rankingsForDcg.add(ranking.getValue());
-        }
-
         for (int i = 0; i < tmpList.size(); ++i) {
             int docId = tmpList.get(i).getKey();
             result.add(postingTable.get(docId));

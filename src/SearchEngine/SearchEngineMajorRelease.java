@@ -53,7 +53,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     @Override
-    void index(String directory){
+    void index(){
         BufferedWriter fileIdFile;
 
         try {
@@ -107,19 +107,19 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     @Override
-    boolean loadIndex(String directory) {
-        return loadCompressedIndex(directory);
+    boolean loadIndex() {
+        return loadCompressedIndex();
     }
     
     @Override
-    void compressIndex(String directory) {
+    void compressIndex() {
         index.compressIndex();
         searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
     }
 
     @Override
-    boolean loadCompressedIndex(String directory) {
+    boolean loadCompressedIndex() {
         try {
             index.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH, FilePaths.DOCINDEX_FILE);
         } catch (IOException e) {
@@ -148,8 +148,8 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     @Override
-    ArrayList<String> search(String query, int topK, int prf) {
-        ArrayList<String> results = executeSearch(query, topK, prf);
+    ArrayList<String> search(String query, int topK) {
+        ArrayList<String> results = executeSearch(query, topK);
 
         if (results.size() == 0 && Configuration.ENABLE_SPELLING_CORRECTION) {
             StringBuilder correctedQuery = new StringBuilder();
@@ -158,18 +158,18 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
                 correctedQuery.append(" ");
             }
 
-            results = executeSearch(correctedQuery.toString(), topK, prf);
+            results = executeSearch(correctedQuery.toString(), topK);
         }
 
         return results;
     }
 
-    private ArrayList<String> executeSearch(String query, int topK, int prf) {
+    private ArrayList<String> executeSearch(String query, int topK) {
         ArrayList<Posting> postings;
         ArrayList<Document> documents = new ArrayList<>();
 
         try {
-            postings = searchFactory.getSearchFromQuery(query, topK, prf).execute();
+            postings = searchFactory.getSearchFromQuery(query, topK).execute();
 
             for (int i = 0; i < topK && i < postings.size(); ++i) {
                 documents.add(index.buildDocument(postings.get(i)));
@@ -182,7 +182,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         ArrayList<String> tmpResults = new ArrayList<>();
 
         for (Document document: documents) {
-            tmpResults.add(document.getInventionTitle());
+            tmpResults.add(String.valueOf(document.getDocId()));
         }
 
         WebFile webFile = new WebFile();
@@ -210,23 +210,29 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     private void computeNdcgList(ArrayList<String> goldRanking, ArrayList<String> results) {
         ArrayList<Double> actualDcg = new ArrayList<>();
         ArrayList<Double> idealDcg = new ArrayList<>();
+        ArrayList<Double> goldRelevances = new ArrayList<>();
+
+        for (int i = 0; i < goldRanking.size(); ++i) {
+            goldRelevances.add(1 + Math.floor(10 * Math.pow(0.5, i * 0.1)));
+        }
 
         for (int i = 0; i < results.size(); ++i) {
             if (i == 0) {
-                idealDcg.add((1 + Math.floor(10 * Math.pow(0.5, i))));
+                idealDcg.add(goldRelevances.get(i));
             } else {
-                idealDcg.add(idealDcg.get(i-1) + (1 + Math.floor(10 * Math.pow(0.5, i))));
+                double ranking = i < goldRelevances.size() ? goldRelevances.get(i) : 0;
+                idealDcg.add(idealDcg.get(i-1) + (ranking/(Math.log(i+1)/Math.log(2))));
             }
 
 
             double summand = 0.0;
             if (goldRanking.contains(results.get(i))) {
-                summand = 1 + Math.floor(10 * Math.pow(0.5, i * 0.1));
+                summand = goldRelevances.get(goldRanking.indexOf(results.get(i)));
             }
             if (i == 0) {
                 actualDcg.add(summand);
             } else {
-                actualDcg.add(actualDcg.get(i-1) + summand);
+                actualDcg.add(actualDcg.get(i-1) + (summand/(Math.log(i+1)/Math.log(2))));
             }
 
         }
@@ -237,8 +243,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             ndcg.add(actualDcg.get(i) / idealDcg.get(i));
         }
     }
-
-
 
     //Observer methods
     @Override

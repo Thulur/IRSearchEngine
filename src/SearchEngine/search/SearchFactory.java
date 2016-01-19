@@ -15,7 +15,7 @@ public class SearchFactory {
         this.index = index;
     }
 
-    public Search getSearchFromQuery(String query, int topK, int prf) {
+    public Search getSearchFromQuery(String query, int topK) {
         List<String> booleanTokens = new LinkedList<>();
         booleanTokens.add("OR");
         booleanTokens.add("NOT");
@@ -31,13 +31,13 @@ public class SearchFactory {
 
         if (queryIsBoolean) {
             search = new BooleanSearch();
-        } else if (prf > 0) {
-            search = new PRFSearch();
+        //} else if (prf > 0) {
+        //    search = new PRFSearch();
         } else {
             search = new VectorSpaceSearch();
         }
 
-        search.setupSearch(query, index, topK, prf);
+        search.setupSearch(query, index, topK, 0);
 
         return search;
     }

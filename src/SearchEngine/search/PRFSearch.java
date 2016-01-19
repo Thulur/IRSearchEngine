@@ -31,7 +31,7 @@ public class PRFSearch implements Search {
         searchFactory.setIndex(index);
 
         // Execute search with original query
-        Search firstSearch = searchFactory.getSearchFromQuery(searchTerm, topK, 0);
+        Search firstSearch = searchFactory.getSearchFromQuery(searchTerm, topK);
         ArrayList<Posting> firstSearchResults = firstSearch.execute();
         Map<String, List<Long>> words = getWordOccurrencesFromResults(firstSearchResults);
 
@@ -42,7 +42,7 @@ public class PRFSearch implements Search {
         String modifiedSearchTerm = getModifiedQuery(searchTerm, tmpList.iterator());
 
         // Execute search with modified query
-        Search secondSearch = searchFactory.getSearchFromQuery(modifiedSearchTerm, topK, 0);
+        Search secondSearch = searchFactory.getSearchFromQuery(modifiedSearchTerm, topK);
         ArrayList<Posting> secondSearchResults = secondSearch.execute();
 
         ArrayList<Document> result = new ArrayList<>();
