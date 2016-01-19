@@ -99,7 +99,13 @@ public class Posting implements Comparable<Posting> {
         } else if (weight > posting.getWeight()) {
             return 1;
         } else {
-            return 0;
+            if (docId < posting.getDocId()) {
+                return -1;
+            } else if (docId > posting.getDocId()) {
+                return 1;
+            } else {
+                return 0;
+            }
         }
     }
 }

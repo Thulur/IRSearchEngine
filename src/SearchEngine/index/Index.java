@@ -332,14 +332,13 @@ public class Index {
 
     public List<Posting> decompressLine(long readPos) throws IOException {
         TreeSet<Posting> postings = new TreeSet<>();
-        TreeMap<String /* iwas aus dem posting */, Posting> test = new TreeMap<>();
         int numCount = 0;
         long patentId = 0;
         long occurrence = 0;
         long numOcc = 0;
         long curNum;
         Posting posting = new Posting();
-        CustomFileReader postingReader = null;
+        CustomFileReader postingReader;
         byte[] buffer;
         byte[] curNumBuffer = new byte[18];
         int curNumBufferLength = 0;

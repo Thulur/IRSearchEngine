@@ -23,6 +23,7 @@ package SearchEngine;
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
+import SearchEngine.data.Posting;
 import SearchEngine.data.output.AnsiEscapeFormat;
 import SearchEngine.data.output.HTMLFormat;
 import SearchEngine.data.output.OutputFormat;
@@ -143,7 +144,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
         searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
-        System.out.printf("Loading finished");
         return true;
     }
 
@@ -165,14 +165,21 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private ArrayList<String> executeSearch(String query, int topK, int prf) {
-        ArrayList<Document> documents = null;
+        ArrayList<Posting> postings;
+        ArrayList<Document> documents = new ArrayList<>();
+
         try {
-            documents = searchFactory.getSearchFromQuery(query, topK, prf).execute();
+            postings = searchFactory.getSearchFromQuery(query, topK, prf).execute();
+
+            for (int i = 0; i < topK && i < postings.size(); ++i) {
+                documents.add(index.buildDocument(postings.get(i)));
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        /*ArrayList<String> tmpResults = new ArrayList<>();
+        ArrayList<String> tmpResults = new ArrayList<>();
 
         for (Document document: documents) {
             tmpResults.add(document.getInventionTitle());
@@ -181,14 +188,14 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         WebFile webFile = new WebFile();
 
         ArrayList<String> goldRanking = webFile.getGoogleRanking(query);
-        computeNdcgList(goldRanking, tmpResults);*/
+        computeNdcgList(goldRanking, tmpResults);
 
         ArrayList<String> results = new ArrayList<>();
 
         // topK should be used in the Search class not here
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
-                results.add(documents.get(i).generateSnippet(query, outputFormat)/* + "\nNDCG Value: " + ndcg.get(i)*/ + "\n");
+                results.add(documents.get(i).generateSnippet(query, outputFormat) + "\nNDCG Value: " + ndcg.get(i) + "\n");
             }
         }
 
@@ -214,7 +221,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
             double summand = 0.0;
             if (goldRanking.contains(results.get(i))) {
-                System.out.println("Containment found");
                 summand = 1 + Math.floor(10 * Math.pow(0.5, i * 0.1));
             }
             if (i == 0) {

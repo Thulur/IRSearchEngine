@@ -1,6 +1,5 @@
 package SearchEngine.search;
 
-import SearchEngine.data.Document;
 import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
@@ -18,7 +17,7 @@ public class BooleanSearch implements Search {
     private String booleanOperator;
     private Index index;
     private WordParser wordParser;
-    private ArrayList<Document> results;
+    private ArrayList<Posting> results;
     private int topK;
 
     @Override
@@ -38,7 +37,7 @@ public class BooleanSearch implements Search {
         results = new ArrayList<>();
     }
 
-    public ArrayList<Document> execute() throws IOException {
+    public ArrayList<Posting> execute() throws IOException {
         defineSubqueries();
         processQuery();
         executeBooleanOperation();
@@ -54,13 +53,16 @@ public class BooleanSearch implements Search {
     }
 
     private void processQuery() throws IOException {
+        SearchFactory searchFactory = new SearchFactory();
+        searchFactory.setIndex(index);
+
         for (String searchToken : searchTerm.split(" ")) {
             if (booleanTokens.contains(searchToken)) {
                 booleanOperator = searchToken;
             } else if (searchToken.contains("*")) {
-                searchResults.put(searchToken, index.lookUpPostingInFile(searchToken.toLowerCase()));
+                searchResults.put(searchToken, searchFactory.getSearchFromQuery(searchToken.toLowerCase(), topK, 0).execute());
             } else {
-                searchResults.put(searchToken, index.lookUpPostingInFile(wordParser.stemSingleWord(searchToken)));
+                searchResults.put(searchToken, searchFactory.getSearchFromQuery(wordParser.stemSingleWord(searchToken), topK, 0).execute());
             }
         }
     }
@@ -78,6 +80,7 @@ public class BooleanSearch implements Search {
 
         for (Posting posting: searchIterator.next()) {
             secondSet.add(posting.getDocId());
+
             postings.put(posting.getDocId(), posting);
         }
 
@@ -92,7 +95,7 @@ public class BooleanSearch implements Search {
         int i = 0;
         while (docIdIterator.hasNext() && i < topK) {
             curDocId = docIdIterator.next();
-            results.add(index.buildDocument(postings.get(curDocId)));
+            results.add(postings.get(curDocId));
             ++i;
         }
     }

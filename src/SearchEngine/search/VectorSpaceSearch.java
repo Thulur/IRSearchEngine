@@ -1,7 +1,6 @@
 package SearchEngine.search;
 
 import SearchEngine.data.Configuration;
-import SearchEngine.data.Document;
 import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 import SearchEngine.utils.WordParser;
@@ -27,25 +26,15 @@ public class VectorSpaceSearch implements Search {
     }
 
     @Override
-    public ArrayList<Document> execute() throws IOException {
-        ArrayList<Document> documents;
-        ArrayList<Document> result = new ArrayList<>();
+    public ArrayList<Posting> execute() throws IOException {
         if (searchTerm.startsWith("\"") && searchTerm.endsWith("\"")) {
-            documents = processPhraseQuery();
+            return processPhraseQuery();
         } else {
-            documents = processSimpleQuery();
+            return processSimpleQuery();
         }
-
-        Document doc;
-        for (int i = 0; i < topK && i < documents.size(); ++i) {
-            doc = documents.get(i);
-            result.add(doc);
-        }
-
-        return result;
     }
 
-    private ArrayList<Document> processSimpleQuery() throws IOException {
+    private ArrayList<Posting> processSimpleQuery() throws IOException {
         List<String> wildcardTokens = new LinkedList<>();
 
         List<String> searchWords = new LinkedList<>();
@@ -59,7 +48,7 @@ public class VectorSpaceSearch implements Search {
             searchWords.add(wildcardToken);
         }
 
-        computeQueryVector(searchWords);
+        computeQueryVector(searchWords.toArray(new String[searchWords.size()]));
 
         ArrayList<Posting> postings = new ArrayList<>();
         double docWeightSum = 0;
@@ -82,51 +71,44 @@ public class VectorSpaceSearch implements Search {
             queryVector.put(key, queryVector.get(key)/docWeightSum);
         }
 
-        postings = rankResults(postings, searchWords);
+        postings = rankResults(postings);
 
-        ArrayList<Document> result = new ArrayList<>();
-        for (int i = 0; i < topK && i < postings.size(); ++i) {
-            result.add(index.buildDocument(postings.get(i)));
-        }
-
-        return result;
+        return postings;
     }
 
-    private ArrayList<Document> processPhraseQuery() throws IOException {
+    private ArrayList<Posting> processPhraseQuery() throws IOException {
         Map<Integer, List<Posting>> docs = new HashMap<>();
         String removedQuotationMarks = searchTerm.substring(1, searchTerm.length() - 1);
-        Set<String> tokens = WordParser.getInstance().stem(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES).keySet();
-        String stemmedQuery = WordParser.getInstance().stemToString(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES);
+        String[] stemmedQuery = WordParser.getInstance().stemToString(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES).split(" ");
 
-        computeQueryVector(new LinkedList<>(tokens));
+        computeQueryVector(stemmedQuery);
         int numDocs = index.getNumDocuments();
         double docWeightSum = 0;
-        Iterator<String> tokenIterator = tokens.iterator();
         // Initialize HashSet with first documents
-        String searchWord = tokenIterator.next();
-        List<Posting> tmpDocList = index.lookUpPostingInFile(searchWord);
-        for (Posting posting: tmpDocList) {
+        String searchWord = stemmedQuery[0];
+        List<Posting> tmpPostingList = index.lookUpPostingInFile(searchWord);
+        for (Posting posting: tmpPostingList) {
             LinkedList<Posting> tmpList = new LinkedList<>();
             tmpList.add(posting);
             docs.put(posting.getDocId(), tmpList);
 
-            Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
+            Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpPostingList.size()));
             queryVector.put(searchWord, docVector);
             docWeightSum += docVector * docVector;
         }
 
-        while (tokenIterator.hasNext()) {
-            searchWord = tokenIterator.next();
-            tmpDocList = index.lookUpPostingInFile(searchWord);
+        for (int i = 1; i < stemmedQuery.length; ++i) {
+            searchWord = stemmedQuery[i];
+            tmpPostingList = index.lookUpPostingInFile(searchWord);
 
-            for (Posting doc: tmpDocList) {
+            for (Posting doc: tmpPostingList) {
                 if (docs.containsKey(doc.getDocId())) {
                     List<Posting> tmpList = docs.get(doc.getDocId());
                     tmpList.add(doc);
                     docs.put(doc.getDocId(), tmpList);
                 }
 
-                Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
+                Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpPostingList.size()));
                 queryVector.put(searchWord, docVector);
                 docWeightSum += docVector * docVector;
             }
@@ -138,28 +120,30 @@ public class VectorSpaceSearch implements Search {
             queryVector.put(key, queryVector.get(key)/docWeightSum);
         }
 
+        ArrayList<Posting> results = new ArrayList<>();
+        for (Map.Entry<Integer, List<Posting>> postingsPerDocId: docs.entrySet()) {
+            List<Posting> postings = postingsPerDocId.getValue();
+            if (postings.size() == stemmedQuery.length) {
+                for (long occurrence: postings.get(0).getOccurrences()) {
+                    boolean isMatch = true;
+                    for (int i = 1; i < postings.size(); ++i) {
+                        if (!postings.get(i).getOccurrences().contains(occurrence + i)) {
+                            isMatch = false;
+                        }
+                    }
 
-        ArrayList<Document> result = new ArrayList<>();
-        ArrayList<Posting> postings = new ArrayList<>();
-        docs.values().forEach(postings::addAll);
-        postings = rankResults(postings, new LinkedList<>(tokens));
-        Document doc;
-
-        for (Posting posting: postings) {
-            doc = index.buildDocument(posting);
-            String stemmedTitle = WordParser.getInstance().stemToString(doc.getInventionTitle(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
-            String stemmedAbstract = WordParser.getInstance().stemToString(doc.getPatentAbstract(), Configuration.FILTER_STOPWORDS_IN_PHRASES);
-
-            if (stemmedTitle.indexOf(stemmedQuery) >= 0 ||
-                    stemmedAbstract.indexOf(stemmedQuery) >= 0) {
-                result.add(doc);
+                    if (isMatch) {
+                        results.addAll(postings);
+                        break;
+                    }
+                }
             }
         }
 
-        return result;
+        return rankResults(results);
     }
 
-    private void computeQueryVector(List<String> searchWords) {
+    private void computeQueryVector(String[] searchWords) {
         for (String searchWord: searchWords) {
             double wordCount;
             if (queryVector.get(searchWord) == null) {
@@ -172,7 +156,7 @@ public class VectorSpaceSearch implements Search {
         }
     }
 
-    private ArrayList<Posting> rankResults(ArrayList<Posting> postings, List<String> searchWords) {
+    private ArrayList<Posting> rankResults(ArrayList<Posting> postings) {
         Map<Integer, Posting> postingTable = new HashMap<>();
 
         // Initialize data structure
@@ -205,26 +189,11 @@ public class VectorSpaceSearch implements Search {
             rankingsForDcg.add(ranking.getValue());
         }
 
-        ArrayList<Double> actualDcg = computeActualDcg(rankingsForDcg);
-
-        for (int i = 0; i < topK && i < tmpList.size(); ++i) {
+        for (int i = 0; i < tmpList.size(); ++i) {
             int docId = tmpList.get(i).getKey();
             result.add(postingTable.get(docId));
         }
 
         return result;
     }
-
-    ArrayList<Double> computeActualDcg(ArrayList<Double> rankings) {
-        ArrayList<Double> actualDcg = new ArrayList<>();
-
-        actualDcg.add(1.0);
-
-        for (int i = 1; i < rankings.size(); ++i) {
-            actualDcg.add(actualDcg.get((i-1)) + (rankings.get(i)/(Math.log((i+1))/Math.log(2.0))));
-        }
-
-        return actualDcg;
-    }
-
 }

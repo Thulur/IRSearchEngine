@@ -1,6 +1,6 @@
 package SearchEngine.search;
 
-import SearchEngine.data.Document;
+import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
 
 import java.io.IOException;
@@ -12,5 +12,5 @@ import java.util.ArrayList;
 public interface Search {
     void setupSearch(String searchTerm, Index index, int topK, int prf);
 
-    ArrayList<Document> execute() throws IOException;
+    ArrayList<Posting> execute() throws IOException;
 }

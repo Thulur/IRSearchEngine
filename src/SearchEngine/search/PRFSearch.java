@@ -2,8 +2,8 @@ package SearchEngine.search;
 
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
+import SearchEngine.data.Posting;
 import SearchEngine.index.Index;
-import SearchEngine.utils.WordParser;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,13 +26,13 @@ public class PRFSearch implements Search {
     }
 
     @Override
-    public ArrayList<Document> execute() throws IOException {
+    public ArrayList<Posting> execute() throws IOException {
         SearchFactory searchFactory = new SearchFactory();
         searchFactory.setIndex(index);
 
         // Execute search with original query
         Search firstSearch = searchFactory.getSearchFromQuery(searchTerm, topK, 0);
-        ArrayList<Document> firstSearchResults = firstSearch.execute();
+        ArrayList<Posting> firstSearchResults = firstSearch.execute();
         Map<String, List<Long>> words = getWordOccurrencesFromResults(firstSearchResults);
 
         // Sort words by their number of occurrences
@@ -43,24 +43,24 @@ public class PRFSearch implements Search {
 
         // Execute search with modified query
         Search secondSearch = searchFactory.getSearchFromQuery(modifiedSearchTerm, topK, 0);
-        ArrayList<Document> secondSearchResults = secondSearch.execute();
+        ArrayList<Posting> secondSearchResults = secondSearch.execute();
 
         ArrayList<Document> result = new ArrayList<>();
         Document curDoc;
-        for (int i = 0; i < topK && i < secondSearchResults.size(); ++i) {
+        /*for (int i = 0; i < topK && i < secondSearchResults.size(); ++i) {
             curDoc = secondSearchResults.get(i);
             curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
             result.add(curDoc);
-        }
+        }*/
 
-        return result;
+        return secondSearchResults;
     }
 
-    private Map<String, List<Long>> getWordOccurrencesFromResults(ArrayList<Document> results) throws IOException {
+    private Map<String, List<Long>> getWordOccurrencesFromResults(ArrayList<Posting> results) throws IOException {
         Map<String, List<Long>> words = new HashMap<>();
 
-        for (int i = 0; i < prf && i < results.size(); ++i) {
-            Document curDoc = results.get(i);
+        /*for (int i = 0; i < prf && i < results.size(); ++i) {
+            Posting curDoc = results.get(i);
             curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
 
             for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.generateSnippet(searchTerm), true).entrySet()) {
@@ -70,7 +70,7 @@ public class PRFSearch implements Search {
                     words.put(entry.getKey(), entry.getValue());
                 }
             }
-        }
+        }*/
 
         return words;
     }
