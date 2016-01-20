@@ -172,10 +172,10 @@ public class Document {
     }
 
     public String generateSnippet(String query) {
-        return generateSnippet(query, null);
+        return generateSnippet(query, -1, null);
     }
 
-    public String generateSnippet(String query, OutputFormat outputFormat) {
+    public String generateSnippet(String query, double ndcg, OutputFormat outputFormat) {
         // For coloring and highlighting take a look at https://en.wikipedia.org/wiki/ANSI_escape_code
         // http://askubuntu.com/questions/528928/how-to-do-underline-bold-italic-strikethrough-color-background-and-size-i
         int displayedChars = 200;
@@ -238,7 +238,7 @@ public class Document {
 
 
         if (outputFormat != null) {
-            formatSnippet(snippet, queryTerms, booleanTokens, outputFormat, isPhraseQuery);
+            formatSnippet(snippet, queryTerms, booleanTokens, ndcg, outputFormat, isPhraseQuery);
         } else {
             snippet.replace(0, 0, "0" + docId + " " + inventionTitle + " ");
         }
@@ -246,7 +246,7 @@ public class Document {
         return snippet.toString();
     }
 
-    private void formatSnippet(StringBuilder snippet, String[] terms, List<String> ignored, OutputFormat outputFormat, boolean isPhraseQuery) {
+    private void formatSnippet(StringBuilder snippet, String[] terms, List<String> ignored, double ndcg, OutputFormat outputFormat, boolean isPhraseQuery) {
         List<String> allTerms = Arrays.asList(terms);
         List<String> tmpTerms = new ArrayList<>();
         for (String term: allTerms) {
@@ -255,7 +255,7 @@ public class Document {
             tmpTerms.add(term);
         }
 
-        StringBuilder titleString = new StringBuilder("0" + docId + " " + inventionTitle);
+        StringBuilder titleString = new StringBuilder("0" + docId + "\t" + inventionTitle);
         if (isPhraseQuery) {
             colorPhrase(snippet, tmpTerms, outputFormat.getTextHighlight(),
                     outputFormat.getTextStandard(), outputFormat.getEnd());
@@ -270,7 +270,7 @@ public class Document {
                     outputFormat.getTitleStandard(), outputFormat.getEnd());
         }
 
-        snippet.replace(0, 0, titleString.toString() + "\n\t\t");
+        snippet.replace(0, 0, titleString.toString() + "\t" + ndcg + "\n");
     }
 
     private void formatLines(StringBuilder snippet) {
@@ -281,9 +281,11 @@ public class Document {
             int newlinePos = snippet.indexOf(" ", i * charsPerLine);
 
             if (newlinePos != -1) {
-                snippet.replace(newlinePos, newlinePos + 1, "\n\t\t");
+                snippet.replace(newlinePos, newlinePos + 1, "\n");
             }
         }
+
+        snippet.append("\n");
     }
 
     private void colorWords(StringBuilder input, List<String> terms, String highlight, String standard, String end) {
