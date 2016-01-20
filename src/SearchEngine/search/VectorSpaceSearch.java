@@ -179,8 +179,7 @@ public class VectorSpaceSearch implements Search {
         }
 
         List<HashMap.Entry<Integer, Double>> tmpList = new ArrayList<>(rankings.entrySet());
-        Collections.sort(tmpList, (obj1, obj2) -> ((Comparable) ((obj1)).getValue()).compareTo(((obj2)).getValue()));
-        Collections.reverse(tmpList);
+        Collections.sort(tmpList, (obj1, obj2) -> ((Comparable) ((obj2)).getValue()).compareTo(((obj1)).getValue()));
         ArrayList<Posting> result = new ArrayList<>();
 
         for (int i = 0; i < tmpList.size(); ++i) {

@@ -69,34 +69,36 @@ public class BooleanSearch implements Search {
 
     private void executeBooleanOperation() throws IOException {
         Iterator<List<Posting>> searchIterator = searchResults.values().iterator();
-        Set<Integer> firstSet = new HashSet<>();
-        Set<Integer> secondSet = new HashSet<>();
         Map<Integer, Posting> postings = new HashMap<>();
 
         for (Posting posting: searchIterator.next()) {
-            firstSet.add(posting.getDocId());
             postings.put(posting.getDocId(), posting);
         }
 
         for (Posting posting: searchIterator.next()) {
-            secondSet.add(posting.getDocId());
+            if (postings.get(posting.getDocId()) != null) {
+                if (booleanOperator.equals("NOT")) {
+                    postings.remove(posting.getDocId());
+                } else {
+                    Posting tmpPosting = postings.get(posting.getDocId());
+                    double curWeight = tmpPosting.getWeight();
+                    tmpPosting.setWeight(curWeight + posting.getWeight());
 
-            postings.put(posting.getDocId(), posting);
+                    if (booleanOperator.equals("AND")) {
+                        results.add(tmpPosting);
+                    }
+                }
+            } else {
+                if (booleanOperator.equals("OR")) {
+                    postings.put(posting.getDocId(), posting);
+                }
+            }
         }
 
-        switch (booleanOperator) {
-            case "AND":  firstSet.retainAll(secondSet); break;
-            case "OR": firstSet.addAll(secondSet); break;
-            case "NOT": firstSet.removeAll(secondSet); break;
-            default: break;
+        if (booleanOperator.equals("NOT") || booleanOperator.equals("OR")) {
+            results.addAll(postings.values());
         }
-        Iterator<Integer> docIdIterator = firstSet.iterator();
-        int curDocId;
-        int i = 0;
-        while (docIdIterator.hasNext() && i < topK) {
-            curDocId = docIdIterator.next();
-            results.add(postings.get(curDocId));
-            ++i;
-        }
+
+        Collections.sort(results, (obj1, obj2) -> ((Comparable) ((obj2)).getWeight()).compareTo(((obj1)).getWeight()));
     }
 }
