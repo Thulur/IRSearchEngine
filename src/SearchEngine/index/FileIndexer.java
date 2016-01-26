@@ -5,7 +5,7 @@ import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
 import SearchEngine.data.Posting;
 import SearchEngine.index.parse.ParsedEventListener;
-import SearchEngine.index.parse.XmlParser;
+import SearchEngine.index.parse.ContentParser;
 import SearchEngine.utils.NumberParser;
 import SearchEngine.utils.WordParser;
 import org.apache.commons.lang3.ArrayUtils;
@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
  * Created by sebastian on 03.11.2015.
  */
 public class FileIndexer implements Callable<Integer>, ParsedEventListener {
-    private XmlParser xmlApp = new XmlParser();
+    private ContentParser xmlApp = new ContentParser();
     private HashMap<String, Long> values = new HashMap<>();
     private CustomFileWriter tmpPostingList;
     private CustomFileWriter dictionaryFile;
@@ -59,7 +59,7 @@ public class FileIndexer implements Callable<Integer>, ParsedEventListener {
     public Integer call() {
         try {
             System.out.println("Start Parsing");
-            xmlApp.parseFiles(FilePaths.RAW_PARTIAL_PATH + filename);
+            xmlApp.parseFile(FilePaths.RAW_PARTIAL_PATH + filename);
             System.out.println("Finish Parsing");
         } catch (Exception e) {
             e.printStackTrace();

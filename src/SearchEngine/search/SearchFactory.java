@@ -1,6 +1,6 @@
 package SearchEngine.search;
 
-import SearchEngine.index.Index;
+import SearchEngine.index.ContentIndex;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -9,10 +9,10 @@ import java.util.List;
  * Created by sebastian on 10.11.2015.
  */
 public class SearchFactory {
-    private Index index;
+    private ContentIndex contentIndex;
 
-    public void setIndex(Index index) {
-        this.index = index;
+    public void setContentIndex(ContentIndex contentIndex) {
+        this.contentIndex = contentIndex;
     }
 
     public Search getSearchFromQuery(String query, int topK) {
@@ -37,7 +37,7 @@ public class SearchFactory {
             search = new VectorSpaceSearch();
         }
 
-        search.setupSearch(query, index, topK, 0);
+        search.setupSearch(query, contentIndex, topK, 0);
 
         return search;
     }

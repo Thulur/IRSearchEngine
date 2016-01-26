@@ -15,14 +15,14 @@ import java.util.regex.Pattern;
 /**
  * Created by Sebastian on 24.10.2015.
  */
-public class Index {
+public class ContentIndex {
     TreeMap<String, Long> values = new TreeMap<>();
     TreeMap<String, Long> skipValues = new TreeMap<>();
     DocumentIndex docIndex = new DocumentIndex();
     String indexFile;
     int numDocuments = -1;
 
-    public Index() {
+    public ContentIndex() {
 
     }
 

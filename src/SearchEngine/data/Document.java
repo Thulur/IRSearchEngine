@@ -348,7 +348,7 @@ public class Document {
                     if (pos == -1) notComplete = false;
                     ++pos;
                 } else {
-                    // If the first word is found but not the second, do not test the same position again, skip it
+                    // If the first word is found but not the second, do not notifyEventListeners the same position again, skip it
                     ++pos;
                 }
             }

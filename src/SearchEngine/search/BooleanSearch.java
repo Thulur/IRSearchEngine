@@ -1,7 +1,7 @@
 package SearchEngine.search;
 
 import SearchEngine.data.Posting;
-import SearchEngine.index.Index;
+import SearchEngine.index.ContentIndex;
 import SearchEngine.utils.WordParser;
 
 import java.io.IOException;
@@ -15,15 +15,15 @@ public class BooleanSearch implements Search {
     private List<String> booleanTokens;
     private HashMap<String, List<Posting>> searchResults;
     private String booleanOperator;
-    private Index index;
+    private ContentIndex contentIndex;
     private WordParser wordParser;
     private ArrayList<Posting> results;
     private int topK;
 
     @Override
-    public void setupSearch(String searchTerm, Index index, int topK, int prf) {
+    public void setupSearch(String searchTerm, ContentIndex contentIndex, int topK, int prf) {
         this.searchTerm = searchTerm;
-        this.index = index;
+        this.contentIndex = contentIndex;
         this.topK = topK;
 
         wordParser = WordParser.getInstance();
@@ -54,7 +54,7 @@ public class BooleanSearch implements Search {
 
     private void processQuery() throws IOException {
         SearchFactory searchFactory = new SearchFactory();
-        searchFactory.setIndex(index);
+        searchFactory.setContentIndex(contentIndex);
 
         for (String searchToken : searchTerm.split(" ")) {
             if (booleanTokens.contains(searchToken)) {

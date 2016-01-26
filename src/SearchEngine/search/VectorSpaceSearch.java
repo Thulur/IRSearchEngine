@@ -2,7 +2,7 @@ package SearchEngine.search;
 
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Posting;
-import SearchEngine.index.Index;
+import SearchEngine.index.ContentIndex;
 import SearchEngine.utils.WordParser;
 
 import java.io.IOException;
@@ -13,14 +13,14 @@ import java.util.*;
  */
 public class VectorSpaceSearch implements Search {
     private String searchTerm;
-    private Index index;
+    private ContentIndex contentIndex;
     private Map<String, Double> queryVector;
     private int topK;
 
     @Override
-    public void setupSearch(String searchTerm, Index index, int topK, int prf) {
+    public void setupSearch(String searchTerm, ContentIndex contentIndex, int topK, int prf) {
         this.searchTerm = searchTerm;
-        this.index = index;
+        this.contentIndex = contentIndex;
         this.queryVector = new HashMap<>();
         this.topK = topK;
     }
@@ -53,12 +53,12 @@ public class VectorSpaceSearch implements Search {
         ArrayList<Posting> postings = new ArrayList<>();
         double docWeightSum = 0;
         for (String searchWord: queryVector.keySet()) {
-            List<Posting> tmpDocList = index.lookUpPostingInFile(searchWord);
+            List<Posting> tmpDocList = contentIndex.lookUpPostingInFile(searchWord);
             // Index does not contain the word
             if (tmpDocList.size() == 0) continue;
 
             postings.addAll(tmpDocList);
-            int numDocs = index.getNumDocuments();
+            int numDocs = contentIndex.getNumDocuments();
 
             Double docVector = (1 + Math.log10(queryVector.get(searchWord)) * Math.log10(numDocs / tmpDocList.size()));
             queryVector.put(searchWord, docVector);
@@ -82,11 +82,11 @@ public class VectorSpaceSearch implements Search {
         String[] stemmedQuery = WordParser.getInstance().stemToString(removedQuotationMarks, Configuration.FILTER_STOPWORDS_IN_PHRASES).split(" ");
 
         computeQueryVector(stemmedQuery);
-        int numDocs = index.getNumDocuments();
+        int numDocs = contentIndex.getNumDocuments();
         double docWeightSum = 0;
         // Initialize HashSet with first documents
         String searchWord = stemmedQuery[0];
-        List<Posting> tmpPostingList = index.lookUpPostingInFile(searchWord);
+        List<Posting> tmpPostingList = contentIndex.lookUpPostingInFile(searchWord);
         for (Posting posting: tmpPostingList) {
             LinkedList<Posting> tmpList = new LinkedList<>();
             tmpList.add(posting);
@@ -99,7 +99,7 @@ public class VectorSpaceSearch implements Search {
 
         for (int i = 1; i < stemmedQuery.length; ++i) {
             searchWord = stemmedQuery[i];
-            tmpPostingList = index.lookUpPostingInFile(searchWord);
+            tmpPostingList = contentIndex.lookUpPostingInFile(searchWord);
 
             for (Posting doc: tmpPostingList) {
                 if (docs.containsKey(doc.getDocId())) {

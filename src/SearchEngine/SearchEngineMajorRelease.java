@@ -27,8 +27,8 @@ import SearchEngine.data.Posting;
 import SearchEngine.data.output.AnsiEscapeFormat;
 import SearchEngine.data.output.HTMLFormat;
 import SearchEngine.data.output.OutputFormat;
+import SearchEngine.index.ContentIndex;
 import SearchEngine.index.FileIndexer;
-import SearchEngine.index.Index;
 import SearchEngine.index.parse.ParsedEventListener;
 import SearchEngine.search.SearchFactory;
 import SearchEngine.utils.SpellingCorrector;
@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
-    private Index index = new Index();
+    private ContentIndex contentIndex = new ContentIndex();
     private List<String> files = new LinkedList<>();
     private int maxThreads = 4;
     private int curFileNum = 0;
@@ -94,7 +94,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         executor.shutdown();
 
         // Join all indices at the end
-        index.mergePartialIndices(files, numPatents);
+        contentIndex.mergePartialIndices(files, numPatents);
 
         if (Configuration.ENABLE_SPELLING_CORRECTION) {
             SpellingCorrector.setup();
@@ -113,15 +113,15 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     
     @Override
     void compressIndex() {
-        index.compressIndex();
+        contentIndex.compressIndex();
         searchFactory = new SearchFactory();
-        searchFactory.setIndex(index);
+        searchFactory.setContentIndex(contentIndex);
     }
 
     @Override
     boolean loadCompressedIndex() {
         try {
-            index.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH, FilePaths.DOCINDEX_FILE);
+            contentIndex.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH, FilePaths.DOCINDEX_FILE);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -143,7 +143,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         }
 
         searchFactory = new SearchFactory();
-        searchFactory.setIndex(index);
+        searchFactory.setContentIndex(contentIndex);
         return true;
     }
 
@@ -172,7 +172,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             postings = searchFactory.getSearchFromQuery(query, topK).execute();
 
             for (int i = 0; i < topK && i < postings.size(); ++i) {
-                documents.add(index.buildDocument(postings.get(i)));
+                documents.add(contentIndex.buildDocument(postings.get(i)));
             }
 
         } catch (IOException e) {

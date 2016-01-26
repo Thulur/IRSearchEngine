@@ -3,7 +3,7 @@ package SearchEngine.search;
 import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.data.Posting;
-import SearchEngine.index.Index;
+import SearchEngine.index.ContentIndex;
 
 import java.io.IOException;
 import java.util.*;
@@ -13,14 +13,14 @@ import java.util.*;
  */
 public class PRFSearch implements Search {
     private String searchTerm;
-    private Index index;
+    private ContentIndex contentIndex;
     private int topK;
     private int prf;
 
     @Override
-    public void setupSearch(String searchTerm, Index index, int topK, int prf) {
+    public void setupSearch(String searchTerm, ContentIndex contentIndex, int topK, int prf) {
         this.searchTerm = searchTerm;
-        this.index = index;
+        this.contentIndex = contentIndex;
         this.topK = topK;
         this.prf = prf;
     }
@@ -28,7 +28,7 @@ public class PRFSearch implements Search {
     @Override
     public ArrayList<Posting> execute() throws IOException {
         SearchFactory searchFactory = new SearchFactory();
-        searchFactory.setIndex(index);
+        searchFactory.setContentIndex(contentIndex);
 
         // Execute search with original query
         Search firstSearch = searchFactory.getSearchFromQuery(searchTerm, topK);
