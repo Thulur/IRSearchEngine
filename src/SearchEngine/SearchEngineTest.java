@@ -130,6 +130,15 @@ public class SearchEngineTest {
         //System.out.println("\ntires NOT pressure:");
         //myEngine.search("tires NOT pressure", 20).forEach(System.out::println);
 
+        System.out.println("\nLinkTo:07920906:");
+        myEngine.search("LinkTo:07920906", 10).forEach(System.out::println);
+
+        System.out.println("\nLinkTo:07904949:");
+        myEngine.search("LinkTo:07904949", 10).forEach(System.out::println);
+
+        System.out.println("\nLinkTo:08078787:");
+        myEngine.search("LinkTo:08078787", 10).forEach(System.out::println);
+
         System.out.println("\nview guidelines:");
         myEngine.search("view guidelines", 20).forEach(System.out::println);
 

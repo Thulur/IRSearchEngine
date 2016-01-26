@@ -24,12 +24,14 @@ public class FileMergeHead {
             postinglistFile = new CustomFileReader(postinglistFilename);
 
             String curLine = indexFile.readLine();
-            String[] lineValues = curLine.split("[ ]");
-            // A line in the index online contains a token and a position (there should be at least one entry)
-            assert lineValues.length == 2;
+            if (curLine != null) {
+                String[] lineValues = curLine.split("[ ]");
+                // A line in the index online contains a token and a position (there should be at least one entry)
+                assert lineValues.length == 2;
 
-            token = lineValues[0];
-            position = Long.parseLong(lineValues[1]);
+                token = lineValues[0];
+                position = Long.parseLong(lineValues[1]);
+            }
         } catch (java.io.IOException e) {
             e.printStackTrace();
         }

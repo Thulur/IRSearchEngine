@@ -13,6 +13,8 @@ import java.util.*;
  * Created by sebastian on 22.10.2015.
  */
 public class Document {
+    public static final int minID = 7861317; // 2011
+    public static final int maxID = 8984661; // 2015
     private int docId;
     private int fileId;
     private String inventionTitle = "";
@@ -23,6 +25,7 @@ public class Document {
     private long patentAbstractLength;
     private String description;
     private String claims;
+    private ArrayList<Integer> citations = new ArrayList<>();
 
     public Document() {
 
@@ -368,5 +371,9 @@ public class Document {
         }
 
         input.append(end);
+    }
+
+    public ArrayList<Integer> getCitations() {
+        return citations;
     }
 }

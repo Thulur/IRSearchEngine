@@ -27,9 +27,12 @@ import SearchEngine.data.Posting;
 import SearchEngine.data.output.AnsiEscapeFormat;
 import SearchEngine.data.output.HTMLFormat;
 import SearchEngine.data.output.OutputFormat;
+import SearchEngine.index.CitationIndex;
+import SearchEngine.index.CitationIndexer;
 import SearchEngine.index.ContentIndex;
-import SearchEngine.index.FileIndexer;
+import SearchEngine.index.ContentIndexer;
 import SearchEngine.index.parse.ParsedEventListener;
+import SearchEngine.search.CitationSearch;
 import SearchEngine.search.SearchFactory;
 import SearchEngine.utils.SpellingCorrector;
 
@@ -39,9 +42,9 @@ import java.util.concurrent.*;
 
 public class SearchEngineMajorRelease extends SearchEngine implements ParsedEventListener { // Replace 'Template' with your search engine's name, i.e. SearchEngineMyTeamName
     private ContentIndex contentIndex = new ContentIndex();
+    private CitationIndex citationIndex = new CitationIndex();
     private List<String> files = new LinkedList<>();
-    private int maxThreads = 4;
-    private int curFileNum = 0;
+    private int maxThreads = 2;
     private SearchFactory searchFactory;
     private int numPatents = 0;
     private OutputFormat outputFormat;
@@ -72,14 +75,21 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             e.printStackTrace();
         }
 
+        indexContent();
+        indexCitations();
+        setupSpellchecking();
+    }
+
+    private void indexContent() {
         ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
         Set<Future<Integer>> result = new HashSet<>();
+        int curFileNum = 0;
+
         while (!executor.isShutdown() && curFileNum < files.size()) {
-            Callable<Integer> fileIndexer = new FileIndexer(files.get(curFileNum), curFileNum, this);
+            Callable<Integer> fileIndexer = new ContentIndexer(files.get(curFileNum), curFileNum, this);
             result.add(executor.submit(fileIndexer));
             ++curFileNum;
         }
-
 
         try {
             for (Future<Integer> future : result) {
@@ -95,7 +105,30 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
         // Join all indices at the end
         contentIndex.mergePartialIndices(files, numPatents);
+    }
 
+    private void indexCitations() {
+        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
+        int curFileNum = 0;
+
+        while (!executor.isShutdown() && curFileNum < files.size()) {
+            Runnable fileIndexer = new CitationIndexer(files.get(curFileNum), this);
+            executor.execute(fileIndexer);
+            ++curFileNum;
+        }
+
+        executor.shutdown();
+
+        try {
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        citationIndex.mergePartialIndices(files);
+    }
+
+    private void setupSpellchecking() {
         if (Configuration.ENABLE_SPELLING_CORRECTION) {
             SpellingCorrector.setup();
             try {
@@ -122,6 +155,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     boolean loadCompressedIndex() {
         try {
             contentIndex.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH, FilePaths.DOCINDEX_FILE);
+            citationIndex.load(FilePaths.INDEX_CITATION_PATH);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -149,16 +183,38 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
 
     @Override
     ArrayList<String> search(String query, int topK) {
-        ArrayList<String> results = executeSearch(query, topK);
+        ArrayList<String> results;
 
-        if (results.size() == 0 && Configuration.ENABLE_SPELLING_CORRECTION) {
-            StringBuilder correctedQuery = new StringBuilder();
-            for (String queryWord: query.split(" ")) {
-                correctedQuery.append(SpellingCorrector.getInstance().correctSpelling(queryWord));
-                correctedQuery.append(" ");
+        if (query.startsWith("LinkTo:")) {
+            List<Integer> docIds = new CitationSearch(query, citationIndex).execute();
+            results = new ArrayList<>();
+
+            try {
+                int i = 0;
+                for(Integer docId: docIds) {
+                    if (i >= topK) break;
+                    ++i;
+
+                    Posting posting = new Posting();
+                    posting.setDocId(docId);
+                    Document doc = contentIndex.buildDocument(posting);
+                    results.add("0" + doc.getDocId() + "\t" + doc.getInventionTitle());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+        } else {
+            results = executeSearch(query, topK);
 
-            results = executeSearch(correctedQuery.toString(), topK);
+            if (results.size() == 0 && Configuration.ENABLE_SPELLING_CORRECTION) {
+                StringBuilder correctedQuery = new StringBuilder();
+                for (String queryWord: query.split(" ")) {
+                    correctedQuery.append(SpellingCorrector.getInstance().correctSpelling(queryWord));
+                    correctedQuery.append(" ");
+                }
+
+                results = executeSearch(correctedQuery.toString(), topK);
+            }
         }
 
         return results;

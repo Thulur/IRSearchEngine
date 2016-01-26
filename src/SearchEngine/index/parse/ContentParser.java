@@ -103,7 +103,6 @@ public class ContentParser extends XmlParser {
 					curElement = null;
 					patentGrantEntered = false;
 					publicationReferenceEntered = false;
-					docNumberEntered = false;
 					document = null;
 				}
 

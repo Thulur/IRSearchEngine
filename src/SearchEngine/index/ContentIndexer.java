@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 /**
  * Created by sebastian on 03.11.2015.
  */
-public class FileIndexer implements Callable<Integer>, ParsedEventListener {
+public class ContentIndexer implements Callable<Integer>, ParsedEventListener {
     private ContentParser xmlApp = new ContentParser();
     private HashMap<String, Long> values = new HashMap<>();
     private CustomFileWriter tmpPostingList;
@@ -31,15 +31,15 @@ public class FileIndexer implements Callable<Integer>, ParsedEventListener {
     private CustomFileWriter docIndex;
     private String filenameId;
     private String filename;
-    private int docId;
+    private int fileId;
     private int numPatents = 0;
 
-    public FileIndexer(String filename, int docId, ParsedEventListener parsingStateListener) {
+    public ContentIndexer(String filename, int fileId, ParsedEventListener parsingStateListener) {
         xmlApp.addDocumentParsedListener(parsingStateListener);
         xmlApp.addDocumentParsedListener(this);
         this.filename = filename;
         filenameId = "";
-        this.docId = docId;
+        this.fileId = fileId;
 
         if (filename.indexOf("ipg") != -1) {
             filenameId = filename.substring(filename.indexOf("ipg") + 3, filename.indexOf("ipg") + 9);
@@ -58,9 +58,9 @@ public class FileIndexer implements Callable<Integer>, ParsedEventListener {
     @Override
     public Integer call() {
         try {
-            System.out.println("Start Parsing");
+            System.out.println("Start Parsing Content");
             xmlApp.parseFile(FilePaths.RAW_PARTIAL_PATH + filename);
-            System.out.println("Finish Parsing");
+            System.out.println("Finish Parsing Content");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,7 +109,7 @@ public class FileIndexer implements Callable<Integer>, ParsedEventListener {
         }
     }
 
-    public void addToIndex(Document document) throws IOException {
+    private void addToIndex(Document document) throws IOException {
         ++numPatents;
         StringBuilder docContent = new StringBuilder(document.getInventionTitle());
         docContent.append(" ");
@@ -119,7 +119,7 @@ public class FileIndexer implements Callable<Integer>, ParsedEventListener {
         docContent.append(" ");
         docContent.append(document.getDescription());
         Map<String, List<Long>> words = WordParser.getInstance().stem(docContent.toString(), true);
-        document.setFileId(docId);
+        document.setFileId(fileId);
         docIndex.write(document.getDocIndexEntry());
         docIndex.write(" ".concat(String.valueOf(WordParser.getInstance().stemToString(document.getInventionTitle(), true).split("[ ]").length)));
         docIndex.write(" ".concat(String.valueOf(WordParser.getInstance().stemToString(document.getPatentAbstract(), true).split("[ ]").length)));

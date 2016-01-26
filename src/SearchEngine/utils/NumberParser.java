@@ -14,7 +14,14 @@ public class NumberParser {
      * @return Integer value of s or -1 if no conversion is possible.
      */
     public static int parseDecimalInt(String s) {
-        return -1;
+        int result = 0;
+
+        for (int i = 0; i < s.length(); ++i) {
+            result *= 10;
+            result += s.charAt(i) - '0';
+        }
+
+        return result;
     }
 
     public static long parseDecimalLong(String s) {
