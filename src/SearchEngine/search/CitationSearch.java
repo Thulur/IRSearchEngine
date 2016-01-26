@@ -24,7 +24,20 @@ public class CitationSearch {
         query = query.replace("LinkTo:", "");
 
         try {
-            results = citationIndex.lookUpCitationsInFile(NumberParser.parseDecimalInt(query));
+            if (query.contains(" AND ")) {
+                String[] docIds = query.split(" AND ");
+
+                List<Integer> firstId = citationIndex.lookUpCitationsInFile(NumberParser.parseDecimalInt(docIds[0]));
+                List<Integer> secondId = citationIndex.lookUpCitationsInFile(NumberParser.parseDecimalInt(docIds[1]));
+
+                for (Integer docId: firstId) {
+                    if (secondId.contains(docId)) {
+                        results.add(docId);
+                    }
+                }
+            } else {
+                results = citationIndex.lookUpCitationsInFile(NumberParser.parseDecimalInt(query));
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

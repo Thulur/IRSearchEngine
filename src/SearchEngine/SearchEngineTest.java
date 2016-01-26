@@ -139,6 +139,12 @@ public class SearchEngineTest {
         System.out.println("\nLinkTo:08078787:");
         myEngine.search("LinkTo:08078787", 10).forEach(System.out::println);
 
+        System.out.println("\nLinkTo:07865308 AND 07925708:");
+        myEngine.search("LinkTo:07865308 AND 07925708", 10).forEach(System.out::println);
+
+        System.out.println("\nLinkTo:07947864 AND 07947142:");
+        myEngine.search("LinkTo:07947864 AND 07947142", 10).forEach(System.out::println);
+
         System.out.println("\nview guidelines:");
         myEngine.search("view guidelines", 20).forEach(System.out::println);
 
