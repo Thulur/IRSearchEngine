@@ -118,18 +118,23 @@ public class SearchEngineTest {
         //System.out.println("\ncomputer-readable media:");
         //myEngine.search("computer-readable media", 10).forEach(System.out::println);
 
-        System.out.println("\ngraph editor:");
-        myEngine.search("\"graph editor\"", 20).forEach(System.out::println);
+        //System.out.println("\ngraph editor:");
+        //myEngine.search("\"graph editor\"", 20).forEach(System.out::println);
 
-        System.out.println("\nfossil hydrocarbons:");
-        myEngine.search("fossil hydrocarbons", 20).forEach(System.out::println);
+        //System.out.println("\nfossil hydrocarbons:");
+        //myEngine.search("fossil hydrocarbons", 20).forEach(System.out::println);
 
-        System.out.println("\nphysiological AND saline:");
-        myEngine.search("physiological AND saline", 20).forEach(System.out::println);
+        //System.out.println("\nphysiological AND saline:");
+        //myEngine.search("physiological AND saline", 20).forEach(System.out::println);
 
-        System.out.println("\ntires NOT pressure:");
-        myEngine.search("tires NOT pressure", 20).forEach(System.out::println);
-        //vulnerability testing devices matching
+        //System.out.println("\ntires NOT pressure:");
+        //myEngine.search("tires NOT pressure", 20).forEach(System.out::println);
+
+        System.out.println("\nview guidelines:");
+        myEngine.search("view guidelines", 20).forEach(System.out::println);
+
+        System.out.println("\non-chip OR OCV:");
+        myEngine.search("on-chip OR OCV", 20).forEach(System.out::println);
 //
         //System.out.println("\n\"mobile devices\":");
         //myEngine.search("\"mobile devices\"", 10).forEach(System.out::println);
