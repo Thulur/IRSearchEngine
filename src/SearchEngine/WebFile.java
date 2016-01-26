@@ -162,7 +162,7 @@ public class WebFile {
 
     // returns at most 100 patent IDs
     public ArrayList <String> getGoogleRanking(String query) {
-
+        query = query.replaceAll("NOT ", "-");
 
         // only US : &tbs=ptso:us
         // only US grants : &tbs=ptso:us,ptss:g
