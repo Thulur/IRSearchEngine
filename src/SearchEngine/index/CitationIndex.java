@@ -13,6 +13,7 @@ import java.util.*;
  */
 public class CitationIndex {
     Map<Integer, Long> values = new HashMap<>();
+    Map<Integer, Double> pageRank = new HashMap<>();
 
     public void load(String file) throws IOException {
         CustomFileReader docIndex = new CustomFileReader(file);
@@ -90,6 +91,78 @@ public class CitationIndex {
         return results;
     }
 
+
+    public void computePageRanks() {
+        HashMap<Integer, List<Integer>> citationGraph = new HashMap<>();
+        HashMap<Integer, List<Integer>> inverseCitationGraph = new HashMap<>();
+
+        for (Integer docId: values.keySet()) {
+            //TODO: think about correct handling of exception
+            try {
+                citationGraph.put(docId, lookUpCitationsInFile(docId));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        //compute inverse graph
+        for (Integer docId: citationGraph.keySet()) {
+            inverseCitationGraph.put(docId, new LinkedList<>());
+        }
+        for (Integer docId: citationGraph.keySet()) {
+            for (Integer targetDocId: citationGraph.get(docId)) {
+                if (inverseCitationGraph.get(targetDocId) != null) {
+                    inverseCitationGraph.get(targetDocId).add(docId);
+                }
+            }
+        }
+
+        // numberOfPatents should be the number of all patents in the dataset
+        // this is assuming that every patent occurs in the citationIndex
+        int numberOfPatents = citationGraph.size();
+        double DAMPING_FACTOR = 0.85;
+
+        for (Integer docId: citationGraph.keySet()) {
+            pageRank.put(docId, (1.0/(double) numberOfPatents));
+        }
+        for (int i = 0; i < 50; ++i) {
+            for (Integer docId: pageRank.keySet()) {
+                double sum = 0.0;
+                for (Integer inLink: citationGraph.get(docId)) {
+                    if (pageRank.get(inLink) != null) {
+                        sum += pageRank.get(inLink)/inverseCitationGraph.get(inLink).size();
+                    } else {
+                        sum = 1.0/(double)citationGraph.size();
+                    }
+                }
+                double rank = (1 - DAMPING_FACTOR/numberOfPatents) * sum;
+                pageRank.put(docId, rank);
+            }
+        }
+
+        //call of recursive method
+        //can probably be deleted because actually calculating this recursively is a bad idea
+//        for (Integer docId: pageRank.keySet()) {
+//            pageRank.put(docId, computeRankOfPage(docId, citationGraph, inverseCitationGraph, DAMPING_FACTOR));
+//        }
+    }
+
+    private Double computeRankOfPage(Integer docId, HashMap<Integer, List<Integer>> citationGraph, HashMap<Integer, List<Integer>> inverseCitationGraph, double DAMPING_FACTOR) {
+        double sum = 0.0;
+        if (citationGraph.get(docId) != null) {
+            for (Integer inLink: citationGraph.get(docId)) {
+                if (inverseCitationGraph.get(inLink) != null) {
+                    sum += computeRankOfPage(inLink, citationGraph, inverseCitationGraph, DAMPING_FACTOR)/inverseCitationGraph.get(inLink).size();
+                } else {
+                    sum += computeRankOfPage(inLink, citationGraph, inverseCitationGraph, DAMPING_FACTOR)/1.0;
+                }
+            }
+        } else {
+            sum = 1.0/(double)citationGraph.size();
+        }
+        double rank = (1 - DAMPING_FACTOR/(double)citationGraph.size()) * sum;
+        return rank;
+    }
 
     private String getIpgId(String filename) {
         if (filename.indexOf("ipg") < 0) return "";
