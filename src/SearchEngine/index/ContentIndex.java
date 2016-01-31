@@ -146,8 +146,10 @@ public class ContentIndex {
             tmpIndexFile.close();
 
             normalizeTermDocWeight(indexFile, postingList, docWeights);
-
             cleanupDocIndex();
+
+            indexFile.close();
+            postingList.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -214,6 +216,7 @@ public class ContentIndex {
         }
 
         tmpPostingListReader.close();
+        tmpIndexReader.close();
         File deleteTmpIndexFile = new File(FilePaths.INDEX_PATH + ".tmp");
         deleteTmpIndexFile.delete();
         File deleteTmpPostinglistFile = new File(FilePaths.POSTINGLIST_PATH + ".tmp");
@@ -443,8 +446,13 @@ public class ContentIndex {
     private void loadIndexAt(String word) throws IOException {
         String line;
         CustomFileReader indexFileReader;
-        long position = skipValues.floorEntry(word).getValue();
         int readValues = 0;
+        long position = 0;
+
+        if (skipValues.floorEntry(word) != null) {
+            position = skipValues.floorEntry(word).getValue();
+        }
+
 
         indexFileReader = new CustomFileReader(indexFile);
         indexFileReader.seek(position);
