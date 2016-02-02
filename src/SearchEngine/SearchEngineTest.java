@@ -19,7 +19,7 @@ public class SearchEngineTest {
 
         long start = System.currentTimeMillis();
 
-        myEngine.index();
+        //myEngine.index();
 
         long time = System.currentTimeMillis() - start;
 
@@ -30,7 +30,7 @@ public class SearchEngineTest {
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        myEngine.compressIndex();
+        //myEngine.compressIndex();
         System.out.println("Compression time:\t" + (System.currentTimeMillis() - start) + "\tms\n");
         myEngine.loadCompressedIndex();
         start = System.currentTimeMillis();
@@ -145,11 +145,11 @@ public class SearchEngineTest {
         //System.out.println("\nLinkTo:07947864 AND 07947142:");
         //myEngine.search("LinkTo:07947864 AND 07947142", 10).forEach(System.out::println);
 
-        System.out.println("\nview guidelines:");
-        myEngine.search("view guidelines", 20).forEach(System.out::println);
+        //System.out.println("\nview guidelines:");
+        //myEngine.search("view guidelines", 20).forEach(System.out::println);
 
-        System.out.println("\non-chip OR OCV:");
-        myEngine.search("on-chip OR OCV", 20).forEach(System.out::println);
+        //System.out.println("\non-chip OR OCV:");
+        //myEngine.search("on-chip OR OCV", 20).forEach(System.out::println);
 //
         //System.out.println("\n\"mobile devices\":");
         //myEngine.search("\"mobile devices\"", 10).forEach(System.out::println);

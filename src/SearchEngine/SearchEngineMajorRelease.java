@@ -154,7 +154,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     @Override
     boolean loadCompressedIndex() {
         try {
-//            contentIndex.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH, FilePaths.DOCINDEX_FILE);
+            contentIndex.loadFromFile(FilePaths.COMPRESSED_INDEX_PATH, FilePaths.DOCINDEX_FILE);
             citationIndex.load(FilePaths.INDEX_CITATION_PATH);
         } catch (IOException e) {
             e.printStackTrace();
