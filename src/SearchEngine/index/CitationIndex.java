@@ -119,32 +119,44 @@ public class CitationIndex {
 
         // numberOfPatents should be the number of all patents in the dataset
         // this is assuming that every patent occurs in the citationIndex
-        int numberOfPatents = citationGraph.size();
+        double numberOfPatents = 1117856;
         double DAMPING_FACTOR = 0.85;
 
         for (Integer docId: citationGraph.keySet()) {
-            pageRank.put(docId, (1.0/(double) numberOfPatents));
+            pageRank.put(docId, (1.0/numberOfPatents));
         }
         for (int i = 0; i < 50; ++i) {
+            HashMap<Integer, Double> tmpPageRank = new HashMap<>();
+
             for (Integer docId: pageRank.keySet()) {
                 double sum = 0.0;
                 for (Integer inLink: citationGraph.get(docId)) {
                     if (pageRank.get(inLink) != null) {
                         sum += pageRank.get(inLink)/inverseCitationGraph.get(inLink).size();
                     } else {
-                        sum = 1.0/(double)citationGraph.size();
+                        sum += 1.0/numberOfPatents;
                     }
                 }
-                double rank = (1 - DAMPING_FACTOR/numberOfPatents) * sum;
-                pageRank.put(docId, rank);
+                double rank = (1 - DAMPING_FACTOR)/numberOfPatents + DAMPING_FACTOR * sum;
+                tmpPageRank.put(docId, rank);
             }
+
+            pageRank = tmpPageRank;
         }
 
-        //call of recursive method
-        //can probably be deleted because actually calculating this recursively is a bad idea
-//        for (Integer docId: pageRank.keySet()) {
-//            pageRank.put(docId, computeRankOfPage(docId, citationGraph, inverseCitationGraph, DAMPING_FACTOR));
-//        }
+        double sum = 0;
+        for (Double value: pageRank.values()) {
+            sum += value;
+        }
+
+        sum += (numberOfPatents - citationGraph.size()) * ((1 - DAMPING_FACTOR)/numberOfPatents);
+
+        System.out.println("Sum: " + sum);
+        System.out.println("7861321: " + pageRank.get(7861321));
+        System.out.println("7886437: " + pageRank.get(7886437));
+        System.out.println("8074432: " + pageRank.get(8074432));
+        System.out.println("8074897: " + pageRank.get(8074897));
+        System.out.println("8074994: " + pageRank.get(8074994));
     }
 
     private Double computeRankOfPage(Integer docId, HashMap<Integer, List<Integer>> citationGraph, HashMap<Integer, List<Integer>> inverseCitationGraph, double DAMPING_FACTOR) {

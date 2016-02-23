@@ -179,7 +179,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         searchFactory = new SearchFactory();
         searchFactory.setContentIndex(contentIndex);
 
-        citationIndex.computePageRanks();
+        //citationIndex.computePageRanks();
 
         return true;
     }

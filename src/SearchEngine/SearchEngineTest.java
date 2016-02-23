@@ -157,6 +157,9 @@ public class SearchEngineTest {
         //System.out.println("\nadd-on:");
         //myEngine.search("add-on", 20).forEach(System.out::println);
 
+        System.out.println("\nMarker pen holder:");
+        myEngine.search("\"patterns in scale-free networks\"", 10).forEach(System.out::println);
+
         time = System.currentTimeMillis() - start;
 
         System.out.print("Search time:\t" + (time) + "\tmilliseconds\n");
