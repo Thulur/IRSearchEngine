@@ -81,7 +81,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
     }
 
     private void indexContent() {
-        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
+        /*ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
         Set<Future<Integer>> result = new HashSet<>();
         int curFileNum = 0;
 
@@ -101,7 +101,7 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             e.printStackTrace();
         }
 
-        executor.shutdown();
+        executor.shutdown();*/
 
         // Join all indices at the end
         contentIndex.mergePartialIndices(files, numPatents);

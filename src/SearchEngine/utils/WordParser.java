@@ -61,16 +61,6 @@ public class WordParser {
         return word;
     }
 
-    /**
-     * Stems a given string.
-     * @param text A string which will be tokenized.
-     * @param position A position which the result positions will be relative to.
-     * @return Returns tokens with a list of positions relative to a given position.
-     */
-    public Map<String, List<Long>> stem(String text, Boolean filterStopwords, Long position) {
-        return genericStem(text, filterStopwords, position);
-    }
-
     public String stemToString(String text, Boolean filterStopwords) {
         StringBuilder result = new StringBuilder();
         String[] inputWords = text.split("[\\s+,;:.?!()]");

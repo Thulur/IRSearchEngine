@@ -103,43 +103,45 @@ public class ContentIndex {
                 }
 
                 Iterator<FileMergeHead> files = sortedPostings.values().iterator();
-                StringBuilder line = new StringBuilder();
-                StringBuilder vectorLine = new StringBuilder();
                 int entryCount = 0;
                 while (files.hasNext()) {
                     FileMergeHead file = files.next();
                     entryCount += file.docNumInCurLine();
-                    line.append(file.getPostinglistLine());
                 }
 
-                for (String entry: line.toString().split("[;]")) {
-                    String[] values = entry.split(",");
+                files = sortedPostings.values().iterator();
+                while (files.hasNext()) {
+                    FileMergeHead file = files.next();
 
-                    Double docVector = (1 + Math.log10(Double.parseDouble(values[Posting.POSTING_NUM_OCC_POS - 1]))) * Math.log10(1 + (numPatents / entryCount));
-                    double docVectorSum;
+                    for (String entry: file.getPostinglistLine().toString().split("[;]")) {
+                        String[] values = entry.split(",");
 
-                    if (docWeights.containsKey(values[Posting.POSTING_DOC_ID_POS - 1])) {
-                        docVectorSum = docWeights.get(values[Posting.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
-                    } else {
-                        docVectorSum = docVector * docVector;
+                        Double docVector = (1 + Math.log10(Double.parseDouble(values[Posting.POSTING_NUM_OCC_POS - 1]))) * Math.log10(1 + (numPatents / entryCount));
+                        double docVectorSum;
+
+                        if (docWeights.containsKey(values[Posting.POSTING_DOC_ID_POS - 1])) {
+                            docVectorSum = docWeights.get(values[Posting.POSTING_DOC_ID_POS - 1]) + docVector * docVector;
+                        } else {
+                            docVectorSum = docVector * docVector;
+                        }
+
+                        docWeights.put(values[Posting.POSTING_DOC_ID_POS - 1], docVectorSum);
+
+                        Posting posting = new Posting().fromStringWithoutWeight(entry);
+                        double maxFactor = 0;
+                        if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(posting.getDocId())) {
+                            maxFactor = Configuration.TITLE_EXTRA_WEIGHT_FACTOR;
+                        } else if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(posting.getDocId()) + docIndex.numWordsAbstractInEntry(posting.getDocId())) {
+                            maxFactor = Configuration.ABSTRACT_EXTRA_WEIGHT_FACTOR;
+                        }
+                        docVector += maxFactor * docVector;
+
+                        tmpPostingList.write(docVector.toString());
+                        tmpPostingList.write(",".concat(entry).concat(";"));
                     }
-
-                    docWeights.put(values[Posting.POSTING_DOC_ID_POS - 1], docVectorSum);
-
-                    Posting posting = new Posting().fromStringWithoutWeight(entry);
-                    double maxFactor = 0;
-                    if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(posting.getDocId())) {
-                        maxFactor = Configuration.TITLE_EXTRA_WEIGHT_FACTOR;
-                    } else if (posting.getOccurrences().get(0) < docIndex.numWordsTitleInEntry(posting.getDocId()) + docIndex.numWordsAbstractInEntry(posting.getDocId())) {
-                        maxFactor = Configuration.ABSTRACT_EXTRA_WEIGHT_FACTOR;
-                    }
-                    docVector += maxFactor * docVector;
-
-                    vectorLine.append(docVector);
-                    vectorLine.append(",".concat(entry).concat(";"));
                 }
 
-                tmpPostingList.write(vectorLine.toString().concat("\n"));
+                tmpPostingList.write("\n");
                 curTokens.remove(curWord);
             }
             tmpPostingList.close();
