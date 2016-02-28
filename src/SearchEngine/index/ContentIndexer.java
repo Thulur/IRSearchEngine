@@ -4,8 +4,8 @@ import SearchEngine.data.CustomFileWriter;
 import SearchEngine.data.Document;
 import SearchEngine.data.FilePaths;
 import SearchEngine.data.Posting;
-import SearchEngine.index.parse.ParsedEventListener;
 import SearchEngine.index.parse.ContentParser;
+import SearchEngine.index.parse.ParsedEventListener;
 import SearchEngine.utils.NumberParser;
 import SearchEngine.utils.WordParser;
 import org.apache.commons.lang3.ArrayUtils;
@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 /**
  * Created by sebastian on 03.11.2015.
@@ -127,6 +128,9 @@ public class ContentIndexer implements Callable<Integer>, ParsedEventListener {
 
         for (Map.Entry<String, List<Long>> entry : words.entrySet()) {
             String word = entry.getKey();
+
+            if (!isValidWort(word)) continue;
+
             List<Long> occurrences = entry.getValue();
             Posting posting = new Posting();
             posting.setDocId(document.getDocId());
@@ -142,6 +146,20 @@ public class ContentIndexer implements Callable<Integer>, ParsedEventListener {
                 values.put(word, tmpPos);
             }
         }
+    }
+
+    private boolean isValidWort(String word) {
+        // Do not index short and to long words
+        if (word.length() < 3 || word.length() > 15) {
+            return false;
+        }
+
+        // Only index words or numbers
+        if (!(Pattern.matches("[a-zA-Z]+", word) ||Pattern.matches("\\d+", word) || Pattern.matches("[a-zA-Z]+\\-[a-zA-Z]+", word))) {
+            return false;
+        }
+
+        return true;
     }
 
     private void save() {
