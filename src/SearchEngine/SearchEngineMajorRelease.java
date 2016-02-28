@@ -244,17 +244,17 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
             tmpResults.add(String.valueOf(document.getDocId()));
         }
 
-        WebFile webFile = new WebFile();
+        //WebFile webFile = new WebFile();
 
-        ArrayList<String> goldRanking = webFile.getGoogleRanking(query);
-        computeNdcgList(goldRanking, tmpResults);
+        //ArrayList<String> goldRanking = webFile.getGoogleRanking(query);
+        //computeNdcgList(goldRanking, tmpResults);
 
         ArrayList<String> results = new ArrayList<>();
 
         // topK should be used in the Search class not here
         for (int i = 0; i < topK && i < documents.size(); ++i) {
             if (documents.get(i) != null) {
-                results.add(documents.get(i).generateSnippet(query, ndcg.get(i), outputFormat));
+                results.add(documents.get(i).generateSnippet(query, 0, outputFormat));
             }
         }
 

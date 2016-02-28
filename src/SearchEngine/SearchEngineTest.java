@@ -19,7 +19,7 @@ public class SearchEngineTest {
 
         long start = System.currentTimeMillis();
 
-        myEngine.index();
+        //myEngine.index();
 
         long time = System.currentTimeMillis() - start;
 
@@ -30,7 +30,7 @@ public class SearchEngineTest {
         // ArrayList<String> results = new ArrayList <> ();
 
         //compression
-        myEngine.compressIndex();
+        //myEngine.compressIndex();
         System.out.println("Compression time:\t" + (System.currentTimeMillis() - start) + "\tms\n");
         myEngine.loadCompressedIndex();
         start = System.currentTimeMillis();
@@ -158,7 +158,9 @@ public class SearchEngineTest {
         //myEngine.search("add-on", 20).forEach(System.out::println);
 
         System.out.println("\nMarker pen holder:");
-        myEngine.search("\"patterns in scale-free networks\"", 10).forEach(System.out::println);
+        myEngine.search("auto #2", 10).forEach(System.out::println);
+        System.out.println("----------------------------------------------");
+        myEngine.search("test", 10).forEach(System.out::println);
 
         time = System.currentTimeMillis() - start;
 

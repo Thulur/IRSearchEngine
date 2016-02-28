@@ -73,7 +73,14 @@ public class Document {
             ++bufferPos;
         }
 
-        return new String(readData, 0, bufferPos - tag.length(), "UTF-8");
+        String result;
+        if (bufferPos - tag.length() > 0) {
+            result = new String(readData, 0, bufferPos - tag.length(), "UTF-8");
+        } else {
+            result = "";
+        }
+
+        return result;
     }
 
     private String readLineFromFile(RandomAccessFile file, long pos, long length) throws IOException {
@@ -189,11 +196,6 @@ public class Document {
         booleanTokens.add("AND");
         booleanTokens.add("NOT");
         Map<String, Integer> sentenceRanking = new HashMap<>();
-
-        // Occurrence average
-
-        Map<String, List<Integer>> indicesMap = new HashMap<>();
-
         String[] queryTerms = query.split(" ");
 
         if (query.startsWith("\"") && query.endsWith("\"")) {
@@ -273,7 +275,7 @@ public class Document {
                     outputFormat.getTitleStandard(), outputFormat.getEnd());
         }
 
-        snippet.replace(0, 0, titleString.toString() + "\t" + ndcg + "\n");
+        snippet.replace(0, 0, titleString.toString() + "\n");
     }
 
     private void formatLines(StringBuilder snippet) {

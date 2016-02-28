@@ -4,6 +4,7 @@ import SearchEngine.data.Configuration;
 import SearchEngine.data.Document;
 import SearchEngine.data.Posting;
 import SearchEngine.index.ContentIndex;
+import SearchEngine.utils.WordParser;
 
 import java.io.IOException;
 import java.util.*;
@@ -45,13 +46,12 @@ public class PRFSearch implements Search {
         Search secondSearch = searchFactory.getSearchFromQuery(modifiedSearchTerm, topK);
         ArrayList<Posting> secondSearchResults = secondSearch.execute();
 
-        ArrayList<Document> result = new ArrayList<>();
-        Document curDoc;
-        /*for (int i = 0; i < topK && i < secondSearchResults.size(); ++i) {
-            curDoc = secondSearchResults.get(i);
-            curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
-            result.add(curDoc);
-        }*/
+        ArrayList<Posting> result = new ArrayList<>();
+        Posting posting;
+        for (int i = 0; i < topK && i < secondSearchResults.size(); ++i) {
+            posting = secondSearchResults.get(i);
+            result.add(posting);
+        }
 
         return secondSearchResults;
     }
@@ -59,9 +59,9 @@ public class PRFSearch implements Search {
     private Map<String, List<Long>> getWordOccurrencesFromResults(ArrayList<Posting> results) throws IOException {
         Map<String, List<Long>> words = new HashMap<>();
 
-        /*for (int i = 0; i < prf && i < results.size(); ++i) {
-            Posting curDoc = results.get(i);
-            curDoc.loadPatentData(index.getCacheFile(curDoc.getFileId()));
+        for (int i = 0; i < prf && i < results.size(); ++i) {
+            Document curDoc = new Document(results.get(i));;
+            curDoc.loadPatentData(contentIndex.getCacheFile(curDoc.getFileId()));
 
             for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.generateSnippet(searchTerm), true).entrySet()) {
                 if (words.containsKey(entry.getKey())) {
@@ -70,7 +70,7 @@ public class PRFSearch implements Search {
                     words.put(entry.getKey(), entry.getValue());
                 }
             }
-        }*/
+        }
 
         return words;
     }

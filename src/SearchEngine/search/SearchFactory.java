@@ -4,7 +4,6 @@ import SearchEngine.index.ContentIndex;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -32,10 +31,10 @@ public class SearchFactory {
         Search search;
 
         int prf = 0;
-        Pattern prfPattern = Pattern.compile(".*[#]\\d+");
-        Matcher prfMatcher = prfPattern.matcher(query);
-        if (prfMatcher.matches()) {
+        if (Pattern.matches(".*[#]\\d+", query)) {
             prf = Integer.parseInt(query.substring(query.indexOf("#") + 1, query.length()));
+            query = query.substring(0, query.indexOf("#"));
+            System.out.println(prf);
         }
 
         if (queryIsBoolean) {
@@ -46,7 +45,7 @@ public class SearchFactory {
             search = new VectorSpaceSearch();
         }
 
-        search.setupSearch(query, contentIndex, topK, 0);
+        search.setupSearch(query, contentIndex, topK, prf);
 
         return search;
     }
