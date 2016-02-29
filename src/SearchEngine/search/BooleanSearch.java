@@ -60,9 +60,11 @@ public class BooleanSearch implements Search {
             if (booleanTokens.contains(searchToken)) {
                 booleanOperator = searchToken;
             } else if (searchToken.contains("*")) {
-                searchResults.put(searchToken, searchFactory.getSearchFromQuery(searchToken.toLowerCase(), topK).execute());
+                List<Posting> tmpList = contentIndex.lookUpPostingInFile(searchToken.toLowerCase());
+                searchResults.put(searchToken, tmpList);
             } else {
-                searchResults.put(searchToken, searchFactory.getSearchFromQuery(wordParser.stemSingleWord(searchToken), topK).execute());
+                List<Posting> tmpList = contentIndex.lookUpPostingInFile(wordParser.stemSingleWord(searchToken));
+                searchResults.put(searchToken, tmpList);
             }
         }
     }
@@ -99,6 +101,6 @@ public class BooleanSearch implements Search {
             results.addAll(postings.values());
         }
 
-        Collections.sort(results, (obj1, obj2) -> ((Comparable) ((obj2)).getWeight()).compareTo(((obj1)).getWeight()));
+        Collections.sort(results, (obj1, obj2) -> ((Comparable) ((obj2)).getDocId()).compareTo(((obj1)).getDocId()));
     }
 }

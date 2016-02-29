@@ -158,7 +158,7 @@ public class SearchEngineTest {
         //myEngine.search("add-on", 20).forEach(System.out::println);
 
         System.out.println("\nMarker pen holder:");
-        myEngine.search("auto #2", 10).forEach(System.out::println);
+        myEngine.search("test OR auto", 10).forEach(System.out::println);
         System.out.println("----------------------------------------------");
         myEngine.search("test", 10).forEach(System.out::println);
 
