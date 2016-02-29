@@ -381,14 +381,14 @@ public class ContentIndex {
                         numCount = -1;
                         occurrence = 0;
 
-                        /*if (postings.size() > 10000) {
+                        if (postings.size() > 10000) {
                             if (postings.first().compareTo(posting) < 0) {
                                 postings.add(posting);
                                 postings.pollFirst();
                             }
-                        } else {*/
+                        } else {
                             postings.add(posting);
-                        //}
+                        }
 
                         posting = new Posting();
                     }
