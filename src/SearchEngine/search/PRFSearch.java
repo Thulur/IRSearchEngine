@@ -60,7 +60,7 @@ public class PRFSearch implements Search {
         Map<String, List<Long>> words = new HashMap<>();
 
         for (int i = 0; i < prf && i < results.size(); ++i) {
-            Document curDoc = new Document(results.get(i));;
+            Document curDoc = contentIndex.buildDocument(results.get(i));
             curDoc.loadPatentData(contentIndex.getCacheFile(curDoc.getFileId()));
 
             for (Map.Entry<String, List<Long>> entry: WordParser.getInstance().stem(curDoc.generateSnippet(searchTerm), true).entrySet()) {
