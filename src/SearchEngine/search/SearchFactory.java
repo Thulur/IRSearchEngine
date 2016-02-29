@@ -34,7 +34,6 @@ public class SearchFactory {
         if (Pattern.matches(".*[#]\\d+", query)) {
             prf = Integer.parseInt(query.substring(query.indexOf("#") + 1, query.length()));
             query = query.substring(0, query.indexOf("#"));
-            System.out.println(prf);
         }
 
         if (queryIsBoolean) {

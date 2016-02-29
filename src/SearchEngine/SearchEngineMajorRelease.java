@@ -179,8 +179,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         searchFactory = new SearchFactory();
         searchFactory.setContentIndex(contentIndex);
 
-        //citationIndex.computePageRanks();
-
         return true;
     }
 
@@ -243,11 +241,6 @@ public class SearchEngineMajorRelease extends SearchEngine implements ParsedEven
         for (Document document: documents) {
             tmpResults.add(String.valueOf(document.getDocId()));
         }
-
-        //WebFile webFile = new WebFile();
-
-        //ArrayList<String> goldRanking = webFile.getGoogleRanking(query);
-        //computeNdcgList(goldRanking, tmpResults);
 
         ArrayList<String> results = new ArrayList<>();
 
